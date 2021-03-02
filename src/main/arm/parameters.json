@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "value": "${artifactsLocationBase}/${project.artifactId}/${git.tag}/src/main/"
+        },
+        "identity": {
+            "value": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "${identityId}": {}
+                }
+            }
+        },
+        "createAKSCluster": {
+            "value": "${createAKSCluster}"
+        },
+        "aksClusterName": {
+            "value": "${aksClusterName}"
+        }, 
+        "aksClusterRGName": {
+            "value": "${aksClusterRGName}"
+        },
+        "createACR": {
+            "value": "${createACR}"
+        },
+        "acrName": {
+            "value": "${acrName}"
+        },
+        "useOpenLibertyImage": {
+            "value": "${useOpenLibertyImage}"
+        },
+        "appReplicas": {
+            "value": "${appReplicas}"
+        }
+    }
+}

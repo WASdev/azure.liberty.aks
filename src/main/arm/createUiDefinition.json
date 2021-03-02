@@ -1,0 +1,206 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Azure.CreateUIDef",
+    "version": "0.1.2-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "identity",
+                "type": "Microsoft.ManagedIdentity.IdentitySelector",
+                "label": "Managed Identity Configuration",
+                "toolTip": {
+                    "userAssignedIdentity": "Add user-assigned identities to enable the app deployment."
+                },
+                "defaultValue": {
+                    "systemAssignedIdentity": "Off"
+                },
+                "options": {
+                    "hideSystemAssignedIdentity": true,
+                    "hideUserAssignedIdentity": false
+                }
+            }
+        ],
+        "steps": [
+            {
+                "name": "AKSCluster",
+                "label": "Configure AKS cluster",
+                "subLabel": {
+                    "preValidation": "Provide required info for AKS cluster configuration",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Configure AKS cluster",
+                "elements": [
+                    {
+                        "name": "createAKSCluster",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Create a new AKS cluster?",
+                        "defaultValue": "Yes",
+                        "toolTip": "Select 'Yes' to create a new AKS cluster, or select 'No' to provide an existing AKS cluster.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "clusterInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Provide information for an existing AKS cluster",
+                        "elements": [
+                            {
+                                "name": "aksClusterName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Cluster name",
+                                "toolTip": "Use only allowed characters.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-z0-9A-Z\\-]+$",
+                                    "validationMessage": "The value must only contain letters and numbers."
+                                }
+                            },
+                            {
+                                "name": "aksClusterRGName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Resource group name of the cluster",
+                                "toolTip": "Use only allowed characters.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-z0-9A-Z\\-]+$",
+                                    "validationMessage": "The value must only contain letters and numbers."
+                                }
+                            }
+                        ],
+                        "visible": "[not(bool(steps('AKSCluster').createAKSCluster))]"
+                    }
+                ]
+            },
+            {
+                "name": "ACRInstance",
+                "label": "Configure ACR instance",
+                "subLabel": {
+                    "preValidation": "Provide required info for ACR instance configuration",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Configure ACR instance",
+                "elements": [
+                    {
+                        "name": "createACR",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Create a new ACR instance?",
+                        "defaultValue": "Yes",
+                        "toolTip": "Select 'Yes' to create a new ACR instance, or select 'No' to provide an existing ACR instance.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "acrInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Provide information for an existing ACR instance",
+                        "elements": [
+                            {
+                                "name": "acrName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Registry name",
+                                "toolTip": "Use only allowed characters.",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-z0-9A-Z\\-]+$",
+                                    "validationMessage": "The value must only contain letters and numbers."
+                                }
+                            }
+                        ],
+                        "visible": "[not(bool(steps('ACRInstance').createACR))]"
+                    }
+                ]
+            },
+            {
+                "name": "Application",
+                "label": "Configure Java EE Application",
+                "subLabel": {
+                    "preValidation": "Provide required info for application",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Configure Java EE Application",
+                "elements": [
+                    {
+                        "name": "appPackageUrl",
+                        "type": "Microsoft.Common.FileUpload",
+                        "label": "Application package (.war)",
+                        "toolTip": "The application war package to deploy.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "options": {
+                            "multiple": false,
+                            "uploadMode": "url",
+                            "openMode": "binary"
+                        }
+                    },
+                    {
+                        "name": "useOpenLibertyImage",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Application Java runtime",
+                        "defaultValue": "Open Liberty",
+                        "toolTip": "Select 'Open Liberty' if you prefer Open Source runtime, or select 'WebSphere Liberty' if you prefer commercial version of Open Liberty.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Open Liberty",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "WebSphere Liberty",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "appReplicas",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Number of application replicas",
+                        "defaultValue": "2",
+                        "toolTip": "The number of application replicas to deploy.",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^(1|2|3|4|5)$",
+                            "validationMessage": "Number of application replicas to deploy, limit 1-5."
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "identity": "[basics('identity')]",
+            "createAKSCluster": "[bool(steps('AKSCluster').createAKSCluster)]",
+            "aksClusterName": "[steps('AKSCluster').clusterInfo.aksClusterName]",
+            "aksClusterRGName": "[steps('AKSCluster').clusterInfo.aksClusterRGName]",
+            "createACR": "[bool(steps('ACRInstance').createACR)]",
+            "acrName": "[steps('ACRInstance').acrInfo.acrName]",
+            "appPackageUrl": "[steps('Application').appPackageUrl]",
+            "useOpenLibertyImage": "[bool(steps('Application').useOpenLibertyImage)]",
+            "appReplicas": "[int(steps('Application').appReplicas)]"
+        }
+    }
+}

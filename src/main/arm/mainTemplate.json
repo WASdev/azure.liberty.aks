@@ -1,0 +1,179 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "defaultValue": ""
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "identity": {
+            "type": "object"
+        },
+        "createAKSCluster": {
+            "defaultValue": true,
+            "type": "bool"
+        },
+        "aksClusterName": {
+            "type": "string",
+            "defaultValue": ""
+        }, 
+        "aksClusterRGName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "createACR": {
+            "defaultValue": true,
+            "type": "bool"
+        },
+        "acrName": {
+            "type": "string",
+            "defaultValue": ""
+        }, 
+        "appPackageUrl": {
+            "type": "string"
+        },
+        "useOpenLibertyImage": {
+            "defaultValue": true,
+            "type": "bool"
+        },
+        "appReplicas": {
+            "type": "int",
+            "defaultValue": 1
+        },
+        "guidValue": {
+            "defaultValue": "[newGuid()]",
+            "type": "string"
+        }
+    },
+    "variables": {
+        "suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
+        "aksClusterName": "[if(parameters('createAKSCluster'), concat('cluster', variables('suffix')), parameters('aksClusterName'))]",
+        "aksClusterRGName": "[if(parameters('createAKSCluster'), resourceGroup().name, parameters('aksClusterRGName'))]",
+        "acrName": "[if(parameters('createACR'), concat('acr', variables('suffix')), parameters('acrName'))]",
+        "appName": "[concat('app', variables('suffix'))]",
+        "deploymentScriptName": "[concat('script', variables('suffix'))]",
+        "scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
+        "arguments": "[concat(variables('aksClusterRGName'), ' ', variables('aksClusterName'), ' ', variables('acrName'), ' ', parameters('appPackageUrl'), ' ', variables('appName'), ' ', parameters('useOpenLibertyImage'), ' ', parameters('appReplicas'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-09-01",
+            "name": "${tracking.pid}",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2019-05-01",
+            "type": "Microsoft.ContainerRegistry/registries",
+            "name": "[variables('acrName')]",
+            "location": "[parameters('location')]",
+            "condition": "[parameters('createACR')]",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "adminUserEnabled": true
+            }
+        },
+        {
+            "apiVersion": "2020-09-01",
+            "type": "Microsoft.ContainerService/managedClusters",
+            "name": "[variables('aksClusterName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]"
+            ],
+            "condition": "[parameters('createAKSCluster')]",
+            "properties": {
+                "kubernetesVersion": "1.18.10",
+                "enableRBAC": true,
+                "dnsPrefix": "[concat(variables('aksClusterName'), '-dns')]",
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "osDiskSizeGB": 0,
+                        "count": 1,
+                        "vmSize": "Standard_DS2_v2",
+                        "osType": "Linux",
+                        "storageProfile": "ManagedDisks",
+                        "type": "VirtualMachineScaleSets",
+                        "mode": "System"
+                    }
+                ],
+                "networkProfile": {
+                    "loadBalancerSku": "standard",
+                    "networkPlugin": "kubenet"
+                }
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('deploymentScriptName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName'))]"
+            ],
+            "kind": "AzureCLI",
+            "identity": "[parameters('identity')]",
+            "properties": {
+                "AzCliVersion": "2.15.0",
+                "arguments": "[variables('arguments')]",
+                "primaryScriptUri": "[uri(variables('scriptLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]",
+                "supportingScriptUris":[
+                    "[uri(variables('scriptLocation'), concat('openlibertyapplication.yaml.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('scriptLocation'), concat('server.xml.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('scriptLocation'), concat('Dockerfile.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('scriptLocation'), concat('Dockerfile-wlp.template', parameters('_artifactsLocationSasToken')))]"
+                ],
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        }
+    ],
+    "outputs": {
+        "aksClusterName": {
+            "value": "[variables('aksClusterName')]",
+            "type": "string"
+        },
+        "aksClusterRGName": {
+            "value": "[variables('aksClusterRGName')]",
+            "type": "string"
+        },
+        "acrName": {
+            "value": "[variables('acrName')]",
+            "type": "string"
+        },
+        "appImage": {
+            "value": "[variables('appName')]",
+            "type": "string"
+        },
+        "appName": {
+            "value": "[variables('appName')]",
+            "type": "string"
+        },
+        "result": {
+            "value": "[reference(variables('deploymentScriptName')).outputs]",
+            "type": "object"
+        }
+    }
+}
