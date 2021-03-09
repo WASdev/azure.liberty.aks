@@ -20,7 +20,7 @@
 
     <groupId>com.ibm.websphere.azure</groupId>
     <artifactId>arm-deployment-script-aks</artifactId>
-    <version>1.0.14</version>
+    <version>1.0.16</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
