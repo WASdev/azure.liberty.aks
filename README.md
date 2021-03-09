@@ -20,14 +20,14 @@
 
       ```bash
 
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateAKSCluster=true -DcreateACR=true -DuseOpenLibertyImage=<true or false> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateAKSCluster=true -DcreateACR=true -DuploadAppPackage=<true or false> -DuseOpenLibertyImage=<true or false> -DuseJava8=<true or false> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Ptemplate-validation-tests clean install
       ```
 
    1. Or use an existing AKS cluster and an existing ACR instance:
 
       ```bash
 
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateAKSCluster=false -DaksClusterName=<aks-cluster-name> -DaksClusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DuseOpenLibertyImage=<true or false> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateAKSCluster=false -DaksClusterName=<aks-cluster-name> -DaksClusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DuploadAppPackage=<true or false> -DuseOpenLibertyImage=<true or false> -DuseJava8=<true or false> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Ptemplate-validation-tests clean install
       ```
 
 1. Change to `./target/arm` directory
