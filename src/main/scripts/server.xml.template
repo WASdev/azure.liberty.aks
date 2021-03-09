@@ -18,11 +18,8 @@
 <server description="defaultServer">
     <!-- TODO: Enable features that're specified by user -->
     <featureManager>
-        <feature>cdi-2.0</feature>
-        <feature>jaxb-2.2</feature>
-        <feature>jsf-2.3</feature>
-        <feature>jaxrs-2.1</feature>
-        <feature>ejbLite-3.2</feature>
+        <feature>javaee-8.0</feature>
+        <feature>microProfile-3.3</feature>
     </featureManager>
 
     <!-- TODO: Define http & https endpoints with user specified ports -->
@@ -33,7 +30,7 @@
     <applicationManager autoExpand="true" />
 
     <!-- Define web application with its context root and location -->
-    <webApplication id="${Application_Name}" contextRoot="/"
+    <webApplication id="${Application_Name}" contextRoot="${Context_Root}"
         location="${server.config.dir}/apps/${Application_Package}">
     </webApplication>
 </server>

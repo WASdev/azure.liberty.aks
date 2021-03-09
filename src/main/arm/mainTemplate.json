@@ -36,11 +36,24 @@
         "acrName": {
             "type": "string",
             "defaultValue": ""
-        }, 
+        },
+        "uploadAppPackage": {
+            "defaultValue": false,
+            "type": "bool"
+        },
         "appPackageUrl": {
+            "defaultValue": "",
+            "type": "string"
+        },
+        "contextRoot": {
+            "defaultValue": "/",
             "type": "string"
         },
         "useOpenLibertyImage": {
+            "defaultValue": true,
+            "type": "bool"
+        },
+         "useJava8": {
             "defaultValue": true,
             "type": "bool"
         },
@@ -54,14 +67,15 @@
         }
     },
     "variables": {
-        "suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
-        "aksClusterName": "[if(parameters('createAKSCluster'), concat('cluster', variables('suffix')), parameters('aksClusterName'))]",
-        "aksClusterRGName": "[if(parameters('createAKSCluster'), resourceGroup().name, parameters('aksClusterRGName'))]",
-        "acrName": "[if(parameters('createACR'), concat('acr', variables('suffix')), parameters('acrName'))]",
-        "appName": "[concat('app', variables('suffix'))]",
-        "deploymentScriptName": "[concat('script', variables('suffix'))]",
-        "scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
-        "arguments": "[concat(variables('aksClusterRGName'), ' ', variables('aksClusterName'), ' ', variables('acrName'), ' ', parameters('appPackageUrl'), ' ', variables('appName'), ' ', parameters('useOpenLibertyImage'), ' ', parameters('appReplicas'))]"
+        "const_aksClusterRGName": "[if(parameters('createAKSCluster'), resourceGroup().name, parameters('aksClusterRGName'))]",
+        "const_appName": "[concat('app', variables('const_suffix'))]",
+        "const_appPackageUrl": "[if(parameters('uploadAppPackage'), parameters('appPackageUrl'), 'N/A')]",
+        "const_arguments": "[concat(variables('const_aksClusterRGName'), ' ', variables('name_aksClusterName'), ' ', variables('name_acrName'), ' ', parameters('uploadAppPackage'), ' ', variables('const_appPackageUrl'), ' ', parameters('contextRoot'), ' ', parameters('useOpenLibertyImage'), ' ', parameters('useJava8'), ' ', parameters('appReplicas'), ' ', variables('const_appName'))]",
+        "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
+        "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
+        "name_acrName": "[if(parameters('createACR'), concat('acr', variables('const_suffix')), parameters('acrName'))]",
+        "name_aksClusterName": "[if(parameters('createAKSCluster'), concat('cluster', variables('const_suffix')), parameters('aksClusterName'))]",
+        "name_deploymentScriptName": "[concat('script', variables('const_suffix'))]"
     },
     "resources": [
         {
@@ -81,7 +95,7 @@
         {
             "apiVersion": "2019-05-01",
             "type": "Microsoft.ContainerRegistry/registries",
-            "name": "[variables('acrName')]",
+            "name": "[variables('name_acrName')]",
             "location": "[parameters('location')]",
             "condition": "[parameters('createACR')]",
             "sku": {
@@ -94,16 +108,16 @@
         {
             "apiVersion": "2020-09-01",
             "type": "Microsoft.ContainerService/managedClusters",
-            "name": "[variables('aksClusterName')]",
+            "name": "[variables('name_aksClusterName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]"
+                "[resourceId('Microsoft.ContainerRegistry/registries', variables('name_acrName'))]"
             ],
             "condition": "[parameters('createAKSCluster')]",
             "properties": {
                 "kubernetesVersion": "1.18.10",
                 "enableRBAC": true,
-                "dnsPrefix": "[concat(variables('aksClusterName'), '-dns')]",
+                "dnsPrefix": "[concat(variables('name_aksClusterName'), '-dns')]",
                 "agentPoolProfiles": [
                     {
                         "name": "agentpool",
@@ -128,22 +142,22 @@
         {
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "2020-10-01",
-            "name": "[variables('deploymentScriptName')]",
+            "name": "[variables('name_deploymentScriptName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.ContainerService/managedClusters', variables('aksClusterName'))]"
+                "[resourceId('Microsoft.ContainerService/managedClusters', variables('name_aksClusterName'))]"
             ],
             "kind": "AzureCLI",
             "identity": "[parameters('identity')]",
             "properties": {
                 "AzCliVersion": "2.15.0",
-                "arguments": "[variables('arguments')]",
-                "primaryScriptUri": "[uri(variables('scriptLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]",
+                "arguments": "[variables('const_arguments')]",
+                "primaryScriptUri": "[uri(variables('const_scriptLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptUris":[
-                    "[uri(variables('scriptLocation'), concat('openlibertyapplication.yaml.template', parameters('_artifactsLocationSasToken')))]",
-                    "[uri(variables('scriptLocation'), concat('server.xml.template', parameters('_artifactsLocationSasToken')))]",
-                    "[uri(variables('scriptLocation'), concat('Dockerfile.template', parameters('_artifactsLocationSasToken')))]",
-                    "[uri(variables('scriptLocation'), concat('Dockerfile-wlp.template', parameters('_artifactsLocationSasToken')))]"
+                    "[uri(variables('const_scriptLocation'), concat('openlibertyapplication.yaml.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('const_scriptLocation'), concat('server.xml.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('const_scriptLocation'), concat('Dockerfile.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('const_scriptLocation'), concat('Dockerfile-wlp.template', parameters('_artifactsLocationSasToken')))]"
                 ],
                 "cleanupPreference": "OnSuccess",
                 "retentionInterval": "P1D"
@@ -152,27 +166,27 @@
     ],
     "outputs": {
         "aksClusterName": {
-            "value": "[variables('aksClusterName')]",
+            "value": "[variables('name_aksClusterName')]",
             "type": "string"
         },
         "aksClusterRGName": {
-            "value": "[variables('aksClusterRGName')]",
+            "value": "[variables('const_aksClusterRGName')]",
             "type": "string"
         },
         "acrName": {
-            "value": "[variables('acrName')]",
+            "value": "[variables('name_acrName')]",
             "type": "string"
         },
         "appImage": {
-            "value": "[variables('appName')]",
+            "value": "[if(parameters('uploadAppPackage'), variables('const_appName'), 'Open Liberty/WebSphere Liberty base image')]",
             "type": "string"
         },
         "appName": {
-            "value": "[variables('appName')]",
+            "value": "[variables('const_appName')]",
             "type": "string"
         },
         "result": {
-            "value": "[reference(variables('deploymentScriptName')).outputs]",
+            "value": "[reference(variables('name_deploymentScriptName')).outputs]",
             "type": "object"
         }
     }
