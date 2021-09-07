@@ -19,13 +19,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.ibm.websphere.azure</groupId>
-    <artifactId>arm-deployment-script-aks</artifactId>
-    <version>1.0.16</version>
+    <artifactId>azure.liberty.aks</artifactId>
+    <version>1.0.0</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.7</version>
+        <version>1.0.11</version>
         <relativePath></relativePath>
     </parent>
     
@@ -33,9 +33,13 @@
     <name>${project.artifactId}</name>
 
     <properties>
-        <!-- `tracking.pid` is deprecated, use `template.pid.properties.url` & `template.microsoft.pid.properties.url` instead -->
-        <tracking.pid>pid-43132095-6df1-424b-a498-f589e28f61fd</tracking.pid>
         <test.parameters>-TestParameter '@{&quot;PasswordMinLength&quot;=6}'</test.parameters>
-        <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
+        <azure.apiVersion>2020-06-01</azure.apiVersion>
+        <azure.apiVersion.acr>2019-05-01</azure.apiVersion.acr>
+        <azure.apiVersion.aksCluster>2021-02-01</azure.apiVersion.aksCluster>
+        <azure.apiVersion.deploymentScript>2020-10-01</azure.apiVersion.deploymentScript>
+        <customer.usage.attribution.id>pid-1a2a9b5a-6c82-42de-a938-9fdb6ffe8e55-partnercenter</customer.usage.attribution.id>
+        <aks.start>628cae16-c133-5a2e-ae93-2b44748012fe</aks.start>
+        <aks.end>59f5f6da-0a6d-587d-b23c-177108cd8bbf</aks.end>
     </properties>
 </project>
