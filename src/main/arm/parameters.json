@@ -13,14 +13,14 @@
                 }
             }
         },
-        "createAKSCluster": {
-            "value": "${createAKSCluster}"
+        "createCluster": {
+            "value": "${createCluster}"
         },
-        "aksClusterName": {
-            "value": "${aksClusterName}"
+        "clusterName": {
+            "value": "${clusterName}"
         }, 
-        "aksClusterRGName": {
-            "value": "${aksClusterRGName}"
+        "clusterRGName": {
+            "value": "${clusterRGName}"
         },
         "createACR": {
             "value": "${createACR}"

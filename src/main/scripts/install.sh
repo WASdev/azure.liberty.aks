@@ -15,7 +15,7 @@
 #  limitations under the License.
 
 resourceGroupName=$1
-aksClusterName=$2
+clusterName=$2
 acrName=$3
 uploadAppPackage=$4
 appPackageUrl=$5
@@ -32,7 +32,7 @@ apk add docker-cli
 
 # Install `kubectl` and connect to the AKS cluster
 az aks install-cli
-az aks get-credentials -g $resourceGroupName -n $aksClusterName --overwrite-existing
+az aks get-credentials -g $resourceGroupName -n $clusterName --overwrite-existing
 
 # Install Open Liberty Operator V0.7
 OPERATOR_NAMESPACE=default
