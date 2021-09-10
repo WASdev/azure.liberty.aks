@@ -107,6 +107,8 @@ if [ "$uploadAppPackage" = True ]; then
     # Prepare artifacts for building image
     export Application_Package=${Application_Name}.war
     wget -O ${Application_Package} "$appPackageUrl"
+    envsubst < "server.xml.template" > "server.xml"
+    appServerXml=$(cat server.xml | base64)
 
     # Determine docker file template
     if [ "$useOpenLibertyImage" = True ]; then
@@ -116,7 +118,7 @@ if [ "$uploadAppPackage" = True ]; then
     fi
     echo "dockerFileTemplate: $dockerFileTemplate" >> $logFile
     envsubst < "$dockerFileTemplate" > "Dockerfile"
-    envsubst < "server.xml.template" > "server.xml"
+    appDockerfile=$(cat Dockerfile | base64)
 
     # Build application image with Open Liberty or WebSphere Liberty base image
     az acr build -t ${Application_Image} -r $acrName . >> $logFile
@@ -134,14 +136,15 @@ else
     Context_Root=/
 
     # Remove image pull secret
-    sed -i "/pullSecret/d" openlibertyapplication.yaml.template
+    sed -i "/pullSecret/d" open-liberty-application.yaml.template
 
     Application_Image=$(echo "${Base_Image/kernel/full}")
 fi
 
 # Deploy openliberty application
-envsubst < "openlibertyapplication.yaml.template" > "openlibertyapplication.yaml"
-kubectl apply -f openlibertyapplication.yaml >> $logFile
+envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
+appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
+kubectl apply -f open-liberty-application.yaml >> $logFile
 
 # Wait until the application deployment completes
 wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
@@ -167,5 +170,10 @@ appEndpoint=$(echo ${appEndpoint}${Context_Root})
 
 # Output application endpoint
 result=$(jq -n -c --arg appEndpoint $appEndpoint '{appEndpoint: $appEndpoint}')
+if [ "$uploadAppPackage" = True ]; then
+    result=$(echo "$result" | jq --arg appServerXml "$appServerXml" '{"appServerXml": $appServerXml} + .')
+    result=$(echo "$result" | jq --arg appDockerfile "$appDockerfile" '{"appDockerfile": $appDockerfile} + .')
+fi
+result=$(echo "$result" | jq --arg appDeploymentYaml "$appDeploymentYaml" '{"appDeploymentYaml": $appDeploymentYaml} + .')
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH

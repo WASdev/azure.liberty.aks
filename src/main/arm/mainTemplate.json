@@ -245,7 +245,7 @@
                 "arguments": "[variables('const_arguments')]",
                 "primaryScriptUri": "[uri(variables('const_scriptLocation'), concat('install.sh', parameters('_artifactsLocationSasToken')))]",
                 "supportingScriptUris":[
-                    "[uri(variables('const_scriptLocation'), concat('openlibertyapplication.yaml.template', parameters('_artifactsLocationSasToken')))]",
+                    "[uri(variables('const_scriptLocation'), concat('open-liberty-application.yaml.template', parameters('_artifactsLocationSasToken')))]",
                     "[uri(variables('const_scriptLocation'), concat('server.xml.template', parameters('_artifactsLocationSasToken')))]",
                     "[uri(variables('const_scriptLocation'), concat('Dockerfile.template', parameters('_artifactsLocationSasToken')))]",
                     "[uri(variables('const_scriptLocation'), concat('Dockerfile-wlp.template', parameters('_artifactsLocationSasToken')))]"
@@ -296,6 +296,20 @@
         "appImage": {
             "condition": "[parameters('uploadAppPackage')]",
             "value": "[variables('const_appImage')]",
+            "type": "string"
+        },
+        "appServerXmlEncoded (Use `echo \"copied-value\" | base64 -d` to decode the text)": {
+            "condition": "[parameters('uploadAppPackage')]",
+            "value": "[reference(variables('name_deploymentScriptName')).outputs.appServerXml]",
+            "type": "string"
+        },
+        "appDockerfileEncoded (Use `echo \"copied-value\" | base64 -d` to decode the text)": {
+            "condition": "[parameters('uploadAppPackage')]",
+            "value": "[reference(variables('name_deploymentScriptName')).outputs.appDockerfile]",
+            "type": "string"
+        },
+        "appDeploymentYamlEncoded (Use `echo \"copied-value\" | base64 -d` to decode the text)": {
+            "value": "[reference(variables('name_deploymentScriptName')).outputs.appDeploymentYaml]",
             "type": "string"
         },
         "appEndpoint": {
