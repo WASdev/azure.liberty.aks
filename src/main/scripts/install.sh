@@ -155,13 +155,13 @@ do
     kubectl get svc ${Application_Name} -n ${Project_Name}
 done
 appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-echo "appEndpoint is: ${appEndpoint}" >> $logFile
-while [[ $appEndpoint = :* ]]
+echo "ip:port is ${appEndpoint}" >> $logFile
+while [[ $appEndpoint = :* ]] || [[ -z $appEndpoint ]]
 do
     sleep 5
     echo "Wait until the IP address is created for service ${Application_Name}..." >> $logFile
     appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-    echo "appEndpoint is: ${appEndpoint}" >> $logFile
+    echo "ip:port is ${appEndpoint}" >> $logFile
 done
 appEndpoint=$(echo ${appEndpoint}${Context_Root})
 
