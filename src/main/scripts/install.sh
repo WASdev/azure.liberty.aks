@@ -66,100 +66,106 @@ apk add docker-cli
 
 # Install `kubectl` and connect to the AKS cluster
 az aks install-cli
-az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing
+az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
 # Install Open Liberty Operator V0.7
 OPERATOR_NAMESPACE=default
 WATCH_NAMESPACE='""'
 kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-crd.yaml
 curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-cluster-rbac.yaml \
-      | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
-      | kubectl apply -f -
+    | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
+    | kubectl apply -f - >> $logFile
 curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-operator.yaml \
-      | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
-      | kubectl apply -n ${OPERATOR_NAMESPACE} -f -
+    | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
+    | kubectl apply -n ${OPERATOR_NAMESPACE} -f - >> $logFile
 wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
 
 # Create project namespace
-kubectl create namespace ${Project_Name}
+kubectl create namespace ${Project_Name} >> $logFile
 
 # Log into the ACR
 LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
 USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
-docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD
+docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
 
 # Determine base image
 export Base_Image=
 if [ "$useOpenLibertyImage" = True ] && [ "$useJava8" = True ]; then
-      Base_Image="openliberty/open-liberty:kernel-java8-openj9-ubi"
+    Base_Image="openliberty/open-liberty:kernel-java8-openj9-ubi"
 elif [ "$useOpenLibertyImage" = True ] && [ "$useJava8" = False ]; then
-      Base_Image="openliberty/open-liberty:kernel-java11-openj9-ubi"
+    Base_Image="openliberty/open-liberty:kernel-java11-openj9-ubi"
 elif [ "$useOpenLibertyImage" = False ] && [ "$useJava8" = True ]; then
-      Base_Image="ibmcom/websphere-liberty:kernel-java8-openj9-ubi"
+    Base_Image="ibmcom/websphere-liberty:kernel-java8-openj9-ubi"
 else
-      Base_Image="ibmcom/websphere-liberty:kernel-java11-openj9-ubi"
+    Base_Image="ibmcom/websphere-liberty:kernel-java11-openj9-ubi"
 fi
+echo "Base_Image: $Base_Image" >> $logFile
 
 # Build application image or use default base image
 if [ "$uploadAppPackage" = True ]; then
-      # Prepare artifacts for building image
-      export Application_Package=${Application_Name}.war
-      wget -O ${Application_Package} "$appPackageUrl"
+    # Prepare artifacts for building image
+    export Application_Package=${Application_Name}.war
+    wget -O ${Application_Package} "$appPackageUrl"
 
-      envsubst < "server.xml.template" > "server.xml"
-      envsubst < "Dockerfile.template" > "Dockerfile"
-      envsubst < "Dockerfile-wlp.template" > "Dockerfile-wlp"
+    # Determine docker file template
+    if [ "$useOpenLibertyImage" = True ]; then
+        dockerFileTemplate=Dockerfile.template
+    else
+        dockerFileTemplate=Dockerfile-wlp.template
+    fi
+    echo "dockerFileTemplate: $dockerFileTemplate" >> $logFile
+    envsubst < "$dockerFileTemplate" > "Dockerfile"
+    envsubst < "server.xml.template" > "server.xml"
 
-      # Build application image with Open Liberty or WebSphere Liberty base image
-      if [ "$useOpenLibertyImage" = True ]; then
-            az acr build -t ${Application_Image} -r $acrName .
-      else
-            az acr build -t ${Application_Image} -r $acrName -f Dockerfile-wlp .
-      fi
+    # Build application image with Open Liberty or WebSphere Liberty base image
+    az acr build -t ${Application_Image} -r $acrName . >> $logFile
 
-      # Create image pull secret
-      export Pull_Secret=${Application_Name}-secret
-      kubectl create secret docker-registry ${Pull_Secret} \
-            --docker-server=${LOGIN_SERVER} \
-            --docker-username=${USER_NAME} \
-            --docker-password=${PASSWORD} \
-            --namespace=${Project_Name}
+    # Create image pull secret
+    export Pull_Secret=${Application_Name}-secret
+    kubectl create secret docker-registry ${Pull_Secret} \
+        --docker-server=${LOGIN_SERVER} \
+        --docker-username=${USER_NAME} \
+        --docker-password=${PASSWORD} \
+        --namespace=${Project_Name} >> $logFile
 
-      Application_Image=${LOGIN_SERVER}/${Application_Image}
+    Application_Image=${LOGIN_SERVER}/${Application_Image}
 else
-      Context_Root=/
-      
-      # Remove image pull secret
-      sed -i "/pullSecret/d" openlibertyapplication.yaml.template
-      
-      Application_Image=$(echo "${Base_Image/kernel/full}")
+    Context_Root=/
+
+    # Remove image pull secret
+    sed -i "/pullSecret/d" openlibertyapplication.yaml.template
+
+    Application_Image=$(echo "${Base_Image/kernel/full}")
 fi
 
 # Deploy openliberty application
-envsubst < openlibertyapplication.yaml.template | kubectl create -f -
+envsubst < "openlibertyapplication.yaml.template" > "openlibertyapplication.yaml"
+kubectl apply -f openlibertyapplication.yaml >> $logFile
 
-# Wait until the deployment completes
+# Wait until the application deployment completes
 wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
 
 # Get public IP address and port for the application service
 kubectl get svc ${Application_Name} -n ${Project_Name}
 while [ $? -ne 0 ]
 do
-      sleep 5
-      kubectl get svc ${Application_Name} -n ${Project_Name}
+    sleep 5
+    echo "Wait until the service ${Application_Name} created..." >> $logFile
+    kubectl get svc ${Application_Name} -n ${Project_Name}
 done
 appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+echo "appEndpoint is: ${appEndpoint}" >> $logFile
 while [[ $appEndpoint = :* ]]
 do
-      sleep 5
-      echo retry
-      appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+    sleep 5
+    echo "Wait until the IP address is created for service ${Application_Name}..." >> $logFile
+    appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+    echo "appEndpoint is: ${appEndpoint}" >> $logFile
 done
 appEndpoint=$(echo ${appEndpoint}${Context_Root})
 
 # Output application endpoint
-echo "endpoint is: $appEndpoint"
 result=$(jq -n -c --arg appEndpoint $appEndpoint '{appEndpoint: $appEndpoint}')
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
