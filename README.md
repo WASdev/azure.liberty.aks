@@ -40,9 +40,9 @@
 ## After deployment
 
 1. If you check the resource group `resourceGroupName` in [Azure portal](https://portal.azure.com/), you will see related resources created:
-   1. An new AKS cluster if it's specified;
-   1. An new ACR instance if it's specified;
-   1. An deployment script instance;
+   1. A new AKS cluster if it's specified;
+   1. A new ACR instance if it's specified;
+   1. A deployment script instance;
 1. To visit the application home page:
    1. Open the resource group `resourceGroupName`;
    1. Navigate to "Deployments > `deploymentName` > Outputs";

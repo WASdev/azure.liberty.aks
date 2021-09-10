@@ -133,10 +133,14 @@
         }
     },
     "variables": {
-        "const_clusterRGName": "[if(parameters('createCluster'), resourceGroup().name, parameters('clusterRGName'))]",
+        "const_appImage": "[concat(variables('const_appImageName'), ':', variables('const_appImageTag'))]",
+        "const_appImageName": "[concat('image', variables('const_suffix'))]",
+        "const_appImageTag": "1.0.0",
         "const_appName": "[concat('app', variables('const_suffix'))]",
         "const_appPackageUrl": "[if(parameters('uploadAppPackage'), parameters('appPackageUrl'), 'N/A')]",
-        "const_arguments": "[concat(variables('const_clusterRGName'), ' ', variables('name_clusterName'), ' ', variables('name_acrName'), ' ', parameters('uploadAppPackage'), ' ', variables('const_appPackageUrl'), ' ', parameters('contextRoot'), ' ', parameters('useOpenLibertyImage'), ' ', parameters('useJava8'), ' ', parameters('appReplicas'), ' ', variables('const_appName'))]",
+        "const_appProjName": "[concat('project', variables('const_suffix'))]",
+        "const_arguments": "[concat(variables('const_clusterRGName'), ' ', variables('name_clusterName'), ' ', variables('name_acrName'), ' ', parameters('uploadAppPackage'), ' ', variables('const_appPackageUrl'), ' ', parameters('contextRoot'), ' ', parameters('useOpenLibertyImage'), ' ', parameters('useJava8'), ' ', variables('const_appName'), ' ', variables('const_appProjName'), ' ', variables('const_appImage'), ' ', parameters('appReplicas'))]",
+        "const_clusterRGName": "[if(parameters('createCluster'), resourceGroup().name, parameters('clusterRGName'))]",
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
         "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
         "name_acrName": "[if(parameters('createACR'), concat('acr', variables('const_suffix')), parameters('acrName'))]",
@@ -281,17 +285,22 @@
             "value": "[variables('name_acrName')]",
             "type": "string"
         },
-        "appImage": {
-            "value": "[if(parameters('uploadAppPackage'), variables('const_appName'), 'Open Liberty/WebSphere Liberty base image')]",
-            "type": "string"
-        },
         "appName": {
             "value": "[variables('const_appName')]",
             "type": "string"
         },
-        "result": {
-            "value": "[reference(variables('name_deploymentScriptName')).outputs]",
-            "type": "object"
+        "appNamespaceName": {
+            "value": "[variables('const_appProjName')]",
+            "type": "string"
+        },
+        "appImage": {
+            "condition": "[parameters('uploadAppPackage')]",
+            "value": "[variables('const_appImage')]",
+            "type": "string"
+        },
+        "appEndpoint": {
+            "value": "[reference(variables('name_deploymentScriptName')).outputs.appEndpoint]",
+            "type": "string"
         }
     }
 }

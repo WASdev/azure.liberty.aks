@@ -14,16 +14,50 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-resourceGroupName=$1
+wait_deployment_complete() {
+    deploymentName=$1
+    namespaceName=$2
+    logFile=$3
+
+    kubectl get deployment ${deploymentName} -n ${namespaceName}
+    while [ $? -ne 0 ]
+    do
+        echo "Wait until the deployment ${deploymentName} created..." >> $logFile
+        sleep 5
+        kubectl get deployment ${deploymentName} -n ${namespaceName}
+    done
+    read -r -a replicas <<< `kubectl get deployment ${deploymentName} -n ${namespaceName} -o=jsonpath='{.spec.replicas}{" "}{.status.readyReplicas}{" "}{.status.availableReplicas}{" "}{.status.updatedReplicas}{"\n"}'`
+    while [[ ${#replicas[@]} -ne 4 || ${replicas[0]} != ${replicas[1]} || ${replicas[1]} != ${replicas[2]} || ${replicas[2]} != ${replicas[3]} ]]
+    do
+        # Delete pods in ImagePullBackOff status
+        podIds=`kubectl get pod -n ${namespaceName} | grep ImagePullBackOff | awk '{print $1}'`
+        read -r -a podIds <<< `echo $podIds`
+        for podId in "${podIds[@]}"
+        do
+            echo "Delete pod ${podId} in ImagePullBackOff status" >> $logFile
+            kubectl delete pod ${podId} -n ${namespaceName}
+        done
+
+        sleep 5
+        echo "Wait until the deployment ${deploymentName} completes..." >> $logFile
+        read -r -a replicas <<< `kubectl get deployment ${deploymentName} -n ${namespaceName} -o=jsonpath='{.spec.replicas}{" "}{.status.readyReplicas}{" "}{.status.availableReplicas}{" "}{.status.updatedReplicas}{"\n"}'`
+    done
+    echo "Deployment ${deploymentName} completed." >> $logFile
+}
+
+clusterRGName=$1
 clusterName=$2
 acrName=$3
 uploadAppPackage=$4
 appPackageUrl=$5
-contextRoot=$6
+export Context_Root=$6
 useOpenLibertyImage=$7
 useJava8=$8
-appReplicas=$9
-appName=${10}
+export Application_Name=$9
+export Project_Name=${10}
+export Application_Image=${11}
+export Application_Replicas=${12}
+logFile=deployment.log
 
 # Install utilities
 apk update
@@ -32,7 +66,7 @@ apk add docker-cli
 
 # Install `kubectl` and connect to the AKS cluster
 az aks install-cli
-az aks get-credentials -g $resourceGroupName -n $clusterName --overwrite-existing
+az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing
 
 # Install Open Liberty Operator V0.7
 OPERATOR_NAMESPACE=default
@@ -44,19 +78,16 @@ curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/mast
 curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-operator.yaml \
       | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
       | kubectl apply -n ${OPERATOR_NAMESPACE} -f -
+wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
+
+# Create project namespace
+kubectl create namespace ${Project_Name}
 
 # Log into the ACR
 LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
 USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
 docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD
-
-# Copy templates to /tmp for customization
-cp server.xml.template /tmp
-cp Dockerfile.template /tmp
-cp Dockerfile-wlp.template /tmp
-cp openlibertyapplication.yaml.template /tmp
-cd /tmp
 
 # Determine base image
 export Base_Image=
@@ -71,12 +102,9 @@ else
 fi
 
 # Build application image or use default base image
-export Application_Name=$appName
 if [ "$uploadAppPackage" = True ]; then
-      export Context_Root=$contextRoot
-
       # Prepare artifacts for building image
-      export Application_Package=${appName}.war
+      export Application_Package=${Application_Name}.war
       wget -O ${Application_Package} "$appPackageUrl"
 
       envsubst < "server.xml.template" > "server.xml"
@@ -85,9 +113,9 @@ if [ "$uploadAppPackage" = True ]; then
 
       # Build application image with Open Liberty or WebSphere Liberty base image
       if [ "$useOpenLibertyImage" = True ]; then
-            az acr build -t ${Application_Name}:1.0.0 -r $acrName .
+            az acr build -t ${Application_Image} -r $acrName .
       else
-            az acr build -t ${Application_Name}:1.0.0 -r $acrName -f Dockerfile-wlp .
+            az acr build -t ${Application_Image} -r $acrName -f Dockerfile-wlp .
       fi
 
       # Create image pull secret
@@ -95,59 +123,43 @@ if [ "$uploadAppPackage" = True ]; then
       kubectl create secret docker-registry ${Pull_Secret} \
             --docker-server=${LOGIN_SERVER} \
             --docker-username=${USER_NAME} \
-            --docker-password=${PASSWORD}
+            --docker-password=${PASSWORD} \
+            --namespace=${Project_Name}
 
-      export Application_Image=${LOGIN_SERVER}/${Application_Name}:1.0.0
+      Application_Image=${LOGIN_SERVER}/${Application_Image}
 else
-      export Context_Root=/
+      Context_Root=/
       
       # Remove image pull secret
       sed -i "/pullSecret/d" openlibertyapplication.yaml.template
       
-      export Application_Image=$(echo "${Base_Image/kernel/full}")
+      Application_Image=$(echo "${Base_Image/kernel/full}")
 fi
 
 # Deploy openliberty application
-export Application_Replicas=$appReplicas
 envsubst < openlibertyapplication.yaml.template | kubectl create -f -
 
 # Wait until the deployment completes
-kubectl get deployment ${Application_Name}
+wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
+
+# Get public IP address and port for the application service
+kubectl get svc ${Application_Name} -n ${Project_Name}
 while [ $? -ne 0 ]
 do
       sleep 5
-      kubectl get deployment ${Application_Name}
+      kubectl get svc ${Application_Name} -n ${Project_Name}
 done
-replicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.spec.replicas}')
-readyReplicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.status.readyReplicas}')
-availableReplicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.status.availableReplicas}')
-updatedReplicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.status.updatedReplicas}')
-while [[ $replicas != $readyReplicas || $readyReplicas != $availableReplicas || $availableReplicas != $updatedReplicas ]]
+appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+while [[ $appEndpoint = :* ]]
 do
       sleep 5
       echo retry
-      replicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.spec.replicas}')
-      readyReplicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.status.readyReplicas}')
-      availableReplicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.status.availableReplicas}')
-      updatedReplicas=$(kubectl get deployment ${Application_Name} -o=jsonpath='{.status.updatedReplicas}')
+      appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
 done
-kubectl get svc ${Application_Name}
-while [ $? -ne 0 ]
-do
-      sleep 5
-      kubectl get svc ${Application_Name}
-done
-Application_Endpoint=$(kubectl get svc ${Application_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-while [[ $Application_Endpoint = :* ]]
-do
-      sleep 5
-      echo retry
-      Application_Endpoint=$(kubectl get svc ${Application_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-done
-Application_Endpoint=$(echo ${Application_Endpoint}${Context_Root})
+appEndpoint=$(echo ${appEndpoint}${Context_Root})
 
 # Output application endpoint
-echo "endpoint is: $Application_Endpoint"
-result=$(jq -n -c --arg endpoint $Application_Endpoint '{applicationEndpoint: $endpoint}')
-echo "result is: $result"
+echo "endpoint is: $appEndpoint"
+result=$(jq -n -c --arg appEndpoint $appEndpoint '{appEndpoint: $appEndpoint}')
+echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
