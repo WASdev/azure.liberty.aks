@@ -46,4 +46,4 @@
 1. To visit the application home page:
    1. Open the resource group `resourceGroupName`;
    1. Navigate to "Deployments > `deploymentName` > Outputs";
-   1. Copy value of property `result > applicationEndpoint` and open it in the browser;
+   1. Copy value of property `appEndpoint` and open it in the browser;

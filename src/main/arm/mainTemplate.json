@@ -315,6 +315,34 @@
         "appEndpoint": {
             "value": "[reference(variables('name_deploymentScriptName')).outputs.appEndpoint]",
             "type": "string"
+        },
+        "cmdToConnectToCluster": {
+            "value": "[concat('az aks get-credentials -g ', variables('const_clusterRGName'), ' -n ', variables('name_clusterName'))]",
+            "type": "string"
+        },
+        "cmdToGetAppInstance": {
+            "value": "[concat('kubectl get openlibertyapplication ', variables('const_appName'), ' -n ', variables('const_appProjName'))]",
+            "type": "string"
+        },
+        "cmdToGetAppDeployment": {
+            "value": "[concat('kubectl get deployment ', variables('const_appName'), ' -n ', variables('const_appProjName'))]",
+            "type": "string"
+        },
+        "cmdToGetAppPods": {
+            "value": "[concat('kubectl get pod -n ', variables('const_appProjName'))]",
+            "type": "string"
+        },
+        "cmdToGetAppService": {
+            "value": "[concat('kubectl get service ', variables('const_appName'), ' -n ', variables('const_appProjName'))]",
+            "type": "string"
+        },
+        "cmdToLoginInRegistry": {
+            "value": "[concat('az acr login -n ', variables('name_acrName'))]",
+            "type": "string"
+        },
+        "cmdToGetRegistryLoginServer": {
+            "value": "[concat('az acr show -n ', variables('name_acrName'), ' --query loginServer -o tsv')]",
+            "type": "string"
         }
     }
 }
