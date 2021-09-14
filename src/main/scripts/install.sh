@@ -68,14 +68,14 @@ apk add docker-cli
 az aks install-cli
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
-# Install Open Liberty Operator V0.7
+# Install Open Liberty Operator V0.7.1
 OPERATOR_NAMESPACE=default
 WATCH_NAMESPACE='""'
-kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-crd.yaml
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-cluster-rbac.yaml \
+kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.1/openliberty-app-crd.yaml
+curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.1/openliberty-app-cluster-rbac.yaml \
     | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
     | kubectl apply -f - >> $logFile
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.0/openliberty-app-operator.yaml \
+curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/0.7.1/openliberty-app-operator.yaml \
     | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
     | kubectl apply -n ${OPERATOR_NAMESPACE} -f - >> $logFile
 wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
