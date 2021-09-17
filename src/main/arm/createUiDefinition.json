@@ -68,7 +68,7 @@
                                 "name": "vmSizeSelect",
                                 "type": "Microsoft.Compute.SizeSelector",
                                 "label": "VM size",
-                                "toolTip": "The size of the virtual machines that will form the nodes in the cluster. This cannot be changed after creating the cluster.",
+                                "toolTip": "The size of the virtual machines for the nodes in the cluster. This cannot be changed after creating the cluster.",
                                 "recommendedSizes": [
                                     "Standard_DS2_v2"
                                 ],
