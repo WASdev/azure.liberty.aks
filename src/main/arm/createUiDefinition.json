@@ -41,7 +41,7 @@
                             "text": "If you encounter problems during deployment of Liberty on Azure, please report them here.",
                             "link": {
                                 "label": "Issue tracker",
-                                "uri": "https://aka.ms/azure-liberty-aro-issues"
+                                "uri": "https://aka.ms/azure-liberty-aks-issues"
                             }
                         }
                     },
