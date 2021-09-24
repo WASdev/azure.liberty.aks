@@ -175,7 +175,7 @@
   - <version_number>
 - Package file (.zip)
   - Run `mvn -Ptemplate-validation-tests clean install`
-  - Find `azure.liberty.aro-<version-number>-arm-assembly.zip` in the `target` directory
+  - Find `azure.liberty.aks-<version-number>-arm-assembly.zip` in the `target` directory
 
 ## CSP Reseller audience
 
