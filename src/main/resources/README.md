@@ -50,6 +50,10 @@
   - Provisions IBM WebSphere Liberty on Azure Kubernetes Service with built in container registry, WAR/EAR deployment, and the Open Liberty Kubernetes operator.
 - Description
   - IBM WebSphere Liberty provides a flexible, secure server runtime environment for large-scale and mission critical application deployments. This offer provisions an IBM WebSphere Liberty environment on Azure Kubernetes Service.
+- Search Keywords
+   - Java
+   - Java EE
+   - Kubernetes
 
 ### Legal Links
 
@@ -61,7 +65,7 @@
 - [Overview](https://openliberty.io/)
 - [Learn more](https://openliberty.io/guides/)
 - [Documentation](https://openliberty.io/docs/)
-- [Pricing (Bring Your Own WebSphere Server License, pay as you go for Azure resources)](https://azure.microsoft.com/en-us/pricing/details/openshift/) ???
+- [Pricing (Bring Your Own WebSphere Server License, pay as you go for Azure resources)](https://azure.microsoft.com/en-us/pricing/details/kubernetes-service/) ???
 - [IBM Pricing Policy](http://www-01.ibm.com/software/passportadvantage/eligible_public_cloud_BYOSL_policy.html) ???
 
 ### Contact Information
@@ -134,7 +138,7 @@
 ### New plan
 
 - Plan ID
-  - liberty-aro
+  - liberty-aks
 - Plan name
   - IBM WebSphere Liberty on Azure Kubernetes Service
 
