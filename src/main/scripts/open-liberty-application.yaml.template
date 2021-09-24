@@ -16,6 +16,7 @@ apiVersion: openliberty.io/v1beta1
 kind: OpenLibertyApplication
 metadata:
   name: ${Application_Name}
+  namespace: ${Project_Name}
 spec:
   replicas: ${Application_Replicas}
   applicationImage: ${Application_Image}
