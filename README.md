@@ -1,3 +1,11 @@
+# Related Repositories
+
+* [tWAS cluster on Azure VMs](https://github.com/WASdev/azure.websphere-traditional.cluster)
+* [Base images used in tWAS cluster](https://github.com/WASdev/azure.websphere-traditional.image)
+* [Liberty on ARO](https://github.com/WASdev/azure.liberty.aro)
+
+
+
 # Deploy a Java application with Open Liberty or WebSphere Liberty on an Azure Kubernetes Service (AKS) cluster
 
 ## Prerequisites
