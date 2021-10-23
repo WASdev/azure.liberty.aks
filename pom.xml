@@ -20,7 +20,7 @@
 
     <groupId>com.ibm.websphere.azure</groupId>
     <artifactId>azure.liberty.aks</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
@@ -41,5 +41,6 @@
         <customer.usage.attribution.id>pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter</customer.usage.attribution.id>
         <aks.start>628cae16-c133-5a2e-ae93-2b44748012fe</aks.start>
         <aks.end>59f5f6da-0a6d-587d-b23c-177108cd8bbf</aks.end>
+        <samples.available>false</samples.available>
     </properties>
 </project>

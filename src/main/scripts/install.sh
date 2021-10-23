@@ -48,15 +48,12 @@ wait_deployment_complete() {
 clusterRGName=$1
 clusterName=$2
 acrName=$3
-uploadAppPackage=$4
-appPackageUrl=$5
-export Context_Root=$6
-useOpenLibertyImage=$7
-useJava8=$8
-export Application_Name=$9
-export Project_Name=${10}
-export Application_Image=${11}
-export Application_Replicas=${12}
+deployApplication=$4
+sourceImagePath=$5
+export Application_Name=$6
+export Project_Name=$7
+export Application_Image=$8
+export Application_Replicas=$9
 logFile=deployment.log
 
 # Install utilities
@@ -90,39 +87,10 @@ USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
 docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
 
-# Determine base image
-export Base_Image=
-if [ "$useOpenLibertyImage" = True ] && [ "$useJava8" = True ]; then
-    Base_Image="openliberty/open-liberty:kernel-java8-openj9-ubi"
-elif [ "$useOpenLibertyImage" = True ] && [ "$useJava8" = False ]; then
-    Base_Image="openliberty/open-liberty:kernel-java11-openj9-ubi"
-elif [ "$useOpenLibertyImage" = False ] && [ "$useJava8" = True ]; then
-    Base_Image="ibmcom/websphere-liberty:kernel-java8-openj9-ubi"
-else
-    Base_Image="ibmcom/websphere-liberty:kernel-java11-openj9-ubi"
-fi
-echo "Base_Image: $Base_Image" >> $logFile
-
-# Build application image or use default base image
-if [ "$uploadAppPackage" = True ]; then
-    # Prepare artifacts for building image
-    export Application_Package=${Application_Name}.war
-    wget -O ${Application_Package} "$appPackageUrl"
-    envsubst < "server.xml.template" > "server.xml"
-    appServerXml=$(cat server.xml | base64)
-
-    # Determine docker file template
-    if [ "$useOpenLibertyImage" = True ]; then
-        dockerFileTemplate=Dockerfile.template
-    else
-        dockerFileTemplate=Dockerfile-wlp.template
-    fi
-    echo "dockerFileTemplate: $dockerFileTemplate" >> $logFile
-    envsubst < "$dockerFileTemplate" > "Dockerfile"
-    appDockerfile=$(cat Dockerfile | base64)
-
-    # Build application image with Open Liberty or WebSphere Liberty base image
-    az acr build -t ${Application_Image} -r $acrName . >> $logFile
+# Deploy application image if it's requested by the user
+if [ "$deployApplication" = True ]; then
+    # Import application image to the ACR
+    az acr import -n $acrName --source ${sourceImagePath} -t ${Application_Image} >> $logFile
 
     # Create image pull secret
     export Pull_Secret=${Application_Name}-secret
@@ -133,48 +101,36 @@ if [ "$uploadAppPackage" = True ]; then
         --namespace=${Project_Name} >> $logFile
 
     Application_Image=${LOGIN_SERVER}/${Application_Image}
-else
-    Context_Root=/
 
-    # Remove image pull secret
-    sed -i "/pullSecret/d" open-liberty-application.yaml.template
+    # Deploy openliberty application
+    envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
+    appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
+    kubectl apply -f open-liberty-application.yaml >> $logFile
 
-    Application_Image=$(echo "${Base_Image/kernel/full}")
-fi
+    # Wait until the application deployment completes
+    wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
 
-# Deploy openliberty application
-envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
-appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
-kubectl apply -f open-liberty-application.yaml >> $logFile
-
-# Wait until the application deployment completes
-wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
-
-# Get public IP address and port for the application service
-kubectl get svc ${Application_Name} -n ${Project_Name}
-while [ $? -ne 0 ]
-do
-    sleep 5
-    echo "Wait until the service ${Application_Name} created..." >> $logFile
+    # Get public IP address and port for the application service
     kubectl get svc ${Application_Name} -n ${Project_Name}
-done
-appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-echo "ip:port is ${appEndpoint}" >> $logFile
-while [[ $appEndpoint = :* ]] || [[ -z $appEndpoint ]]
-do
-    sleep 5
-    echo "Wait until the IP address is created for service ${Application_Name}..." >> $logFile
+    while [ $? -ne 0 ]
+    do
+        sleep 5
+        echo "Wait until the service ${Application_Name} created..." >> $logFile
+        kubectl get svc ${Application_Name} -n ${Project_Name}
+    done
     appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
     echo "ip:port is ${appEndpoint}" >> $logFile
-done
-appEndpoint=$(echo ${appEndpoint}${Context_Root})
+    while [[ $appEndpoint = :* ]] || [[ -z $appEndpoint ]]
+    do
+        sleep 5
+        echo "Wait until the IP address is created for service ${Application_Name}..." >> $logFile
+        appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+        echo "ip:port is ${appEndpoint}" >> $logFile
+    done
 
-# Output application endpoint
-result=$(jq -n -c --arg appEndpoint $appEndpoint '{appEndpoint: $appEndpoint}')
-if [ "$uploadAppPackage" = True ]; then
-    result=$(echo "$result" | jq --arg appServerXml "$appServerXml" '{"appServerXml": $appServerXml} + .')
-    result=$(echo "$result" | jq --arg appDockerfile "$appDockerfile" '{"appDockerfile": $appDockerfile} + .')
+    # Output application endpoint
+    result=$(jq -n -c --arg appEndpoint "$appEndpoint" '{appEndpoint: $appEndpoint}')
+    result=$(echo "$result" | jq --arg appDeploymentYaml "$appDeploymentYaml" '{"appDeploymentYaml": $appDeploymentYaml} + .')
+    echo "Result is: $result" >> $logFile
+    echo $result > $AZ_SCRIPTS_OUTPUT_PATH
 fi
-result=$(echo "$result" | jq --arg appDeploymentYaml "$appDeploymentYaml" '{"appDeploymentYaml": $appDeploymentYaml} + .')
-echo "Result is: $result" >> $logFile
-echo $result > $AZ_SCRIPTS_OUTPUT_PATH
