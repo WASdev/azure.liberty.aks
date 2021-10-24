@@ -20,6 +20,7 @@ metadata:
 spec:
   replicas: ${Application_Replicas}
   applicationImage: ${Application_Image}
+  pullPolicy: Always
   pullSecret: ${Pull_Secret}
   service:
     type: LoadBalancer

@@ -81,28 +81,27 @@ wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
 # Create project namespace
 kubectl create namespace ${Project_Name} >> $logFile
 
-# Log into the ACR
+# Retrieve login server and credentials of the ACR
 LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
 USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
-docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
+
+# Create image pull secret
+export Pull_Secret=${Application_Name}-secret
+kubectl create secret docker-registry ${Pull_Secret} \
+    --docker-server=${LOGIN_SERVER} \
+    --docker-username=${USER_NAME} \
+    --docker-password=${PASSWORD} \
+    --namespace=${Project_Name} >> $logFile
 
 # Deploy application image if it's requested by the user
 if [ "$deployApplication" = True ]; then
-    # Import application image to the ACR
+    # Log into the ACR and import application image
+    docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
     az acr import -n $acrName --source ${sourceImagePath} -t ${Application_Image} >> $logFile
-
-    # Create image pull secret
-    export Pull_Secret=${Application_Name}-secret
-    kubectl create secret docker-registry ${Pull_Secret} \
-        --docker-server=${LOGIN_SERVER} \
-        --docker-username=${USER_NAME} \
-        --docker-password=${PASSWORD} \
-        --namespace=${Project_Name} >> $logFile
-
     Application_Image=${LOGIN_SERVER}/${Application_Image}
 
-    # Deploy openliberty application
+    # Deploy open liberty application and output its base64 encoded deployment yaml file content
     envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
     appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
     kubectl apply -f open-liberty-application.yaml >> $logFile
@@ -127,10 +126,19 @@ if [ "$deployApplication" = True ]; then
         appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
         echo "ip:port is ${appEndpoint}" >> $logFile
     done
-
-    # Output application endpoint
-    result=$(jq -n -c --arg appEndpoint "$appEndpoint" '{appEndpoint: $appEndpoint}')
-    result=$(echo "$result" | jq --arg appDeploymentYaml "$appDeploymentYaml" '{"appDeploymentYaml": $appDeploymentYaml} + .')
-    echo "Result is: $result" >> $logFile
-    echo $result > $AZ_SCRIPTS_OUTPUT_PATH
+else
+    Application_Image=${LOGIN_SERVER}"/$"{Application_Image}
+    # Output base64 encoded deployment template yaml file content
+    appDeploymentYaml=$(cat open-liberty-application.yaml.template \
+        | sed -e "s/\${Project_Name}/${Project_Name}/g" -e "s/\${Application_Replicas}/${Application_Replicas}/g" \
+        | sed -e "s/\${Pull_Secret}/${Pull_Secret}/g" -e "s#\${Application_Image}#${Application_Image}#g" \
+        | base64)
 fi
+
+# Write outputs to deployment script output path
+result=$(jq -n -c --arg appDeploymentYaml "$appDeploymentYaml" '{appDeploymentYaml: $appDeploymentYaml}')
+if [ "$deployApplication" = True ]; then
+    result=$(echo "$result" | jq --arg appEndpoint "$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
+fi
+echo "Result is: $result" >> $logFile
+echo $result > $AZ_SCRIPTS_OUTPUT_PATH
