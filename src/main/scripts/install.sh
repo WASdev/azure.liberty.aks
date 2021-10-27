@@ -14,21 +14,38 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+MAX_RETRIES=99
+
 wait_deployment_complete() {
     deploymentName=$1
     namespaceName=$2
     logFile=$3
 
+    cnt=0
     kubectl get deployment ${deploymentName} -n ${namespaceName}
     while [ $? -ne 0 ]
     do
-        echo "Wait until the deployment ${deploymentName} created..." >> $logFile
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the deployment ${deploymentName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         sleep 5
         kubectl get deployment ${deploymentName} -n ${namespaceName}
     done
+
+    cnt=0
     read -r -a replicas <<< `kubectl get deployment ${deploymentName} -n ${namespaceName} -o=jsonpath='{.spec.replicas}{" "}{.status.readyReplicas}{" "}{.status.availableReplicas}{" "}{.status.updatedReplicas}{"\n"}'`
     while [[ ${#replicas[@]} -ne 4 || ${replicas[0]} != ${replicas[1]} || ${replicas[1]} != ${replicas[2]} || ${replicas[2]} != ${replicas[3]} ]]
     do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+
         # Delete pods in ImagePullBackOff status
         podIds=`kubectl get pod -n ${namespaceName} | grep ImagePullBackOff | awk '{print $1}'`
         read -r -a podIds <<< `echo $podIds`
@@ -39,24 +56,59 @@ wait_deployment_complete() {
         done
 
         sleep 5
-        echo "Wait until the deployment ${deploymentName} completes..." >> $logFile
+        echo "Wait until the deployment ${deploymentName} completes, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         read -r -a replicas <<< `kubectl get deployment ${deploymentName} -n ${namespaceName} -o=jsonpath='{.spec.replicas}{" "}{.status.readyReplicas}{" "}{.status.availableReplicas}{" "}{.status.updatedReplicas}{"\n"}'`
     done
     echo "Deployment ${deploymentName} completed." >> $logFile
 }
 
+wait_service_available() {
+    serviceName=$1
+    namespaceName=$2
+    logFile=$3
+
+    cnt=0
+    kubectl get svc ${serviceName} -n ${namespaceName}
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the service ${serviceName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        kubectl get svc ${serviceName} -n ${namespaceName}
+    done
+
+    cnt=0
+    appEndpoint=$(kubectl get svc ${serviceName} -n ${namespaceName} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+    echo "ip:port is ${appEndpoint}" >> $logFile
+    while [[ $appEndpoint = :* ]] || [[ -z $appEndpoint ]]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        sleep 5
+        echo "Wait until the IP address and port of the service ${serviceName} are available, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        appEndpoint=$(kubectl get svc ${serviceName} -n ${namespaceName} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+        echo "ip:port is ${appEndpoint}" >> $logFile
+    done
+}
+
 clusterRGName=$1
 clusterName=$2
 acrName=$3
-uploadAppPackage=$4
-appPackageUrl=$5
-export Context_Root=$6
-useOpenLibertyImage=$7
-useJava8=$8
-export Application_Name=$9
-export Project_Name=${10}
-export Application_Image=${11}
-export Application_Replicas=${12}
+deployApplication=$4
+sourceImagePath=$5
+export Application_Name=$6
+export Project_Name=$7
+export Application_Image=$8
+export Application_Replicas=$9
 logFile=deployment.log
 
 # Install utilities
@@ -80,101 +132,66 @@ curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/mast
     | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
     | kubectl apply -n ${OPERATOR_NAMESPACE} -f - >> $logFile
 wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "The Open Liberty Operator is not available." >&2
+  exit 1
+fi
 
 # Create project namespace
 kubectl create namespace ${Project_Name} >> $logFile
 
-# Log into the ACR
+# Retrieve login server and credentials of the ACR
 LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
 USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
-docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
 
-# Determine base image
-export Base_Image=
-if [ "$useOpenLibertyImage" = True ] && [ "$useJava8" = True ]; then
-    Base_Image="openliberty/open-liberty:kernel-java8-openj9-ubi"
-elif [ "$useOpenLibertyImage" = True ] && [ "$useJava8" = False ]; then
-    Base_Image="openliberty/open-liberty:kernel-java11-openj9-ubi"
-elif [ "$useOpenLibertyImage" = False ] && [ "$useJava8" = True ]; then
-    Base_Image="ibmcom/websphere-liberty:kernel-java8-openj9-ubi"
-else
-    Base_Image="ibmcom/websphere-liberty:kernel-java11-openj9-ubi"
-fi
-echo "Base_Image: $Base_Image" >> $logFile
+# Create image pull secret
+export Pull_Secret=${Application_Name}-secret
+kubectl create secret docker-registry ${Pull_Secret} \
+    --docker-server=${LOGIN_SERVER} \
+    --docker-username=${USER_NAME} \
+    --docker-password=${PASSWORD} \
+    --namespace=${Project_Name} >> $logFile
 
-# Build application image or use default base image
-if [ "$uploadAppPackage" = True ]; then
-    # Prepare artifacts for building image
-    export Application_Package=${Application_Name}.war
-    wget -O ${Application_Package} "$appPackageUrl"
-    envsubst < "server.xml.template" > "server.xml"
-    appServerXml=$(cat server.xml | base64)
-
-    # Determine docker file template
-    if [ "$useOpenLibertyImage" = True ]; then
-        dockerFileTemplate=Dockerfile.template
-    else
-        dockerFileTemplate=Dockerfile-wlp.template
-    fi
-    echo "dockerFileTemplate: $dockerFileTemplate" >> $logFile
-    envsubst < "$dockerFileTemplate" > "Dockerfile"
-    appDockerfile=$(cat Dockerfile | base64)
-
-    # Build application image with Open Liberty or WebSphere Liberty base image
-    az acr build -t ${Application_Image} -r $acrName . >> $logFile
-
-    # Create image pull secret
-    export Pull_Secret=${Application_Name}-secret
-    kubectl create secret docker-registry ${Pull_Secret} \
-        --docker-server=${LOGIN_SERVER} \
-        --docker-username=${USER_NAME} \
-        --docker-password=${PASSWORD} \
-        --namespace=${Project_Name} >> $logFile
-
+# Deploy application image if it's requested by the user
+if [ "$deployApplication" = True ]; then
+    # Log into the ACR and import application image
+    docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
+    az acr import -n $acrName --source ${sourceImagePath} -t ${Application_Image} >> $logFile
     Application_Image=${LOGIN_SERVER}/${Application_Image}
-else
-    Context_Root=/
 
-    # Remove image pull secret
-    sed -i "/pullSecret/d" open-liberty-application.yaml.template
+    # Deploy open liberty application and output its base64 encoded deployment yaml file content
+    envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
+    appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
+    kubectl apply -f open-liberty-application.yaml >> $logFile
 
-    Application_Image=$(echo "${Base_Image/kernel/full}")
-fi
+    # Wait until the application deployment completes
+    wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
+    if [[ $? != 0 ]]; then
+        echo "The OpenLibertyApplication ${Application_Name} is not available." >&2
+        exit 1
+    fi
 
-# Deploy openliberty application
-envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
-appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
-kubectl apply -f open-liberty-application.yaml >> $logFile
-
-# Wait until the application deployment completes
-wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
-
-# Get public IP address and port for the application service
-kubectl get svc ${Application_Name} -n ${Project_Name}
-while [ $? -ne 0 ]
-do
-    sleep 5
-    echo "Wait until the service ${Application_Name} created..." >> $logFile
-    kubectl get svc ${Application_Name} -n ${Project_Name}
-done
-appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-echo "ip:port is ${appEndpoint}" >> $logFile
-while [[ $appEndpoint = :* ]] || [[ -z $appEndpoint ]]
-do
-    sleep 5
-    echo "Wait until the IP address is created for service ${Application_Name}..." >> $logFile
+    # Get public IP address and port for the application service
+    wait_service_available ${Application_Name} ${Project_Name} ${logFile}
+    if [[ $? != 0 ]]; then
+        echo "The service ${Application_Name} is not available." >&2
+        exit 1
+    fi
     appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
-    echo "ip:port is ${appEndpoint}" >> $logFile
-done
-appEndpoint=$(echo ${appEndpoint}${Context_Root})
-
-# Output application endpoint
-result=$(jq -n -c --arg appEndpoint $appEndpoint '{appEndpoint: $appEndpoint}')
-if [ "$uploadAppPackage" = True ]; then
-    result=$(echo "$result" | jq --arg appServerXml "$appServerXml" '{"appServerXml": $appServerXml} + .')
-    result=$(echo "$result" | jq --arg appDockerfile "$appDockerfile" '{"appDockerfile": $appDockerfile} + .')
+else
+    Application_Image=${LOGIN_SERVER}"/$"{Application_Image}
+    # Output base64 encoded deployment template yaml file content
+    appDeploymentYaml=$(cat open-liberty-application.yaml.template \
+        | sed -e "s/\${Project_Name}/${Project_Name}/g" -e "s/\${Application_Replicas}/${Application_Replicas}/g" \
+        | sed -e "s/\${Pull_Secret}/${Pull_Secret}/g" -e "s#\${Application_Image}#${Application_Image}#g" \
+        | base64)
 fi
-result=$(echo "$result" | jq --arg appDeploymentYaml "$appDeploymentYaml" '{"appDeploymentYaml": $appDeploymentYaml} + .')
+
+# Write outputs to deployment script output path
+result=$(jq -n -c --arg appDeploymentYaml "$appDeploymentYaml" '{appDeploymentYaml: $appDeploymentYaml}')
+if [ "$deployApplication" = True ]; then
+    result=$(echo "$result" | jq --arg appEndpoint "$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
+fi
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
