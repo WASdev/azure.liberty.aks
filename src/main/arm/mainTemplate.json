@@ -124,7 +124,8 @@
         "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
         "name_acrName": "[if(parameters('createACR'), concat('acr', variables('const_suffix')), parameters('acrName'))]",
         "name_clusterName": "[if(parameters('createCluster'), concat('cluster', variables('const_suffix')), parameters('clusterName'))]",
-        "name_deploymentScriptName": "[concat('script', variables('const_suffix'))]"
+        "name_deploymentScriptName": "[concat('script', variables('const_suffix'))]",
+        "name_cpDeploymentScript": "[concat('cpscript', variables('const_suffix'))]"
     },
     "resources": [
         {
@@ -156,11 +157,28 @@
             }
         },
         {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "${azure.apiVersion.deploymentScript}",
+            "name": "[variables('name_cpDeploymentScript')]",
+            "location": "[parameters('location')]",
+            "kind": "AzureCLI",
+            "identity": "[parameters('identity')]",
+            "properties": {
+                "AzCliVersion": "2.15.0",
+                "primaryScriptUri": "[uri(variables('const_scriptLocation'), concat('check-permission.sh', parameters('_artifactsLocationSasToken')))]",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        },
+        {
             "type": "Microsoft.ContainerRegistry/registries",
             "apiVersion": "${azure.apiVersion.acr}",
             "name": "[variables('name_acrName')]",
             "location": "[parameters('location')]",
             "condition": "[parameters('createACR')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deploymentScripts', variables('name_cpDeploymentScript'))]"
+            ],
             "sku": {
                 "name": "Basic"
             },
