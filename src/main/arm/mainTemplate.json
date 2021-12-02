@@ -114,7 +114,8 @@
     "variables": {
         "const_appImage": "[concat(variables('const_appImageName'), ':', variables('const_appImageTag'))]",
         "const_appImageName": "[concat('image', variables('const_suffix'))]",
-        "const_appImagePath": "[if(empty(parameters('appImagePath')), 'NA', if(equals(length(split(parameters('appImagePath'), '/')), 1), concat('docker.io/library/', parameters('appImagePath')), parameters('appImagePath')))]",
+        "const_appImagePath": "[if(empty(parameters('appImagePath')), 'NA', if(equals(variables('const_appImagePathLen'), 1), concat('docker.io/library/', parameters('appImagePath')), if(equals(variables('const_appImagePathLen'), 2), concat('docker.io/', parameters('appImagePath')), parameters('appImagePath'))))]",
+        "const_appImagePathLen": "[length(split(parameters('appImagePath'), '/'))]",
         "const_appImageTag": "1.0.0",
         "const_appName": "[concat('app', variables('const_suffix'))]",
         "const_appProjName": "[concat('project', variables('const_suffix'))]",
