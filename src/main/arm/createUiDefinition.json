@@ -305,7 +305,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "If you input a fully qualified docker image path containing the registry login server, it's used directly. Otherwise, the login server is assumed to be 'docker.io'. For example, 'websphere-liberty' will be converted to 'docker.io/library/websphere-liberty', and 'ibmcom/websphere-liberty' will be converted to 'docker.io/ibmcom/websphere-liberty'."
+                                    "text": "Please provide a public image which is accessible without credentials. If you input a fully qualified docker image path containing the registry login server, it's used directly. Otherwise, the login server is assumed to be 'docker.io'. For example, 'websphere-liberty' will be converted to 'docker.io/library/websphere-liberty', and 'ibmcom/websphere-liberty' will be converted to 'docker.io/ibmcom/websphere-liberty'."
                                 },
                                 "visible": "[or(not(bool(${samples.available})), equals(steps('Application').appImageInfo.appImageOption, '1'))]"
                             },
@@ -313,6 +313,7 @@
                                 "name": "appImagePath",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Application docker image path",
+                                "placeholder": "Example: docker.io/openliberty/open-liberty:full-java11-openj9-ubi",
                                 "toolTip": "Specify the docker image path of your application.",
                                 "constraints": {
                                     "required": true,
