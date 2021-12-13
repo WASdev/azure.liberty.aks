@@ -117,18 +117,18 @@ apk add gettext
 apk add docker-cli
 
 # Install `kubectl` and connect to the AKS cluster
-az aks install-cli
+az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
 # Install Open Liberty Operator V0.7.1
 OPERATOR_VERSION=0.7.1
 OPERATOR_NAMESPACE=default
 WATCH_NAMESPACE='""'
-kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-crd.yaml
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-cluster-rbac.yaml \
+kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-crd.yaml 2>&1
+curl -sL https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-cluster-rbac.yaml \
     | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
     | kubectl apply -f - >> $logFile
-curl -L https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-operator.yaml \
+curl -sL https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-operator.yaml \
     | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
     | kubectl apply -n ${OPERATOR_NAMESPACE} -f - >> $logFile
 wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
@@ -156,8 +156,12 @@ kubectl create secret docker-registry ${Pull_Secret} \
 # Deploy application image if it's requested by the user
 if [ "$deployApplication" = True ]; then
     # Log into the ACR and import application image
-    docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile
+    docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile 2>/dev/null
     az acr import -n $acrName --source ${sourceImagePath} -t ${Application_Image} >> $logFile
+    if [[ $? != 0 ]]; then
+        echo "Unable to import source image ${sourceImagePath} to the Azure Container Registry instance. Please check if it's a public image and the source image path is correct" >&2
+        exit 1
+    fi
     Application_Image=${LOGIN_SERVER}/${Application_Image}
 
     # Deploy open liberty application and output its base64 encoded deployment yaml file content

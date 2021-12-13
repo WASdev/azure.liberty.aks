@@ -20,7 +20,7 @@
 
     <groupId>com.ibm.websphere.azure</groupId>
     <artifactId>azure.liberty.aks</artifactId>
-    <version>1.0.9</version>
+    <version>1.0.13</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
