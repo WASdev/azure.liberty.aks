@@ -120,18 +120,17 @@ apk add docker-cli
 az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
-# Install Open Liberty Operator V0.7.1
-OPERATOR_VERSION=0.7.1
-OPERATOR_NAMESPACE=default
-WATCH_NAMESPACE='""'
-kubectl apply -f https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-crd.yaml 2>&1
-curl -sL https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-cluster-rbac.yaml \
-    | sed -e "s/OPEN_LIBERTY_OPERATOR_NAMESPACE/${OPERATOR_NAMESPACE}/" \
-    | kubectl apply -f - >> $logFile
-curl -sL https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/master/deploy/releases/${OPERATOR_VERSION}/openliberty-app-operator.yaml \
-    | sed -e "s/OPEN_LIBERTY_WATCH_NAMESPACE/${WATCH_NAMESPACE}/" \
-    | kubectl apply -n ${OPERATOR_NAMESPACE} -f - >> $logFile
-wait_deployment_complete open-liberty-operator $OPERATOR_NAMESPACE ${logFile}
+# Install Open Liberty Operator
+mkdir -p overlays/watch-all-namespaces
+wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
+wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
+wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kustomize/overlays/watch-all-namespaces/kustomization.yaml -q -P ./overlays/watch-all-namespaces
+mkdir base
+wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kustomize/base/kustomization.yaml -q -P ./base
+wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kustomize/base/open-liberty-crd.yaml -q -P ./base
+wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/0.8.0/kustomize/base/open-liberty-operator.yaml -q -P ./base
+kubectl apply -k overlays/watch-all-namespaces
+wait_deployment_complete olo-controller-manager default ${logFile}
 if [[ $? -ne 0 ]]; then
   echo "The Open Liberty Operator is not available." >&2
   exit 1
