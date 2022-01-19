@@ -118,7 +118,7 @@
         "const_appImagePathLen": "[length(split(parameters('appImagePath'), '/'))]",
         "const_appImageTag": "1.0.0",
         "const_appName": "[concat('app', variables('const_suffix'))]",
-        "const_appProjName": "[concat('project', variables('const_suffix'))]",
+        "const_appProjName": "default",
         "const_arguments": "[concat(variables('const_clusterRGName'), ' ', variables('name_clusterName'), ' ', variables('name_acrName'), ' ', parameters('deployApplication'), ' ', variables('const_appImagePath'), ' ', variables('const_appName'), ' ', variables('const_appProjName'), ' ', variables('const_appImage'), ' ', parameters('appReplicas'))]",
         "const_clusterRGName": "[if(parameters('createCluster'), resourceGroup().name, parameters('clusterRGName'))]",
         "const_cmdToGetAcrLoginServer": "[concat('az acr show -n ', variables('name_acrName'), ' --query loginServer -o tsv')]",
