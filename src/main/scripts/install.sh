@@ -141,8 +141,11 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
-# Create project namespace
-kubectl create namespace ${Project_Name} >> $logFile
+# Create project namespace if it doesn't exist before
+kubectl get namespace ${Project_Name}
+if [[ $? -ne 0 ]]; then
+  kubectl create namespace ${Project_Name} >> $logFile
+fi
 
 # Retrieve login server and credentials of the ACR
 LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
