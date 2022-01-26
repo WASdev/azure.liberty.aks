@@ -30,9 +30,20 @@ fi
 # Query principal Id of the user-assigned managed identity
 principalId=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "principalId" -o tsv)
 
-# Check if the user assigned managed identity has Contributor or Owner role
-roleLength=$(az role assignment list --assignee ${principalId} | jq '.[] | [select(.roleDefinitionName=="Contributor" or .roleDefinitionName=="Owner")] | length')
-if [ ${roleLength} -lt 1 ]; then
-    echo "The user-assigned managed identity must have Contributor or Owner role in the subscription, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
+# Check if the user assigned managed identity has Owner role or Contributor and User Access Administrator roles
+roleAssignments=$(az role assignment list --assignee ${principalId})
+roleLength=$(echo $roleAssignments | jq '[ .[] | select(.roleDefinitionName=="Owner") ] | length')
+if [ ${roleLength} -ne 1 ]; then
+    roleLength=$(echo $roleAssignments | jq '[ .[] | select(.roleDefinitionName=="Contributor" or .roleDefinitionName=="User Access Administrator") ] | length')
+    if [ ${roleLength} -ne 2 ]; then
+        echo "The user-assigned managed identity must have Contributor and User Access Administrator roles or Owner role in the subscription, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
+        exit 1
+    fi
+fi
+
+# Check if the user assigned managed identity has Directory readers role in the Azure AD
+az ad user list 1>/dev/null
+if [ $? == 1 ]; then
+    echo "The user-assigned managed identity must have Directory readers role in the Azure AD, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
     exit 1
 fi
