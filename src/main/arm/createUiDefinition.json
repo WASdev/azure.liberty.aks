@@ -10,7 +10,7 @@
                 "visible": "[not(equals(length(basics('identity').userAssignedIdentities), 1))]",
                 "options": {
                     "icon": "Error",
-                    "text": "Select <b>only one</b> user-assigned managed identity that has an <b>Owner</b> role or <b>Contributor</b> and <b>User Access Administrator</b> roles in the subscription and a <b>Directory readers</b> role in Azure AD.<br><br>You can find more details from the following articles:<li><a href='https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp#create-a-user-assigned-managed-identity' target='_blank'>Create a user-assigned managed identity</a></li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/role-assignments-portal-managed-identity#user-assigned-managed-identity' target='_blank'>Assign a role to a user-assigned managed identity</a></li><li><a href='https://docs.microsoft.com/azure/active-directory/roles/manage-roles-portal#assign-a-role' target='_blank'>Assign Azure AD roles to a user-assigned managed identity</a></li>"
+                    "text": "<b>The deployment will fail unless the roles specified here are assigned to the user-assigned managed identity.</b><br><br>Select <b>only one</b> user-assigned managed identity that has (1) an <b>Owner</b> role or <b>Contributor</b> and <b>User Access Administrator</b> roles in the subscription, and (2) a <b>Directory readers</b> role in Azure AD.<br><br>You can find more details from the following articles:<li><a href='https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp#create-a-user-assigned-managed-identity' target='_blank'>Create a user-assigned managed identity</a></li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/role-assignments-portal-managed-identity#user-assigned-managed-identity' target='_blank'>Assign a role to a user-assigned managed identity</a></li><li><a href='https://docs.microsoft.com/azure/active-directory/roles/manage-roles-portal#assign-a-role' target='_blank'>Assign Azure AD roles to a user-assigned managed identity</a></li>"
                 }
             },
             {
@@ -18,7 +18,7 @@
                 "type": "Microsoft.ManagedIdentity.IdentitySelector",
                 "label": "Managed Identity Configuration",
                 "toolTip": {
-                    "userAssignedIdentity": "Add a user-assigned managed identity that has an <b>Owner</b> role or <b>Contributor</b> and <b>User Access Administrator</b> roles in the subscription and a <b>Directory readers</b> role in Azure AD to enable the application deployment."
+                    "userAssignedIdentity": "Add a user-assigned managed identity that has (1) an <b>Owner</b> role or <b>Contributor</b> and <b>User Access Administrator</b> roles in the subscription, and (2) a <b>Directory readers</b> role in Azure AD to enable the application deployment."
                 },
                 "defaultValue": {
                     "systemAssignedIdentity": "Off"
