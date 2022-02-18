@@ -120,8 +120,13 @@
         "const_appName": "[concat('app', variables('const_suffix'))]",
         "const_appProjName": "default",
         "const_arguments": "[concat(variables('const_clusterRGName'), ' ', variables('name_clusterName'), ' ', variables('name_acrName'), ' ', parameters('deployApplication'), ' ', variables('const_appImagePath'), ' ', variables('const_appName'), ' ', variables('const_appProjName'), ' ', variables('const_appImage'), ' ', parameters('appReplicas'))]",
+        "const_availabilityZones": ["1", "2", "3"],
         "const_clusterRGName": "[if(parameters('createCluster'), resourceGroup().name, parameters('clusterRGName'))]",
         "const_cmdToGetAcrLoginServer": "[concat('az acr show -n ', variables('name_acrName'), ' --query loginServer -o tsv')]",
+        "const_regionsSupportAvailabilityZones": [
+            "australiaeast", "brazilsouth", "canadacentral", "centralindia", "centralus", "eastasia", "eastus", "eastus2", "francecentral", "germanywestcentral", "japaneast",
+            "koreacentral", "northeurope", "norwayeast", "southeastasia", "southcentralus", "swedencentral", "uksouth", "usgovvirginia", "westeurope", "westus2", "westus3"
+        ],
         "const_scriptLocation": "[uri(parameters('_artifactsLocation'), 'scripts/')]",
         "const_suffix": "[take(replace(parameters('guidValue'), '-', ''), 6)]",
         "name_acrName": "[if(parameters('createACR'), concat('acr', variables('const_suffix')), parameters('acrName'))]",
@@ -213,11 +218,7 @@
                         "storageProfile": "ManagedDisks",
                         "type": "VirtualMachineScaleSets",
                         "mode": "System",
-                        "availabilityZones": [
-                            "1",
-                            "2",
-                            "3"
-                        ]
+                        "availabilityZones": "[if(contains(variables('const_regionsSupportAvailabilityZones'), parameters('location')), variables('const_availabilityZones'), null())]"
                     }
                 ],
                 "networkProfile": {
