@@ -226,6 +226,7 @@
                     "networkPlugin": "kubenet"
                 }
             },
+            "comments": "Availability zones are only enabled for regions that support them.  Constant const_regionsSupportAvailabilityZones encodes regions that support availability zones. This constant must be kept up to date with https://docs.microsoft.com/en-us/azure/availability-zones/az-overview#azure-regions-with-availability-zones",
             "identity": {
                 "type": "SystemAssigned"
             }
