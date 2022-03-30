@@ -312,22 +312,22 @@
         },
         "cmdToGetAppInstance": {
             "condition": "[parameters('deployApplication')]",
-            "value": "[concat('kubectl get openlibertyapplication ', variables('const_appName'), ' -n ', variables('const_appProjName'))]",
+            "value": "[concat('kubectl get openlibertyapplication ', variables('const_appName'))]",
             "type": "string"
         },
         "cmdToGetAppDeployment": {
             "condition": "[parameters('deployApplication')]",
-            "value": "[concat('kubectl get deployment ', variables('const_appName'), ' -n ', variables('const_appProjName'))]",
+            "value": "[concat('kubectl get deployment ', variables('const_appName'))]",
             "type": "string"
         },
         "cmdToGetAppPods": {
             "condition": "[parameters('deployApplication')]",
-            "value": "[concat('kubectl get pod -n ', variables('const_appProjName'))]",
+            "value": "kubectl get pod",
             "type": "string"
         },
         "cmdToGetAppService": {
             "condition": "[parameters('deployApplication')]",
-            "value": "[concat('kubectl get service ', variables('const_appName'), ' -n ', variables('const_appProjName'))]",
+            "value": "[concat('kubectl get service ', variables('const_appName'))]",
             "type": "string"
         },
         "cmdToLoginInRegistry": {
@@ -358,7 +358,7 @@
             "type": "string"
         },
         "cmdToUpdateOrCreateApplication (Please execute command in `cmdToConnectToCluster` before executing this one)": {
-            "value": "[concat('kubectl apply -f <application-yaml-file-path> -n ', variables('const_appProjName'))]",
+            "value": "kubectl apply -f <application-yaml-file-path>",
             "type": "string"
         }
     }
