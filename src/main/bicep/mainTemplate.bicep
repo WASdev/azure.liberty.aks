@@ -77,7 +77,7 @@ var const_availabilityZones = [
   '3'
 ]
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
-var const_cmdToGetAcrLoginServer = 'az acr show -n ${name_acrName} --query loginServer -o tsv'
+var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
 var const_regionsSupportAvailabilityZones = [
   'australiaeast'
   'brazilsouth'
@@ -104,10 +104,10 @@ var const_regionsSupportAvailabilityZones = [
 ]
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var const_suffix = take(replace(guidValue, '-', ''), 6)
-var name_acrName = (createACR ? 'acr${const_suffix}' : acrName)
-var name_clusterName = (createCluster ? 'cluster${const_suffix}' : clusterName)
-var name_deploymentScriptName = 'script${const_suffix}'
-var name_cpDeploymentScript = 'cpscript${const_suffix}'
+var name_acrName = createACR ? format('acr{0}', const_suffix) : acrName
+var name_clusterName = createCluster ? format('cluster{0}', const_suffix) : clusterName
+var name_deploymentScriptName = format('script{0}', const_suffix)
+var name_cpDeploymentScript = format('cpscript{0}', const_suffix)
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter'
@@ -126,7 +126,7 @@ resource checkPermissionDsDeployment 'Microsoft.Resources/deploymentScripts@2020
   identity: identity
   properties: {
     azCliVersion: '2.15.0'
-    primaryScriptUri: uri(const_scriptLocation, 'check-permission.sh${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, format('check-permission.sh{0}', _artifactsLocationSasToken))
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
@@ -151,7 +151,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
   location: location
   properties: {
     enableRBAC: true
-    dnsPrefix: '${name_clusterName}-dns'
+    dnsPrefix: format('{0}-dns', name_clusterName)
     agentPoolProfiles: [
       {
         name: 'agentpool'
@@ -188,9 +188,9 @@ resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' 
   properties: {
     azCliVersion: '2.15.0'
     arguments: const_arguments
-    primaryScriptUri: uri(const_scriptLocation, 'install.sh${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, format('install.sh{0}', _artifactsLocationSasToken))
     supportingScriptUris: [
-      uri(const_scriptLocation, 'open-liberty-application.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, format('open-liberty-application.yaml.template{0}', _artifactsLocationSasToken))
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
@@ -216,15 +216,15 @@ output cmdToGetAcrLoginServer string = const_cmdToGetAcrLoginServer
 output appNamespaceName string = const_appProjName
 output appName string = deployApplication ? const_appName : ''
 output appImage string = deployApplication ? const_appImage : ''
-output cmdToConnectToCluster string = 'az aks get-credentials -g ${const_clusterRGName} -n ${name_clusterName}'
-output cmdToGetAppInstance string = deployApplication ? 'kubectl get openlibertyapplication ${const_appName}' : ''
-output cmdToGetAppDeployment string = deployApplication ? 'kubectl get deployment ${const_appName}' : ''
+output cmdToConnectToCluster string = format('az aks get-credentials -g {0} -n {1}', const_clusterRGName, name_clusterName)
+output cmdToGetAppInstance string = deployApplication ? format('kubectl get openlibertyapplication {0}', const_appName) : ''
+output cmdToGetAppDeployment string = deployApplication ? format('kubectl get deployment {0}', const_appName) : ''
 output cmdToGetAppPods string = deployApplication ? 'kubectl get pod' : ''
-output cmdToGetAppService string = deployApplication ? 'kubectl get service ${const_appName}' : ''
-output cmdToLoginInRegistry string = 'az acr login -n ${name_acrName}'
-output cmdToPullImageFromRegistry string = deployApplication ? 'docker pull $(${const_cmdToGetAcrLoginServer})/${const_appImage}' : ''
-output cmdToTagImageWithRegistry string = 'docker tag <source-image-path> $(${const_cmdToGetAcrLoginServer})/<target-image-name:tag>'
-output cmdToPushImageToRegistry string = 'docker push $(${const_cmdToGetAcrLoginServer})/<target-image-name:tag>'
+output cmdToGetAppService string = deployApplication ? format('kubectl get service {0}', const_appName) : ''
+output cmdToLoginInRegistry string = format('az acr login -n {0}', name_acrName)
+output cmdToPullImageFromRegistry string = deployApplication ? format('docker pull $({0})/{1}', const_cmdToGetAcrLoginServer, const_appImage) : ''
+output cmdToTagImageWithRegistry string = format('docker tag <source-image-path> $({0})/<target-image-name:tag>', const_cmdToGetAcrLoginServer)
+output cmdToPushImageToRegistry string = format('docker push $({0})/<target-image-name:tag>', const_cmdToGetAcrLoginServer)
 output appDeploymentYaml string = deployApplication? format('echo "{0}" | base64 -d', primaryDsDeployment.properties.outputs.appDeploymentYaml) : ''
 output appDeploymentTemplateYaml string =  !deployApplication ? format('echo "{0}" | base64 -d', primaryDsDeployment.properties.outputs.appDeploymentYaml) : ''
 output cmdToUpdateOrCreateApplication string = 'kubectl apply -f <application-yaml-file-path>'
