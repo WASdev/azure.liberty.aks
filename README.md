@@ -15,6 +15,7 @@
 1. Install [Maven](https://maven.apache.org/download.cgi) 3.5.0 or higher.
 1. Install [Docker](https://docs.docker.com/get-docker/) for your OS.
 1. Install [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest&preserve-view=true) 2.0.75 or later.
+1. Install [Bicep](https://docs.microsoft.com/azure/azure-resource-manager/bicep/install#linux).
 1. Install [`jq`](https://stedolan.github.io/jq/download/)
 
 ## Steps of deployment
@@ -28,14 +29,14 @@
 
       ```bash
 
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
    1. Or use an existing AKS cluster and an existing ACR instance:
 
       ```bash
 
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=false -DclusterName=<aks-cluster-name> -DclusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=false -DclusterName=<aks-cluster-name> -DclusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
 1. Change to `./target/cli` directory
@@ -50,7 +51,7 @@
 1. If you check the resource group `resourceGroupName` in [Azure portal](https://portal.azure.com/), you will see related resources created:
    1. A new AKS cluster if it's specified;
    1. A new ACR instance if it's specified;
-   1. A deployment script instance;
+   1. Two deployment script instances;
 1. To visit the application home page:
    1. Open the resource group `resourceGroupName`;
    1. Navigate to "Deployments > `deploymentName` > Outputs";
