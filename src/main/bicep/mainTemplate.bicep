@@ -51,6 +51,49 @@ param createACR bool = true
 @description('Name for the existing ACR')
 param acrName string = ''
 
+@description('true to set up Application Gateway ingress.')
+param enableAppGWIngress bool = false
+
+@allowed([
+  'haveCert'
+  'haveKeyVault'
+  'generateCert'
+])
+@description('Three scenarios we support for deploying app gateway')
+param appGatewayCertificateOption string = 'haveCert'
+
+@description('Public IP Name for the Application Gateway')
+param appGatewayPublicIPAddressName string = 'gwip'
+
+@description('The one-line, base64 string of the SSL certificate data.')
+param appGatewaySSLCertData string = 'appgw-ssl-data'
+
+@secure()
+@description('The value of the password for the SSL Certificate')
+param appGatewaySSLCertPassword string = newGuid()
+
+@description('Resource group name in current subscription containing the KeyVault')
+param keyVaultResourceGroup string = 'kv-contoso-rg'
+
+@description('Existing Key Vault Name')
+param keyVaultName string = 'kv-contoso'
+
+@description('Price tier for Key Vault.')
+param keyVaultSku string = 'Standard'
+
+@description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
+param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
+
+@description('The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate of Appliation Gateway frontend TLS/SSL')
+param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
+
+@secure()
+@description('Base64 string of service principal. use the command to generate a testing string: az ad sp create-for-rbac --sdk-auth | base64 -w0')
+param servicePrincipal string = newGuid()
+
+@description('true to enable cookie based affinity.')
+param enableCookieBasedAffinity bool = false
+
 @description('Flag indicating whether to deploy an application')
 param deployApplication bool = false
 
