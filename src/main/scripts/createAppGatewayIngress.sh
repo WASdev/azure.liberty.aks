@@ -149,13 +149,13 @@ function output_create_gateway_ssl_k8s_secret() {
         -nocerts \
         -out ${scriptDir}/$appgwFrontCertKeyFileName \
         -passin pass:${appgwFrontendSSLCertPassin} \
-        -passout pass:${appgwFrontendSSLCertPsw}
+        -passout pass:${appgwFrontendSSLCertPassin}
 
     utility_validate_status "Export key from frontend certificate."
 
     openssl rsa -in ${scriptDir}/$appgwFrontCertKeyFileName \
         -out ${scriptDir}/$appgwFrontCertKeyDecrytedFileName \
-        -passin pass:${appgwFrontendSSLCertPsw}
+        -passin pass:${appgwFrontendSSLCertPassin}
 
     utility_validate_status "Decryte private key."
 
