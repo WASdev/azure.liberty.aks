@@ -230,7 +230,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
   ]
 }
 
-module appgwStartPid './modules/_pids/_empty.bicep' = {
+module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   name: 'appgwStartPid-to-be-generated'
   params: {}
   dependsOn: [
@@ -256,12 +256,12 @@ module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep
 }
 
 // get key vault object in a resource group
-resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = {
-  name: appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultName : appgwSecretDeployment.outputs.keyVaultName
+resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = if (enableAppGWIngress) {
+  name: (!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultName : appgwSecretDeployment.outputs.keyVaultName
   scope: resourceGroup(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultResourceGroup : resourceGroup().name)
 }
 
-module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = {
+module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment'
   params: {
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
@@ -284,12 +284,12 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
     identity: identity
 
     appgwCertificateOption: appGatewayCertificateOption
-    appgwFrontendSSLCertData: existingKeyvault.getSecret(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultSSLCertDataSecretName : appgwSecretDeployment.outputs.sslCertDataSecretName)
-    appgwFrontendSSLCertPsw: existingKeyvault.getSecret(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultSSLCertPasswordSecretName : appgwSecretDeployment.outputs.sslCertPwdSecretName)
+    appgwFrontendSSLCertData: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertDataSecretName : appgwSecretDeployment.outputs.sslCertDataSecretName)
+    appgwFrontendSSLCertPsw: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertPasswordSecretName : appgwSecretDeployment.outputs.sslCertPwdSecretName)
 
-    appgwName: appgwDeployment.outputs.appGatewayName
-    appgwAlias: appgwDeployment.outputs.appGatewayAlias
-    appgwVNetName: appgwDeployment.outputs.vnetName
+    appgwName: enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
+    appgwAlias: enableAppGWIngress ? appgwDeployment.outputs.appGatewayAlias : ''
+    appgwVNetName: enableAppGWIngress ? appgwDeployment.outputs.vnetName : ''
     servicePrincipal: servicePrincipal
 
     aksClusterRGName: const_clusterRGName
@@ -303,7 +303,7 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
   ]
 }
 
-module appgwEndPid './modules/_pids/_empty.bicep' = {
+module appgwEndPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   name: 'appgwEndPid-to-be-generated'
   params: {}
   dependsOn: [
@@ -327,6 +327,7 @@ resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' 
     retentionInterval: 'P1D'
   }
   dependsOn: [
+    clusterDeployment
     appgwEndPid
   ]
 }
