@@ -54,6 +54,9 @@ param acrName string = ''
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
 
+@description('DNS prefix for ApplicationGateway')
+param dnsNameforApplicationGateway string = 'olgw'
+
 @allowed([
   'haveCert'
   'haveKeyVault'
@@ -106,6 +109,10 @@ param appReplicas int = 2
 @secure()
 param guidValue string = newGuid()
 
+param utcValue string = utcNow()
+
+var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
+var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
 var const_appImage = format('{0}:{1}', const_appImageName, const_appImageTag)
 var const_appImageName = format('image{0}', const_suffix)
 var const_appImagePath = (empty(appImagePath) ? 'NA' : ((const_appImagePathLen == 1) ? format('docker.io/library/{0}', appImagePath) : ((const_appImagePathLen == 2) ? format('docker.io/{0}', appImagePath) : appImagePath)))
@@ -119,6 +126,7 @@ var const_availabilityZones = [
   '2'
   '3'
 ]
+var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
 var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
 var const_regionsSupportAvailabilityZones = [
@@ -149,8 +157,12 @@ var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var const_suffix = take(replace(guidValue, '-', ''), 6)
 var name_acrName = createACR ? format('acr{0}', const_suffix) : acrName
 var name_clusterName = createCluster ? format('cluster{0}', const_suffix) : clusterName
-var name_deploymentScriptName = format('script{0}', const_suffix)
 var name_cpDeploymentScript = format('cpscript{0}', const_suffix)
+var name_deploymentScriptName = format('script{0}', const_suffix)
+var name_dnsNameforApplicationGateway = format('{0}{1}', dnsNameforApplicationGateway, take(utcValue, 6))
+var name_domainLabelforApplicationGateway = take(format('{0}-{1}', name_dnsNameforApplicationGateway, toLower(name_rgNameWithoutSpecialCharacter)), 63)
+var name_keyVaultName = take(format('ol-kv{0}', uniqueString(utcValue)), 24)
+var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter'
@@ -223,6 +235,78 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
   ]
 }
 
+module appgwStartPid './modules/_pids/_empty.bicep' = {
+  name: 'appgwStartPid-to-be-generated'
+  params: {}
+  dependsOn: [
+    clusterDeployment
+  ]
+}
+
+module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep' = if (enableAppGWIngress && (appGatewayCertificateOption != const_appGatewaySSLCertOptionHaveKeyVault)) {
+  name: 'appgateway-certificates-secrets-deployment'
+  params: {
+    certificateDataValue: appGatewaySSLCertData
+    certificatePasswordValue: appGatewaySSLCertPassword
+    identity: identity
+    location: location
+    sku: keyVaultSku
+    subjectName: format('CN={0}', const_azureSubjectName)
+    useExistingAppGatewaySSLCertificate: (appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert) ? true : false
+    keyVaultName: name_keyVaultName
+  }
+  dependsOn: [
+    appgwStartPid
+  ]
+}
+
+// get key vault object in a resource group
+resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = {
+  name: appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultName : appgwSecretDeployment.outputs.keyVaultName
+  scope: resourceGroup(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultResourceGroup : resourceGroup().name)
+}
+
+module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = {
+  name: 'app-gateway-deployment'
+  params: {
+    dnsNameforApplicationGateway: dnsNameforApplicationGateway
+    gatewayPublicIPAddressName: appGatewayPublicIPAddressName
+    location: location
+  }
+  dependsOn: [
+    appgwStartPid
+  ]
+}
+
+module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' = if (enableAppGWIngress) {
+  name: 'networking-deployment'
+  params: {
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
+    location: location
+
+    identity: identity
+
+    appgwCertificateOption: appGatewayCertificateOption
+    appgwFrontendSSLCertData: existingKeyvault.getSecret(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultSSLCertDataSecretName : appgwSecretDeployment.outputs.sslCertDataSecretName)
+    appgwFrontendSSLCertPsw: existingKeyvault.getSecret(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultSSLCertPasswordSecretName : appgwSecretDeployment.outputs.sslCertPwdSecretName)
+
+    appgwName: appgwDeployment.outputs.appGatewayName
+    appgwAlias: appgwDeployment.outputs.appGatewayAlias
+    appgwVNetName: appgwDeployment.outputs.vnetName
+    servicePrincipal: servicePrincipal
+
+    aksClusterRGName: const_clusterRGName
+    aksClusterName: name_clusterName
+
+    enableCookieBasedAffinity: enableCookieBasedAffinity
+  }
+  dependsOn: [
+    appgwSecretDeployment
+    appgwDeployment
+  ]
+}
+
 resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: name_deploymentScriptName
   location: location
@@ -239,7 +323,7 @@ resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' 
     retentionInterval: 'P1D'
   }
   dependsOn: [
-    clusterDeployment
+    networkingDeployment
   ]
 }
 
