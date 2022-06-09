@@ -23,6 +23,7 @@
 1. Checkout [azure-javaee-iaas](https://github.com/Azure/azure-javaee-iaas)
    1. Change to directory hosting the repo project & run `mvn clean install`
 1. Checkout [arm-ttk](https://github.com/Azure/arm-ttk) under the specified parent directory
+   1. Run `git checkout 7dc2c2a7822c2825ea3524ac2af72e561847fece` to checkout the verified version of `arm-ttk`
 1. Checkout this repo under the same parent directory and change to directory hosting the repo project
 1. Build the project by replacing all placeholder `${<place_holder>}` with valid values
    1. Create a new AKS cluster and a new Azure Container Registry (ACR) instance:
