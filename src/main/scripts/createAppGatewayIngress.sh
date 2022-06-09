@@ -156,6 +156,7 @@ function output_create_gateway_ssl_k8s_secret() {
     appgwFrontendSSLCertPassin=${appgwFrontendSSLCertPsw}
     if [[ "$appgwCertificateOption" == "${appgwSelfsignedCert}" ]]; then
         appgwFrontendSSLCertPassin="" # empty password
+        appgwFrontendSSLCertPsw="null"
     fi
 
     openssl pkcs12 \
@@ -163,13 +164,13 @@ function output_create_gateway_ssl_k8s_secret() {
         -nocerts \
         -out ${scriptDir}/$appgwFrontCertKeyFileName \
         -passin pass:${appgwFrontendSSLCertPassin} \
-        -passout pass:${appgwFrontendSSLCertPassin}
+        -passout pass:${appgwFrontendSSLCertPsw}
 
     utility_validate_status "Export key from frontend certificate."
 
     openssl rsa -in ${scriptDir}/$appgwFrontCertKeyFileName \
         -out ${scriptDir}/$appgwFrontCertKeyDecrytedFileName \
-        -passin pass:${appgwFrontendSSLCertPassin}
+        -passin pass:${appgwFrontendSSLCertPsw}
 
     utility_validate_status "Decryte private key."
 
