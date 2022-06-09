@@ -15,23 +15,25 @@
 */
 
 @description('DNS for ApplicationGateway')
-param dnsNameforApplicationGateway string = take('wlsgw${uniqueString(utcValue)}', 63)
+param dnsNameforApplicationGateway string = format('olgw{0}', guidValue)
 @description('Public IP Name for the Application Gateway')
 param gatewayPublicIPAddressName string = 'gwip'
+param nameSuffix string = ''
 param location string
-param utcValue string = utcNow()
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+var const_nameSuffix = empty(nameSuffix) ? guidValue : nameSuffix
 var const_subnetAddressPrefix = '172.16.0.0/28'
 var const_virtualNetworkAddressPrefix = '172.16.0.0/24'
-var name_appGateway = 'appgw${uniqueString(utcValue)}'
+var name_appGateway = format('appgw{0}', const_nameSuffix)
 var name_appGatewaySubnet = 'appGatewaySubnet'
 var name_backendAddressPool = 'myGatewayBackendPool'
 var name_frontEndIPConfig = 'appGwPublicFrontendIp'
 var name_httpListener = 'HTTPListener'
 var name_httpPort = 'httpport'
 var name_httpSetting = 'myHTTPSetting'
-var name_nsg = 'nsg${uniqueString(utcValue)}'
-var name_virtualNetwork = 'vnet${uniqueString(utcValue)}'
+var name_nsg = format('nsg{0}', const_nameSuffix)
+var name_virtualNetwork = format('vnet{0}', const_nameSuffix)
 var ref_appGatewaySubnet = resourceId('Microsoft.Network/virtualNetworks/subnets', name_virtualNetwork, name_appGatewaySubnet)
 var ref_backendAddressPool = resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, name_backendAddressPool)
 var ref_backendHttpSettings = resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', name_appGateway, name_httpSetting)

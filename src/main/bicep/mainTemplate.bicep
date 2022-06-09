@@ -107,18 +107,16 @@ param appImagePath string = ''
 param appReplicas int = 2
 
 @secure()
-param guidValue string = newGuid()
-
-param utcValue string = utcNow()
+param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
 var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
 var const_appImage = format('{0}:{1}', const_appImageName, const_appImageTag)
-var const_appImageName = format('image{0}', const_suffix)
+var const_appImageName = format('image{0}', guidValue)
 var const_appImagePath = (empty(appImagePath) ? 'NA' : ((const_appImagePathLen == 1) ? format('docker.io/library/{0}', appImagePath) : ((const_appImagePathLen == 2) ? format('docker.io/{0}', appImagePath) : appImagePath)))
 var const_appImagePathLen = length(split(appImagePath, '/'))
 var const_appImageTag = '1.0.0'
-var const_appName = format('app{0}', const_suffix)
+var const_appName = format('app{0}', guidValue)
 var const_appProjName = 'default'
 var const_arguments = format('{0} {1} {2} {3} {4} {5} {6} {7} {8}', const_clusterRGName, name_clusterName, name_acrName, deployApplication, const_appImagePath, const_appName, const_appProjName, const_appImage, appReplicas)
 var const_availabilityZones = [
@@ -126,7 +124,7 @@ var const_availabilityZones = [
   '2'
   '3'
 ]
-var const_azureSubjectName = format('{0}.{1}.{2}', name_domainLabelforApplicationGateway, location, 'cloudapp.azure.com')
+var const_azureSubjectName = format('{0}.{1}.{2}', name_dnsNameforApplicationGateway, location, 'cloudapp.azure.com')
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
 var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
 var const_regionsSupportAvailabilityZones = [
@@ -154,15 +152,12 @@ var const_regionsSupportAvailabilityZones = [
   'westus3'
 ]
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_suffix = take(replace(guidValue, '-', ''), 6)
-var name_acrName = createACR ? format('acr{0}', const_suffix) : acrName
-var name_clusterName = createCluster ? format('cluster{0}', const_suffix) : clusterName
-var name_cpDeploymentScript = format('cpscript{0}', const_suffix)
-var name_deploymentScriptName = format('script{0}', const_suffix)
-var name_dnsNameforApplicationGateway = format('{0}{1}', dnsNameforApplicationGateway, take(utcValue, 6))
-var name_domainLabelforApplicationGateway = take(format('{0}-{1}', name_dnsNameforApplicationGateway, toLower(name_rgNameWithoutSpecialCharacter)), 63)
-var name_keyVaultName = take(format('ol-kv{0}', uniqueString(utcValue)), 24)
-var name_rgNameWithoutSpecialCharacter = replace(replace(replace(replace(resourceGroup().name, '.', ''), '(', ''), ')', ''), '_', '') // remove . () _ from resource group name
+var name_acrName = createACR ? format('acr{0}', guidValue) : acrName
+var name_clusterName = createCluster ? format('cluster{0}', guidValue) : clusterName
+var name_cpDeploymentScript = format('cpscript{0}', guidValue)
+var name_deploymentScriptName = format('script{0}', guidValue)
+var name_dnsNameforApplicationGateway = format('{0}{1}', dnsNameforApplicationGateway, guidValue)
+var name_keyVaultName = format('keyvault{0}', guidValue)
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter'
@@ -269,8 +264,9 @@ resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existin
 module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = {
   name: 'app-gateway-deployment'
   params: {
-    dnsNameforApplicationGateway: dnsNameforApplicationGateway
+    dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
     gatewayPublicIPAddressName: appGatewayPublicIPAddressName
+    nameSuffix: guidValue
     location: location
   }
   dependsOn: [
