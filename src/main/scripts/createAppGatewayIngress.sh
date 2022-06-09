@@ -245,5 +245,6 @@ appNamespace=default
 
 curlMaxTime=120
 checkPodStatusMaxAttemps=30
+checkPodStatusInterval=20
 
 create_gateway_ingress
