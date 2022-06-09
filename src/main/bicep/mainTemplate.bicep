@@ -307,6 +307,14 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
   ]
 }
 
+module appgwEndPid './modules/_pids/_empty.bicep' = {
+  name: 'appgwEndPid-to-be-generated'
+  params: {}
+  dependsOn: [
+    networkingDeployment
+  ]
+}
+
 resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: name_deploymentScriptName
   location: location
@@ -323,7 +331,7 @@ resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' 
     retentionInterval: 'P1D'
   }
   dependsOn: [
-    networkingDeployment
+    appgwEndPid
   ]
 }
 
