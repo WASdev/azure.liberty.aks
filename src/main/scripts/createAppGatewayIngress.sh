@@ -14,6 +14,20 @@
 
 echo "Script ${0} starts"
 
+function echo_stderr() {
+    echo >&2 "$@"
+    # The function is used for scripts running within Azure Deployment Script
+    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
+    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/errors.log
+}
+
+function echo_stdout() {
+    echo "$@"
+    # The function is used for scripts running within Azure Deployment Script
+    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
+    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/debug.log
+}
+
 # Validate teminal status with $?, exit with exception if errors happen.
 function utility_validate_status() {
   if [ $? == 1 ]; then
