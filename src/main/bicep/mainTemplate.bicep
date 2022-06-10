@@ -357,7 +357,8 @@ module aksEndPid './modules/_pids/_empty.bicep' = {
   ]
 }
 
-output appEndpoint string = deployApplication ? primaryDsDeployment.properties.outputs.appEndpoint : ''
+output appHttpEndpoint string = deployApplication ? (enableAppGWIngress ? appgwDeployment.outputs.appGatewayURL : primaryDsDeployment.properties.outputs.appEndpoint ) : ''
+output appHttpsEndoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
 output clusterName string = name_clusterName
 output clusterRGName string = const_clusterRGName
 output acrName string = name_acrName
