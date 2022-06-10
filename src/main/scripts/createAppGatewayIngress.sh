@@ -238,7 +238,7 @@ appgwFrontendSSLCertData=${APP_GW_FRONTEND_SSL_CERT_DATA}
 appgwFrontendSSLCertPsw=${APP_GW_FRONTEND_SSL_CERT_PSW}
 appgwCertificateOption=${APP_GW_CERTIFICATE_OPTION}
 appgwFrontendSecretName=${APP_FRONTEND_TLS_SECRET_NAME}
-appNamespace=default=${APP_PROJ_NAME}
+appNamespace=${APP_PROJ_NAME}
 
 appgwIngressHelmRepo="https://appgwingress.blob.core.windows.net/ingress-azure-helm-package/"
 appgwFrontCertFileName="appgw-frontend-cert.pfx"
