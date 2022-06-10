@@ -263,7 +263,7 @@
                                     "text": "Selecting 'Yes' here will cause the offer to configure an Application Gateway Ingress Controller",
                                     "link": {
                                         "label": "Learn more",
-                                        "uri": "https://aka.ms/wls-aks-app-gateway-ingress-controller"
+                                        "uri": "https://aka.ms/azure-liberty-aks-app-gateway-ingress-controller"
                                     }
                                 }
                             },
@@ -316,18 +316,14 @@
                                 "type": "Microsoft.Common.TextBlock",
                                 "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
                                 "options": {
-                                    "text": "    ⁃ Generate a self-signed front-end certificate: Generate a self-signed front-end certificate and apply it during deployment.",
-                                    "link": {
-                                        "label": "Learn more",
-                                        "uri": "https://aka.ms/arm-oraclelinux-wls-cluster-app-gateway-key-vault"
-                                    }
+                                    "text": "    ⁃ Generate a self-signed front-end certificate: Generate a self-signed front-end certificate and apply it during deployment."
                                 }
                             },
                             {
                                 "name": "certificateOption",
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Select desired TLS/SSL certificate option",
-                                "defaultValue": "Upload a TLS/SSL certificate",
+                                "defaultValue": "Generate a self-signed front-end certificate",
                                 "toolTip": "Select desired TLS/SSL certificate option",
                                 "constraints": {
                                     "allowedValues": [
@@ -440,7 +436,7 @@
                                 "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "You must input an Active Directory Service Principal that is encoded with base64 to create the Application Gateway Ingress Controller. See this <a href=https://aka.ms/wls-aks-agic-sp-doc target='_blank'>document</a> for more information.</br>You can generate one with command <b>az ad sp create-for-rbac --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; --sdk-auth | base64 -w0</b>. On macOS omit the <b>-w0</b>."
+                                    "text": "You must input an Active Directory Service Principal that is encoded with base64 to create the Application Gateway Ingress Controller. See this <a href=https://aka.ms/azure-liberty-aks-agic-sp-doc target='_blank'>document</a> for more information.</br>You can generate one with command <b>az ad sp create-for-rbac --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; --sdk-auth | base64 -w0</b>. On macOS omit the <b>-w0</b>."
                                 }
                             },
                             {
