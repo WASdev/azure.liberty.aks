@@ -111,6 +111,7 @@ param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
 var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
+var const_appFrontendTlsSecretName = format('secret{0}', guidValue)
 var const_appImage = format('{0}:{1}', const_appImageName, const_appImageTag)
 var const_appImageName = format('image{0}', guidValue)
 var const_appImagePath = (empty(appImagePath) ? 'NA' : ((const_appImagePathLen == 1) ? format('docker.io/library/{0}', appImagePath) : ((const_appImagePathLen == 2) ? format('docker.io/{0}', appImagePath) : appImagePath)))
@@ -295,8 +296,10 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
 
     aksClusterRGName: const_clusterRGName
     aksClusterName: name_clusterName
+    appFrontendTlsSecretName: const_appFrontendTlsSecretName
+    appProjName: const_appProjName
 
-    enableCookieBasedAffinity: enableCookieBasedAffinity
+    //enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
     appgwSecretDeployment

@@ -41,8 +41,8 @@ param servicePrincipal string = newGuid()
 
 param aksClusterRGName string = 'aks-contoso-rg'
 param aksClusterName string = 'aks-contoso'
-
-param enableCookieBasedAffinity bool = false
+param appFrontendTlsSecretName string = 'tls-secret'
+param appProjName string = 'default'
 
 param utcValue string = utcNow()
 
@@ -51,7 +51,6 @@ var const_appgwSARoleBindingFile='appgw-ingress-clusterAdmin-roleBinding.yaml'
 var const_createGatewayIngressSvcScript = 'createAppGatewayIngress.sh'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var const_primaryScript = 'createAppGatewayIngress.sh'
-//var name_deploymentName='ds-networking-deployment'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'ds-networking-deployment'
@@ -106,8 +105,12 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: appgwCertificateOption
       }
       {
-        name: 'ENABLE_COOKIE_BASED_AFFINITY'
-        value: string(enableCookieBasedAffinity)
+        name: 'APP_FRONTEND_TLS_SECRET_NAME'
+        value: appFrontendTlsSecretName
+      }
+      {
+        name: 'APP_PROJ_NAME'
+        value: appProjName
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
@@ -121,6 +124,3 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     forceUpdateTag: utcValue
   }
 }
-
-//output clusterLBUrl string = (!enableCustomSSL) && length(lbSvcValues) > 0 && (reference(name_deploymentName).outputs.clusterEndpoint != 'null') ? format('http://{0}/',reference(name_deploymentName).outputs.clusterEndpoint): ''
-//output clusterLBSecuredUrl string = enableCustomSSL && length(lbSvcValues) > 0 && (reference(name_deploymentName).outputs.clusterEndpoint != 'null') ? format('https://{0}/',reference(name_deploymentName).outputs.clusterEndpoint): ''

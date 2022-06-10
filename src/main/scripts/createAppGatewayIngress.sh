@@ -231,18 +231,18 @@ appgwVNetName=${APP_GW_VNET_NAME}
 appgwFrontendSSLCertData=${APP_GW_FRONTEND_SSL_CERT_DATA}
 appgwFrontendSSLCertPsw=${APP_GW_FRONTEND_SSL_CERT_PSW}
 appgwCertificateOption=${APP_GW_CERTIFICATE_OPTION}
-enableCookieBasedAffinity=${ENABLE_COOKIE_BASED_AFFINITY}
+appgwFrontendSecretName=${APP_FRONTEND_TLS_SECRET_NAME}
+appNamespace=default=${APP_PROJ_NAME}
 
 appgwIngressHelmRepo="https://appgwingress.blob.core.windows.net/ingress-azure-helm-package/"
 appgwFrontCertFileName="appgw-frontend-cert.pfx"
 appgwFrontCertKeyDecrytedFileName="appgw-frontend-cert-decryted.key"
 appgwFrontCertKeyFileName="appgw-frontend-cert.key"
 appgwFrontPublicCertFileName="appgw-frontend-cert.crt"
-appgwFrontendSecretName="frontend-tls"
+
 appgwSelfsignedCert="generateCert"
 azureAppgwIngressVersion="1.5.1"
 watchNamespace='""'
-appNamespace=default
 
 curlMaxTime=120
 checkPodStatusMaxAttemps=30
