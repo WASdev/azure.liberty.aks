@@ -188,13 +188,15 @@ if [ "$deployApplication" = True ]; then
         exit 1
     fi
 
-    # Get public IP address and port for the application service
-    wait_service_available ${Application_Name} ${Project_Name} ${logFile}
-    if [[ $? != 0 ]]; then
-        echo "The service ${Application_Name} is not available." >&2
-        exit 1
+    # Get public IP address and port for the application service if agic is not enabled
+    if [ "$ENABLE_APP_GW_INGRESS" = False ]; then
+        wait_service_available ${Application_Name} ${Project_Name} ${logFile}
+        if [[ $? != 0 ]]; then
+            echo "The service ${Application_Name} is not available." >&2
+            exit 1
+        fi
+        appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
     fi
-    appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
 else
     Application_Image=${LOGIN_SERVER}"/$"{Application_Image}
     # Output base64 encoded deployment template yaml file content
@@ -208,7 +210,7 @@ fi
 
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg appDeploymentYaml "$appDeploymentYaml" '{appDeploymentYaml: $appDeploymentYaml}')
-if [ "$deployApplication" = True ]; then
+if [ "$deployApplication" = True ] && [ "$ENABLE_APP_GW_INGRESS" = False ]; then
     result=$(echo "$result" | jq --arg appEndpoint "$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
 fi
 echo "Result is: $result" >> $logFile
