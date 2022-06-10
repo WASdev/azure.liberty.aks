@@ -221,6 +221,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2020-07-01' = {
 
 output appGatewayAlias string = reference(gatewayPublicIP.id).dnsSettings.fqdn
 output appGatewayName string = name_appGateway
-output appGatewayURL string = 'http://${reference(gatewayPublicIP.id).dnsSettings.fqdn}/'
-output appGatewaySecuredURL string = 'https://${reference(gatewayPublicIP.id).dnsSettings.fqdn}/'
+output appGatewayURL string = uri(format('http://{0}/', reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
+output appGatewaySecuredURL string = uri(format('https://{0}/', reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
 output vnetName string = name_virtualNetwork
