@@ -231,7 +231,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
 }
 
 module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
-  name: 'appgwStartPid-to-be-generated'
+  name: '43c417c4-4f5a-555e-a9ba-b2d01d88de1f'
   params: {}
   dependsOn: [
     clusterDeployment
@@ -304,7 +304,7 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
 }
 
 module appgwEndPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
-  name: 'appgwEndPid-to-be-generated'
+  name: 'dfa75d32-05de-5635-9833-b004cabcd378'
   params: {}
   dependsOn: [
     networkingDeployment
