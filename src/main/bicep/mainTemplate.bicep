@@ -153,6 +153,7 @@ var const_regionsSupportAvailabilityZones = [
 ]
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var name_acrName = createACR ? format('acr{0}', guidValue) : acrName
+var name_appGatewayPublicIPAddressName = format('{0}{1}', appGatewayPublicIPAddressName, guidValue)
 var name_clusterName = createCluster ? format('cluster{0}', guidValue) : clusterName
 var name_dnsNameforApplicationGateway = format('{0}{1}', dnsNameforApplicationGateway, guidValue)
 var name_keyVaultName = format('keyvault{0}', guidValue)
@@ -265,7 +266,7 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
   name: 'app-gateway-deployment'
   params: {
     dnsNameforApplicationGateway: name_dnsNameforApplicationGateway
-    gatewayPublicIPAddressName: appGatewayPublicIPAddressName
+    gatewayPublicIPAddressName: name_appGatewayPublicIPAddressName
     nameSuffix: guidValue
     location: location
   }

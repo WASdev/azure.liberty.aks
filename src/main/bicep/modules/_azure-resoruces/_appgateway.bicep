@@ -17,7 +17,7 @@
 @description('DNS for ApplicationGateway')
 param dnsNameforApplicationGateway string = format('olgw{0}', guidValue)
 @description('Public IP Name for the Application Gateway')
-param gatewayPublicIPAddressName string = 'gwip'
+param gatewayPublicIPAddressName string = format('gwip{0}', guidValue)
 param nameSuffix string = ''
 param location string
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
