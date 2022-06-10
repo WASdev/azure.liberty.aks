@@ -18,7 +18,7 @@
 param identity object
 
 @description('Used to name the new Azure Key Vault resoure.')
-param keyVaultName string = 'wls-kv-${uniqueString(utcValue)}'
+param keyVaultName string = 'kv-${uniqueString(utcValue)}'
 
 param location string
 
@@ -67,7 +67,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     enableSoftDelete: true
   }
   tags:{
-    'managed-by-azure-weblogic': utcValue
+    'managed-by-azure-liberty-aks': utcValue
   }
 }
 

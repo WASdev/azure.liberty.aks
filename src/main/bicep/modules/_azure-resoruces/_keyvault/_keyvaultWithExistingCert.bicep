@@ -31,7 +31,7 @@ param certificatePasswordValue string = newGuid()
 param enabledForTemplateDeployment bool = true
 
 @description('Name of the vault')
-param keyVaultName string = 'kv-contoso'
+param keyVaultName string = 'kv-${uniqueString(utcValue)}'
 
 param location string
 
@@ -53,7 +53,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' = {
     tenantId: subscription().tenantId
   }
   tags:{
-    'managed-by-azure-weblogic': utcValue
+    'managed-by-azure-liberty-aks': utcValue
   }
 }
 

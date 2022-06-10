@@ -154,10 +154,10 @@ var const_regionsSupportAvailabilityZones = [
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var name_acrName = createACR ? format('acr{0}', guidValue) : acrName
 var name_clusterName = createCluster ? format('cluster{0}', guidValue) : clusterName
-var name_cpDeploymentScript = format('cpscript{0}', guidValue)
-var name_deploymentScriptName = format('script{0}', guidValue)
 var name_dnsNameforApplicationGateway = format('{0}{1}', dnsNameforApplicationGateway, guidValue)
 var name_keyVaultName = format('keyvault{0}', guidValue)
+var name_prefilghtDsName = format('preflightds{0}', guidValue)
+var name_primaryDsName = format('primaryds{0}', guidValue)
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter'
@@ -169,8 +169,8 @@ module aksStartPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
-resource checkPermissionDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: name_cpDeploymentScript
+resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+  name: name_prefilghtDsName
   location: location
   kind: 'AzureCLI'
   identity: identity
@@ -192,7 +192,7 @@ resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if 
     adminUserEnabled: true
   }
   dependsOn: [
-    checkPermissionDsDeployment
+    preflightDsDeployment
   ]
 }
 
@@ -312,7 +312,7 @@ module appgwEndPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
 }
 
 resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: name_deploymentScriptName
+  name: name_primaryDsName
   location: location
   kind: 'AzureCLI'
   identity: identity

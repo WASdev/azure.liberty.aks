@@ -103,8 +103,7 @@ function install_helm() {
 }
 
 function install_azure_ingress() {
-    # create sa and bind cluster-admin role
-    # grant azure ingress permission to access WebLogic service
+    # create sa and bind cluster-admin role to grant azure ingress required permissions
     kubectl apply -f ${scriptDir}/appgw-ingress-clusterAdmin-roleBinding.yaml
 
     install_helm
