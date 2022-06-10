@@ -298,8 +298,6 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
     aksClusterName: name_clusterName
     appFrontendTlsSecretName: const_appFrontendTlsSecretName
     appProjName: const_appProjName
-
-    //enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
     appgwSecretDeployment
@@ -327,6 +325,20 @@ resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' 
     supportingScriptUris: [
       uri(const_scriptLocation, format('open-liberty-application.yaml.template{0}', _artifactsLocationSasToken))
       uri(const_scriptLocation, format('open-liberty-application-agic.yaml.template{0}', _artifactsLocationSasToken))
+    ]
+    environmentVariables: [
+      {
+        name: 'ENABLE_APP_GW_INGRESS'
+        value: string(enableAppGWIngress)
+      }
+      {
+        name: 'APP_FRONTEND_TLS_SECRET_NAME'
+        value: string(const_appFrontendTlsSecretName)
+      }
+      {
+        name: 'ENABLE_COOKIE_BASED_AFFINITY'
+        value: string(enableCookieBasedAffinity)
+      }
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'

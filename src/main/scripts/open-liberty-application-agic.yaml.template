@@ -32,10 +32,10 @@ metadata:
   namespace: ${Project_Name}
   annotations:
     kubernetes.io/ingress.class: azure/application-gateway
-    appgw.ingress.kubernetes.io/cookie-based-affinity: "${ENABLE_COOKIE_BASED_AFFINITY}"
+    appgw.ingress.kubernetes.io/cookie-based-affinity: "${Enable_Cookie_Based_Affinity}"
 spec:
   tls:
-  - secretName: ${FRONTEND_TLS_SECRET}
+  - secretName: ${Frontend_Tls_Secret}
   rules:
     - http:
         paths:
@@ -54,7 +54,7 @@ metadata:
   namespace: ${Project_Name}
   annotations:
     kubernetes.io/ingress.class: azure/application-gateway
-    appgw.ingress.kubernetes.io/cookie-based-affinity: "${ENABLE_COOKIE_BASED_AFFINITY}"
+    appgw.ingress.kubernetes.io/cookie-based-affinity: "${Enable_Cookie_Based_Affinity}"
 spec:
   rules:
     - http:

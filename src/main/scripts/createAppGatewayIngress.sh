@@ -182,6 +182,12 @@ function output_create_gateway_ssl_k8s_secret() {
 
     utility_validate_status "Export cert from frontend certificate."
 
+    # Create namespace if it doesn't exist before
+    kubectl get namespace ${appNamespace}
+    if [[ $? -ne 0 ]]; then
+        kubectl create namespace ${appNamespace}
+    fi
+
     kubectl -n ${appNamespace} create secret tls ${appgwFrontendSecretName} \
         --key="${scriptDir}/$appgwFrontCertKeyDecrytedFileName" \
         --cert="${scriptDir}/$appgwFrontPublicCertFileName"
