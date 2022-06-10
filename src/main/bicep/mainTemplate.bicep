@@ -132,7 +132,7 @@ resource checkPermissionDsDeployment 'Microsoft.Resources/deploymentScripts@2020
   }
 }
 
-resource acrDeployment 'Microsoft.ContainerRegistry/registries@2019-05-01' = if (createACR) {
+resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if (createACR) {
   name: name_acrName
   location: location
   sku: {
