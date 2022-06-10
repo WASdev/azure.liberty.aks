@@ -37,15 +37,15 @@ spec:
   tls:
   - secretName: ${Frontend_Tls_Secret}
   rules:
-    - http:
-        paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: ${Application_Name}
-              port:
-                number: 9080
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${Application_Name}
+            port:
+              number: 9080
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -57,12 +57,12 @@ metadata:
     appgw.ingress.kubernetes.io/cookie-based-affinity: "${Enable_Cookie_Based_Affinity}"
 spec:
   rules:
-    - http:
-        paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: ${Application_Name}
-              port:
-                number: 9080
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${Application_Name}
+            port:
+              number: 9080
