@@ -191,9 +191,11 @@ function output_create_gateway_ssl_k8s_secret() {
 
 function connect_to_aks_cluster() {
     # Install kubectl
+    rm -rf apps && mkdir apps && cd apps
     az aks install-cli
     kubectl --help
     utility_validate_status "Install kubectl."
+    cd ..
 
     # Connect to cluster
     az aks get-credentials --resource-group ${aksClusterRGName} --name ${aksClusterName} --overwrite-existing
