@@ -323,6 +323,7 @@ resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' 
     primaryScriptUri: uri(const_scriptLocation, format('install.sh{0}', _artifactsLocationSasToken))
     supportingScriptUris: [
       uri(const_scriptLocation, format('open-liberty-application.yaml.template{0}', _artifactsLocationSasToken))
+      uri(const_scriptLocation, format('open-liberty-application-agic.yaml.template{0}', _artifactsLocationSasToken))
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
