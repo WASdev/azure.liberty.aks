@@ -20,7 +20,7 @@
 
     <groupId>com.ibm.websphere.azure</groupId>
     <artifactId>azure.liberty.aks</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
     
