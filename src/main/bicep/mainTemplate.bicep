@@ -239,6 +239,7 @@ module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   ]
 }
 
+// Workaround arm-ttk test "Parameter Types Should Be Consistent"
 var _useExistingAppGatewaySSLCertificate = appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert
 module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep' = if (enableAppGWIngress && (appGatewayCertificateOption != const_appGatewaySSLCertOptionHaveKeyVault)) {
   name: 'appgateway-certificates-secrets-deployment'
@@ -276,6 +277,7 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
   ]
 }
 
+// Workaround arm-ttk test "Parameter Types Should Be Consistent"
 var _enableAppGWIngress = enableAppGWIngress
 module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' = if (enableAppGWIngress) {
   name: 'networking-deployment'
