@@ -106,7 +106,6 @@ param appImagePath string = ''
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
-@secure()
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
@@ -240,6 +239,7 @@ module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   ]
 }
 
+var _useExistingAppGatewaySSLCertificate = appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert
 module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep' = if (enableAppGWIngress && (appGatewayCertificateOption != const_appGatewaySSLCertOptionHaveKeyVault)) {
   name: 'appgateway-certificates-secrets-deployment'
   params: {
@@ -249,7 +249,7 @@ module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep
     location: location
     sku: keyVaultSku
     subjectName: format('CN={0}', const_azureSubjectName)
-    useExistingAppGatewaySSLCertificate: (appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert) ? true : false
+    useExistingAppGatewaySSLCertificate: _useExistingAppGatewaySSLCertificate
     keyVaultName: name_keyVaultName
   }
   dependsOn: [
@@ -258,7 +258,7 @@ module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep
 }
 
 // get key vault object in a resource group
-resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-06-01-preview' existing = if (enableAppGWIngress) {
+resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-10-01' existing = if (enableAppGWIngress) {
   name: (!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultName : appgwSecretDeployment.outputs.keyVaultName
   scope: resourceGroup(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultResourceGroup : resourceGroup().name)
 }
@@ -276,6 +276,7 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
   ]
 }
 
+var _enableAppGWIngress = enableAppGWIngress
 module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' = if (enableAppGWIngress) {
   name: 'networking-deployment'
   params: {
@@ -289,9 +290,9 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
     appgwFrontendSSLCertData: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertDataSecretName : appgwSecretDeployment.outputs.sslCertDataSecretName)
     appgwFrontendSSLCertPsw: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertPasswordSecretName : appgwSecretDeployment.outputs.sslCertPwdSecretName)
 
-    appgwName: enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
-    appgwAlias: enableAppGWIngress ? appgwDeployment.outputs.appGatewayAlias : ''
-    appgwVNetName: enableAppGWIngress ? appgwDeployment.outputs.vnetName : ''
+    appgwName: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
+    appgwAlias: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayAlias : ''
+    appgwVNetName: _enableAppGWIngress ? appgwDeployment.outputs.vnetName : ''
     servicePrincipal: servicePrincipal
 
     aksClusterRGName: const_clusterRGName
