@@ -91,7 +91,7 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
 
 @secure()
-@description('Base64 string of service principal. use the command to generate a testing string: az ad sp create-for-rbac --sdk-auth | base64 -w0')
+@description('Base64 string of service principal. use the command to generate a testing string: az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/<AZURE_SUBSCRIPTION_ID> | base64 -w0')
 param servicePrincipal string = newGuid()
 
 @description('true to enable cookie based affinity.')

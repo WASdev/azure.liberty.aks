@@ -371,7 +371,7 @@
                                 "constraints": {
                                     "required": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveCert')]",
                                     "regex": "^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,128}$",
-                                    "validationMessage": "The password must contain at least 6 characters, with at least 1 uppercase letter, 1 lowercase letter and 1 number."
+                                    "validationMessage": "The password must contain at least 6 characters, with at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character."
                                 },
                                 "options": {
                                     "hideConfirmation": false
@@ -436,7 +436,7 @@
                                 "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "You must input an Active Directory Service Principal that is encoded with base64 to create the Application Gateway Ingress Controller. See this <a href=https://aka.ms/azure-liberty-aks-agic-sp-doc target='_blank'>document</a> for more information.</br>You can generate one with command <b>az ad sp create-for-rbac --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; --sdk-auth | base64 -w0</b>. On macOS omit the <b>-w0</b>."
+                                    "text": "You must input an Active Directory Service Principal that is encoded with base64 to create the Application Gateway Ingress Controller. See this <a href=https://aka.ms/azure-liberty-aks-agic-sp-doc target='_blank'>document</a> for more information.</br>You can generate one with command <b>az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; | base64 -w0</b>. On macOS omit the <b>-w0</b>."
                                 }
                             },
                             {
@@ -446,7 +446,7 @@
                                     "password": "Service Principal",
                                     "confirmPassword": "Confirm password"
                                 },
-                                "toolTip": "Base64 encoded JSON blob of the service principal. You can generate one with command 'az ad sp create-for-rbac --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; --sdk-auth | base64 -w0' On macOS omit the -w0.",
+                                "toolTip": "Base64 encoded JSON blob of the service principal. You can generate one with command 'az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; | base64 -w0' On macOS omit the -w0.",
                                 "constraints": {
                                     "required": true
                                 },
