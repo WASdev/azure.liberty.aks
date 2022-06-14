@@ -14,6 +14,7 @@
  limitations under the License.
 */
 
+@secure()
 @description('Certificate data to store in the secret')
 param certificateDataValue string = newGuid()
 

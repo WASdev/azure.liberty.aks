@@ -68,8 +68,9 @@ param appGatewayCertificateOption string = 'haveCert'
 @description('Public IP Name for the Application Gateway')
 param appGatewayPublicIPAddressName string = 'gwip'
 
+@secure()
 @description('The one-line, base64 string of the SSL certificate data.')
-param appGatewaySSLCertData string = 'appgw-ssl-data'
+param appGatewaySSLCertData string = newGuid()
 
 @secure()
 @description('The value of the password for the SSL Certificate')
@@ -205,7 +206,7 @@ resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01
       }
       {
         name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_DATA'
-        value: appGatewaySSLCertData
+        secureValue: appGatewaySSLCertData
       }
       {
         name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'

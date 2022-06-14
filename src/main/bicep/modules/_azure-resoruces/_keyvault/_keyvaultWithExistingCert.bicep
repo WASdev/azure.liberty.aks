@@ -17,6 +17,7 @@
 @description('Secret name of certificate data.')
 param certificateDataName string = 'myIdentityKeyStoreData'
 
+@secure()
 @description('Certificate data to store in the secret')
 param certificateDataValue string = newGuid()
 
