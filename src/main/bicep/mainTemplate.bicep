@@ -177,7 +177,7 @@ resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01
   identity: identity
   properties: {
     azCliVersion: '2.15.0'
-    primaryScriptUri: uri(const_scriptLocation, format('check-permission.sh{0}', _artifactsLocationSasToken))
+    primaryScriptUri: uri(const_scriptLocation, format('preflight.sh{0}', _artifactsLocationSasToken))
     environmentVariables: [
       {
         name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
