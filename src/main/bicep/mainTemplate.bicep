@@ -178,6 +178,40 @@ resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01
   properties: {
     azCliVersion: '2.15.0'
     primaryScriptUri: uri(const_scriptLocation, format('check-permission.sh{0}', _artifactsLocationSasToken))
+    environmentVariables: [
+      {
+        name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
+        value: string(enableAppGWIngress)
+      }
+      {
+        name: 'APPLICATION_GATEWAY_CERTIFICATE_OPTION'
+        value: appGatewayCertificateOption
+      }
+      {
+        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_NAME'
+        value: keyVaultName
+      }
+      {
+        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_RESOURCEGROUP'
+        value: keyVaultResourceGroup
+      }
+      {
+        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_DATA_SECRET_NAME'
+        value: keyVaultSSLCertDataSecretName
+      }
+      {
+        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_PASSWORD_SECRET_NAME'
+        value: keyVaultSSLCertPasswordSecretName
+      }
+      {
+        name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_DATA'
+        value: appGatewaySSLCertData
+      }
+      {
+        name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'
+        value: appGatewaySSLCertPassword
+      }
+    ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
   }
