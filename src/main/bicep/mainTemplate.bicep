@@ -209,7 +209,11 @@ resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01
       }
       {
         name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'
-        value: appGatewaySSLCertPassword
+        secureValue: appGatewaySSLCertPassword
+      }
+      {
+        name: 'BASE64_FOR_SERVICE_PRINCIPAL'
+        secureValue: servicePrincipal
       }
     ]
     cleanupPreference: 'OnSuccess'

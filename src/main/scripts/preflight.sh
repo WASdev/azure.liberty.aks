@@ -40,7 +40,7 @@ function validate_status() {
   fi
 }
 
-function download_application_gateway_certificate_from_keyvault() {
+function get_application_gateway_certificate_from_keyvault() {
   # check key vault accessibility for template deployment
   local enabledForTemplateDeployment=$(az keyvault show --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME} --query "properties.enabledForTemplateDeployment")
   if [[ "${enabledForTemplateDeployment,,}" != "true" ]]; then
@@ -50,38 +50,24 @@ function download_application_gateway_certificate_from_keyvault() {
 
   # allow the identity to access the keyvault
   local principalId=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "principalId" -o tsv)
-  az keyvault set-policy --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}  --object-id ${principalId} --secret-permissions get list
-  validate_status "grant identity permission to get/list secrets in key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
+  az keyvault set-policy --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}  --object-id ${principalId} --secret-permissions get
+  validate_status "grant identity permission to get secrets in key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
 
-  local gatewayCertDataFileName=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/gatewayCertData.txt
-  local gatewayCertPswFileName=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/gatewayCertPsw.txt
-
-  rm -f ${gatewayCertDataFileName}
-  rm -f ${gatewayCertPswFileName}
-
-  # download cert data
-  az keyvault secret download --file ${gatewayCertDataFileName} \
+  # get cert data and set it to the environment variable
+  APPLICATION_GATEWAY_SSL_FRONTEND_CERT_DATA=$(az keyvault secret show \
     --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_DATA_SECRET_NAME} \
-    --vault-name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}
-  validate_status "download secret ${APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_DATA_SECRET_NAME} from key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
-  # set cert data with values in download file
-  APPLICATION_GATEWAY_SSL_FRONTEND_CERT_DATA=$(cat ${gatewayCertDataFileName})
-  # remove the data file
-  rm -f ${gatewayCertDataFileName}
+    --vault-name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME} --query value --output tsv)
+  validate_status "get secret ${APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_DATA_SECRET_NAME} from key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
 
-  # download cert data
-  az keyvault secret download --file ${gatewayCertPswFileName} \
+  # get cert password and set it to the environment variable
+ APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD=$(az keyvault secret show \
     --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_PASSWORD_SECRET_NAME} \
-    --vault-name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME} 
-  validate_status "download secret ${APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_PASSWORD_SECRET_NAME} from key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
-  # set cert data with values in download file
-  APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD=$(cat ${gatewayCertPswFileName})
-  # remove the data file
-  rm -f ${gatewayCertPswFileName}
+    --vault-name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME} --query value --output tsv)
+  validate_status "get secret ${APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_PASSWORD_SECRET_NAME} from key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
 
   # reset key vault policy
   az keyvault delete-policy --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}  --object-id ${principalId}
-  validate_status "delete identity permission to get/list secrets in key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
+  validate_status "delete identity permission to get secrets in key vault ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME}"
 }
 
 function validate_gateway_frontend_certificates() {
@@ -90,7 +76,7 @@ function validate_gateway_frontend_certificates() {
   fi
 
   if [[ "${APPLICATION_GATEWAY_CERTIFICATE_OPTION}" == "haveKeyVault" ]]; then
-    download_application_gateway_certificate_from_keyvault
+    get_application_gateway_certificate_from_keyvault
   fi
 
   local appgwFrontCertFileName=${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/gatewaycert.pfx
