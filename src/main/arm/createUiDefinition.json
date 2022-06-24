@@ -260,7 +260,7 @@
                                 "type": "Microsoft.Common.TextBlock",
                                 "visible": true,
                                 "options": {
-                                    "text": "Selecting 'Yes' here will cause the offer to configure an Application Gateway Ingress Controller",
+                                    "text": "Select 'Yes' to configure an Application Gateway Ingress Controller",
                                     "link": {
                                         "label": "Learn more",
                                         "uri": "https://aka.ms/azure-liberty-aks-app-gateway-ingress-controller"
@@ -322,9 +322,9 @@
                             {
                                 "name": "certificateOption",
                                 "type": "Microsoft.Common.OptionsGroup",
-                                "label": "Select desired TLS/SSL certificate option",
+                                "label": "Select a TLS/SSL certificate option",
                                 "defaultValue": "Generate a self-signed front-end certificate",
-                                "toolTip": "Select desired TLS/SSL certificate option",
+                                "toolTip": "Select a TLS/SSL certificate option",
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -443,7 +443,7 @@
                                 "name": "servicePrincipal",
                                 "type": "Microsoft.Common.PasswordBox",
                                 "label": {
-                                    "password": "Service Principal",
+                                    "password": "Service principal",
                                     "confirmPassword": "Confirm service principal"
                                 },
                                 "toolTip": "Base64 encoded JSON blob of the service principal. You can generate one with command 'az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; | base64 -w0' On macOS omit the -w0.",
