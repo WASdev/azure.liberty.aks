@@ -288,6 +288,50 @@
                                 }
                             },
                             {
+                                "name": "vnetForApplicationGateway",
+                                "type": "Microsoft.Network.VirtualNetworkCombo",
+                                "label": {
+                                    "virtualNetwork": "Virtual network",
+                                    "subnets": "Subnets"
+                                },
+                                "toolTip": {
+                                    "virtualNetwork": "Select a virtual network in which to place the Application Gateway.",
+                                    "subnets": "The subnet must be dedicated only for use by the Application Gateway."
+                                },
+                                "defaultValue": {
+                                    "name": "[concat('wlsaks-vnet',take(guid(), 8))]",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/24"
+                                },
+                                "options": {
+                                    "hideExisting": false
+                                },
+                                "subnets": {
+                                    "gatewaySubnet": {
+                                        "label": "Subnet",
+                                        "defaultValue": {
+                                            "name": "wls-aks-gateway-subnet",
+                                            "addressPrefixSize": "/24"
+                                        },
+                                        "constraints": {
+                                            "minAddressPrefixSize": "/24",
+                                            "minAddressCount": 38,
+                                            "requireContiguousAddresses": false
+                                        }
+                                    }
+                                },
+                                "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]"
+                            },
+                            {
+                                "name": "appgwUsePrivateIP",
+                                "type": "Microsoft.Common.CheckBox",
+                                "label": "Configure frontend IP with private IP address",
+                                "toolTip": "If checked, expose WebLogic Server with private IP address.",
+                                "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]"
+                            },
+                            {
                                 "name": "keyVaultText00",
                                 "type": "Microsoft.Common.TextBlock",
                                 "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
@@ -582,6 +626,10 @@
             "createACR": "[bool(steps('Cluster').acrInfo.createACR)]",
             "acrName": "[last(split(steps('Cluster').acrInfo.acrSelector.id, '/'))]",
             "enableAppGWIngress": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
+            "newOrExistingVnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.newOrExisting]",
+            "vnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway]",
+            "vnetRGNameForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.resourceGroup]",
+            "appgwUsePrivateIP": "[steps('section_appGateway').appgwIngress.appgwUsePrivateIP]",
             "appGatewayCertificateOption": "[steps('section_appGateway').appgwIngress.certificateOption]",
             "appGatewaySSLCertData": "[steps('section_appGateway').appgwIngress.keyVaultSSLCertData]",
             "appGatewaySSLCertPassword": "[steps('section_appGateway').appgwIngress.appGatewaySSLCertPassword]",
