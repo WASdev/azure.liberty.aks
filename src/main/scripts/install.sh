@@ -155,6 +155,16 @@ LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
 USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
 
+# Choose right template by checking if AGIC is enabled
+appDeploymentTemplate=open-liberty-application.yaml.template
+if [ "$ENABLE_APP_GW_INGRESS" = True ]; then
+    appDeploymentTemplate=open-liberty-application-agic.yaml.template
+fi
+
+appDeploymentFile=open-liberty-application.yaml
+export Enable_Cookie_Based_Affinity="${ENABLE_COOKIE_BASED_AFFINITY,,}"
+export Frontend_Tls_Secret=${APP_FRONTEND_TLS_SECRET_NAME}
+
 # Deploy application image if it's requested by the user
 if [ "$deployApplication" = True ]; then
     # Log into the ACR and import application image
@@ -167,9 +177,9 @@ if [ "$deployApplication" = True ]; then
     Application_Image=${LOGIN_SERVER}/${Application_Image}
 
     # Deploy open liberty application and output its base64 encoded deployment yaml file content
-    envsubst < "open-liberty-application.yaml.template" > "open-liberty-application.yaml"
-    appDeploymentYaml=$(cat open-liberty-application.yaml | base64)
-    kubectl apply -f open-liberty-application.yaml >> $logFile
+    envsubst < "$appDeploymentTemplate" > "$appDeploymentFile"
+    appDeploymentYaml=$(cat $appDeploymentFile | base64)
+    kubectl apply -f $appDeploymentFile >> $logFile
 
     # Wait until the application deployment completes
     wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
@@ -178,25 +188,29 @@ if [ "$deployApplication" = True ]; then
         exit 1
     fi
 
-    # Get public IP address and port for the application service
-    wait_service_available ${Application_Name} ${Project_Name} ${logFile}
-    if [[ $? != 0 ]]; then
-        echo "The service ${Application_Name} is not available." >&2
-        exit 1
+    # Get public IP address and port for the application service if agic is not enabled
+    if [ "$ENABLE_APP_GW_INGRESS" = False ]; then
+        wait_service_available ${Application_Name} ${Project_Name} ${logFile}
+        if [[ $? != 0 ]]; then
+            echo "The service ${Application_Name} is not available." >&2
+            exit 1
+        fi
+        appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
     fi
-    appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
 else
     Application_Image=${LOGIN_SERVER}"/$"{Application_Image}
     # Output base64 encoded deployment template yaml file content
-    appDeploymentYaml=$(cat open-liberty-application.yaml.template \
+    appDeploymentYaml=$(cat $appDeploymentTemplate \
         | sed -e "s/\${Project_Name}/${Project_Name}/g" -e "s/\${Application_Replicas}/${Application_Replicas}/g" \
         | sed -e "s#\${Application_Image}#${Application_Image}#g" \
+        | sed -e "s#\${Enable_Cookie_Based_Affinity}#${Enable_Cookie_Based_Affinity}#g" \
+        | sed -e "s#\${Frontend_Tls_Secret}#${Frontend_Tls_Secret}#g" \
         | base64)
 fi
 
 # Write outputs to deployment script output path
 result=$(jq -n -c --arg appDeploymentYaml "$appDeploymentYaml" '{appDeploymentYaml: $appDeploymentYaml}')
-if [ "$deployApplication" = True ]; then
+if [ "$deployApplication" = True ] && [ "$ENABLE_APP_GW_INGRESS" = False ]; then
     result=$(echo "$result" | jq --arg appEndpoint "$appEndpoint" '{"appEndpoint": $appEndpoint} + .')
 fi
 echo "Result is: $result" >> $logFile

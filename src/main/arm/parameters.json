@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "_artifactsLocation": {
-            "value": "${artifactsLocationBase}/${project.artifactId}/${git.tag}/src/main/"
+            "value": "${artifactsLocationBase}/src/main/"
         },
         "identity": {
             "value": {
@@ -27,6 +27,36 @@
         },
         "acrName": {
             "value": "${acrName}"
+        },
+        "enableAppGWIngress": {
+            "value": "${enableAppGWIngress}"
+        },
+        "appGatewayCertificateOption": {
+            "value": "${appGatewayCertificateOption}"
+        },
+        "appGatewaySSLCertData": {
+            "value": "${appGatewaySSLCertData}"
+        },
+        "appGatewaySSLCertPassword": {
+            "value": "${appGatewaySSLCertPassword}"
+        },
+        "keyVaultResourceGroup": {
+            "value": "${keyVaultResourceGroup}"
+        },
+        "keyVaultName": {
+            "value": "${keyVaultName}"
+        },
+        "keyVaultSSLCertDataSecretName": {
+            "value": "${keyVaultSSLCertDataSecretName}"
+        },
+        "keyVaultSSLCertPasswordSecretName": {
+            "value": "${keyVaultSSLCertPasswordSecretName}"
+        },
+        "servicePrincipal": {
+            "value": "${servicePrincipal}"
+        },
+        "enableCookieBasedAffinity": {
+            "value": "${enableCookieBasedAffinity}"
         },
         "deployApplication": {
             "value": "${deployApplication}"
