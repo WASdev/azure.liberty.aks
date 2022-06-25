@@ -299,7 +299,7 @@
                                     "subnets": "The subnet must be dedicated only for use by the Application Gateway."
                                 },
                                 "defaultValue": {
-                                    "name": "[concat('wlsaks-vnet',take(guid(), 8))]",
+                                    "name": "[concat('olaks-vnet',take(guid(), 8))]",
                                     "addressPrefixSize": "/24"
                                 },
                                 "constraints": {
@@ -312,7 +312,7 @@
                                     "gatewaySubnet": {
                                         "label": "Subnet",
                                         "defaultValue": {
-                                            "name": "wls-aks-gateway-subnet",
+                                            "name": "ol-aks-gateway-subnet",
                                             "addressPrefixSize": "/24"
                                         },
                                         "constraints": {
@@ -626,8 +626,8 @@
             "createACR": "[bool(steps('Cluster').acrInfo.createACR)]",
             "acrName": "[last(split(steps('Cluster').acrInfo.acrSelector.id, '/'))]",
             "enableAppGWIngress": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
-            "newOrExistingVnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.newOrExisting]",
             "vnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway]",
+            "newOrExistingVnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.newOrExisting]",
             "vnetRGNameForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.resourceGroup]",
             "appgwUsePrivateIP": "[steps('section_appGateway').appgwIngress.appgwUsePrivateIP]",
             "appGatewayCertificateOption": "[steps('section_appGateway').appgwIngress.certificateOption]",
