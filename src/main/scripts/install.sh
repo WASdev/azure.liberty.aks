@@ -100,6 +100,44 @@ wait_service_available() {
     done
 }
 
+wait_ingress_available() {
+    ingressName=$1
+    namespaceName=$2
+    logFile=$3
+
+    cnt=0
+    kubectl get ingress ${ingressName} -n ${namespaceName}
+    while [ $? -ne 0 ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo "Unable to get the ingress ${ingressName}, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        sleep 5
+        kubectl get ingress ${ingressName} -n ${namespaceName}
+    done
+
+    cnt=0
+    ip=$(kubectl get ingress ${ingressName} -n ${namespaceName} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+    echo "ip is ${ip}" >> $logFile
+    while [ -z $ip ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo "Timeout and exit due to the maximum retries reached." >> $logFile 
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        sleep 5
+        echo "Wait until the IP address of the ingress ${ingressName} is available, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
+        ip=$(kubectl get ingress ${ingressName} -n ${namespaceName} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "ip is ${ip}" >> $logFile
+    done
+}
+
 clusterRGName=$1
 clusterName=$2
 acrName=$3
@@ -188,7 +226,7 @@ if [ "$deployApplication" = True ]; then
         exit 1
     fi
 
-    # Get public IP address and port for the application service if agic is not enabled
+    # Wait until the public IP address of the load balancer service or ingress is available
     if [ "$ENABLE_APP_GW_INGRESS" = False ]; then
         wait_service_available ${Application_Name} ${Project_Name} ${logFile}
         if [[ $? != 0 ]]; then
@@ -196,6 +234,17 @@ if [ "$deployApplication" = True ]; then
             exit 1
         fi
         appEndpoint=$(kubectl get svc ${Application_Name} -n ${Project_Name} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}:{.spec.ports[0].port}')
+    else
+        wait_ingress_available ${Application_Name}-ingress-tls ${Project_Name} ${logFile}
+        if [[ $? != 0 ]]; then
+            echo "The ingress ${Application_Name}-ingress-tls is not available." >&2
+            exit 1
+        fi
+        wait_ingress_available ${Application_Name}-ingress ${Project_Name} ${logFile}
+        if [[ $? != 0 ]]; then
+            echo "The ingress ${Application_Name}-ingress is not available." >&2
+            exit 1
+        fi
     fi
 else
     Application_Image=${LOGIN_SERVER}"/$"{Application_Image}
