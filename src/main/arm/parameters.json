@@ -31,6 +31,9 @@
         "enableAppGWIngress": {
             "value": "${enableAppGWIngress}"
         },
+        "appgwUsePrivateIP": {
+            "value": "${appgwUsePrivateIP}"
+        },
         "appGatewayCertificateOption": {
             "value": "${appGatewayCertificateOption}"
         },
