@@ -369,7 +369,7 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddressName
     nameSuffix: guidValue
     location: location
-    gatewaySubnetId: _appgwUsePrivateIP ? vnetForAppgatewayDeployment.outputs.subIdForApplicationGateway : ''
+    gatewaySubnetId: vnetForAppgatewayDeployment.outputs.subIdForApplicationGateway
     staticPrivateFrontentIP: _appgwUsePrivateIP ? queryPrivateIPFromSubnet.outputs.privateIP : ''
     usePrivateIP: appgwUsePrivateIP
   }
