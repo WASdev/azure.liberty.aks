@@ -215,6 +215,10 @@ resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01
         value: string(enableAppGWIngress)
       }
       {
+        name: 'VNET_FOR_APPLICATIONGATEWAY'
+        value: string(vnetForApplicationGateway)
+      }
+      {
         name: 'APPLICATION_GATEWAY_CERTIFICATE_OPTION'
         value: appGatewayCertificateOption
       }
