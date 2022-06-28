@@ -328,7 +328,7 @@
                                 "name": "appgwUsePrivateIP",
                                 "type": "Microsoft.Common.CheckBox",
                                 "label": "Configure frontend IP with private IP address",
-                                "toolTip": "If checked, expose WebLogic Server with private IP address.",
+                                "toolTip": "If checked, expose application with private IP address.",
                                 "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]"
                             },
                             {
