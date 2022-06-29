@@ -329,7 +329,7 @@
                                 "type": "Microsoft.Common.CheckBox",
                                 "label": "Configure frontend IP with private IP address",
                                 "toolTip": "If checked, expose application with private IP address.",
-                                "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]"
+                                "visible": false
                             },
                             {
                                 "name": "keyVaultText00",
