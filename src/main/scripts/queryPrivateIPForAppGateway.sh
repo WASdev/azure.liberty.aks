@@ -40,7 +40,7 @@ function query_ip() {
     if [[ "${available,,}" == "true" ]]; then
       outputPrivateIP=${KNOWN_IP}
     else
-      local privateIPAddress=$(echo ${ret} | jq -r .availableIpAddresses[0])
+      local privateIPAddress=$(echo ${ret} | jq -r .availableIpAddresses[-1])
       if [[ -z "${privateIPAddress}" ]] || [[ "${privateIPAddress}"=="null" ]]; then
         echo_stderr "ERROR: make sure there is available IP for application gateway in your subnet."
       fi
