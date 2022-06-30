@@ -162,7 +162,7 @@ az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >>
 az aks update -g $clusterRGName -n $clusterName --attach-acr $acrName >> $logFile
 
 # Install Open Liberty Operator
-OPERATOR_VERSION=0.8.0
+OPERATOR_VERSION=0.8.2
 mkdir -p overlays/watch-all-namespaces
 wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
 wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
