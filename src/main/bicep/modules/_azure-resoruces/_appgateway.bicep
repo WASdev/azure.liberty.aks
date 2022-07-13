@@ -20,92 +20,57 @@ param dnsNameforApplicationGateway string = format('olgw{0}', guidValue)
 param gatewayPublicIPAddressName string = format('gwip{0}', guidValue)
 param nameSuffix string = ''
 param location string
+param gatewaySubnetId string = '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/resourcegroupname/providers/Microsoft.Network/virtualNetworks/vnetname/subnets/subnetname'
+param staticPrivateFrontentIP string = '10.0.0.1'
+param usePrivateIP bool = false
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_nameSuffix = empty(nameSuffix) ? guidValue : nameSuffix
-var const_subnetAddressPrefix = '172.16.0.0/28'
-var const_virtualNetworkAddressPrefix = '172.16.0.0/24'
 var name_appGateway = format('appgw{0}', const_nameSuffix)
-var name_appGatewaySubnet = 'appGatewaySubnet'
 var name_backendAddressPool = 'myGatewayBackendPool'
 var name_frontEndIPConfig = 'appGwPublicFrontendIp'
+var name_frontEndPrivateIPConfig = 'appGwPrivateFrontendIp'
 var name_httpListener = 'HTTPListener'
 var name_httpPort = 'httpport'
 var name_httpSetting = 'myHTTPSetting'
-var name_nsg = format('nsg{0}', const_nameSuffix)
-var name_virtualNetwork = format('vnet{0}', const_nameSuffix)
-var ref_appGatewaySubnet = resourceId('Microsoft.Network/virtualNetworks/subnets', name_virtualNetwork, name_appGatewaySubnet)
 var ref_backendAddressPool = resourceId('Microsoft.Network/applicationGateways/backendAddressPools', name_appGateway, name_backendAddressPool)
 var ref_backendHttpSettings = resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', name_appGateway, name_httpSetting)
 var ref_frontendHTTPPort = resourceId('Microsoft.Network/applicationGateways/frontendPorts', name_appGateway, name_httpPort)
 var ref_frontendIPConfiguration = resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', name_appGateway, name_frontEndIPConfig)
 var ref_httpListener = resourceId('Microsoft.Network/applicationGateways/httpListeners', name_appGateway, name_httpListener)
-
-resource nsg 'Microsoft.Network/networkSecurityGroups@2020-07-01' = {
-  name: name_nsg
-  location: location
-  properties: {
-    securityRules: [
-      {
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '65200-65535'
-          sourceAddressPrefix: 'GatewayManager'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 500
-          direction: 'Inbound'
-        }
-        name: 'ALLOW_APPGW'
+var ref_publicIPAddress = resourceId('Microsoft.Network/publicIPAddresses', gatewayPublicIPAddressName)
+var obj_frontendIPConfigurations1 = [
+  {
+    name: name_frontEndIPConfig
+    properties: {
+      publicIPAddress: {
+        id: ref_publicIPAddress
       }
-      {
-        properties: {
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: 'Internet'
-          destinationAddressPrefix: '*'
-          access: 'Allow'
-          priority: 510
-          direction: 'Inbound'
-          destinationPortRanges: [
-            '80'
-            '443'
-          ]
-        }
-        name: 'ALLOW_HTTP_ACCESS'
-      }
-    ]
-  }
-}
-
-resource vnet 'Microsoft.Network/virtualNetworks@2020-07-01' = {
-  name: name_virtualNetwork
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        const_virtualNetworkAddressPrefix
-      ]
     }
-    subnets: [
-      {
-        name: name_appGatewaySubnet
-        properties: {
-          addressPrefix: const_subnetAddressPrefix
-          networkSecurityGroup: {
-            id: nsg.id
-          }
-        }
-      }
-    ]
   }
-  dependsOn: [
-    nsg
-  ]
-}
+]
+var obj_frontendIPConfigurations2 = [
+  {
+    name: name_frontEndIPConfig
+    properties: {
+      publicIPAddress: {
+        id: ref_publicIPAddress
+      }
+    }
+  }
+  {
+    name: name_frontEndPrivateIPConfig
+    properties: {
+      privateIPAllocationMethod: 'Static'
+      privateIPAddress: staticPrivateFrontentIP
+      subnet: {
+        id: gatewaySubnetId
+      }
+    }
+  }
+]
 
-resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
+resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   name: gatewayPublicIPAddressName
   sku: {
     name: 'Standard'
@@ -119,7 +84,7 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2020-07-01' = {
   }
 }
 
-resource appGateway 'Microsoft.Network/applicationGateways@2020-07-01' = {
+resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2021-05-01' = {
   name: name_appGateway
   location: location
   tags: {
@@ -135,21 +100,12 @@ resource appGateway 'Microsoft.Network/applicationGateways@2020-07-01' = {
         name: 'appGatewayIpConfig'
         properties: {
           subnet: {
-            id: ref_appGatewaySubnet
+            id: gatewaySubnetId
           }
         }
       }
     ]
-    frontendIPConfigurations: [
-      {
-        name: name_frontEndIPConfig
-        properties: {
-          publicIPAddress: {
-            id: gatewayPublicIP.id
-          }
-        }
-      }
-    ]
+    frontendIPConfigurations: usePrivateIP ? obj_frontendIPConfigurations2 : obj_frontendIPConfigurations1
     frontendPorts: [
       {
         name: name_httpPort
@@ -215,12 +171,11 @@ resource appGateway 'Microsoft.Network/applicationGateways@2020-07-01' = {
     }
   }
   dependsOn: [
-    vnet
+    gatewayPublicIP
   ]
 }
 
-output appGatewayAlias string = reference(gatewayPublicIP.id).dnsSettings.fqdn
+output appGatewayAlias string = usePrivateIP ? staticPrivateFrontentIP : reference(gatewayPublicIP.id).dnsSettings.fqdn
 output appGatewayName string = name_appGateway
-output appGatewayURL string = uri(format('http://{0}/', reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
-output appGatewaySecuredURL string = uri(format('https://{0}/', reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
-output vnetName string = name_virtualNetwork
+output appGatewayURL string = uri(format('http://{0}/', usePrivateIP ? staticPrivateFrontentIP : reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
+output appGatewaySecuredURL string = uri(format('https://{0}/', usePrivateIP ? staticPrivateFrontentIP : reference(gatewayPublicIP.id).dnsSettings.fqdn), '')

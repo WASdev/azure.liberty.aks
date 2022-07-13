@@ -34,13 +34,13 @@
       subID=$(az account show --query 'id' -o tsv)
       spBase64Encoded=$(az ad sp create-for-rbac --role Contributor --scopes /subscriptions/${subID} --sdk-auth | base64 -w0)
 
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=true -DappGatewayCertificateOption=generateCert -DservicePrincipal=${spBase64Encoded} -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=true -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DservicePrincipal=${spBase64Encoded} -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
    1. Or use an existing AKS cluster and an existing ACR instance without AGIC:
 
       ```bash
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=false -DclusterName=<aks-cluster-name> -DclusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DidentityId=<user-assigned-managed-identity-id> -DcreateCluster=false -DclusterName=<aks-cluster-name> -DclusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=false -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
 1. Change to `./target/cli` directory

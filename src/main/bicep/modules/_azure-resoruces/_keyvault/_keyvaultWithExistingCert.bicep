@@ -59,7 +59,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2021-10-01' = {
 }
 
 resource secretForCertificate 'Microsoft.KeyVault/vaults/secrets@2021-10-01' = {
-  name: '${keyVaultName}/${certificateDataName}'
+  name: format('{0}/{1}', keyVaultName, certificateDataName)
   properties: {
     value: certificateDataValue
   }
@@ -69,7 +69,7 @@ resource secretForCertificate 'Microsoft.KeyVault/vaults/secrets@2021-10-01' = {
 }
 
 resource secretForCertPassword 'Microsoft.KeyVault/vaults/secrets@2021-10-01' = {
-  name: '${keyVaultName}/${certificatePswSecretName}'
+  name: format('{0}/{1}', keyVaultName, certificatePswSecretName)
   properties: {
     value: certificatePasswordValue
   }

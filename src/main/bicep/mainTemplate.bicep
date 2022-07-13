@@ -54,6 +54,30 @@ param acrName string = ''
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
 
+@description('VNET for Application Gateway.')
+param vnetForApplicationGateway object = {
+  name: 'olaks-app-gateway-vnet'
+  resourceGroup: resourceGroup().name
+  addressPrefixes: [
+    '172.16.0.0/24'
+  ]
+  addressPrefix: '172.16.0.0/24'
+  newOrExisting: 'new'
+  subnets: {
+    gatewaySubnet: {
+      name: 'olaks-gateway-subnet'
+      addressPrefix: '172.16.0.0/24'
+      startAddress: '172.16.0.4'
+    }
+  }
+}
+@description('To mitigate ARM-TTK error: Control Named vnetForApplicationGateway must output the newOrExisting property when hideExisting is false')
+param newOrExistingVnetForApplicationGateway string = 'new'
+@description('To mitigate ARM-TTK error: Control Named vnetForApplicationGateway must output the resourceGroup property when hideExisting is false')
+param vnetRGNameForApplicationGateway string = 'vnet-contoso-rg-name'
+@description('If true, configure Azure Application Gateway frontend IP with private IP.')
+param appgwUsePrivateIP bool = false
+
 @description('DNS prefix for ApplicationGateway')
 param dnsNameforApplicationGateway string = 'olgw'
 
@@ -161,6 +185,12 @@ var name_keyVaultName = format('keyvault{0}', guidValue)
 var name_prefilghtDsName = format('preflightds{0}', guidValue)
 var name_primaryDsName = format('primaryds{0}', guidValue)
 
+// Workaround arm-ttk test "Parameter Types Should Be Consistent"
+var _appgwUsePrivateIP = appgwUsePrivateIP
+var _appGatewaySubnetStartAddress = vnetForApplicationGateway.subnets.gatewaySubnet.startAddress
+var _enableAppGWIngress = enableAppGWIngress
+var _useExistingAppGatewaySSLCertificate = appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert
+
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter'
   params: {}
@@ -183,6 +213,10 @@ resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01
       {
         name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
         value: string(enableAppGWIngress)
+      }
+      {
+        name: 'VNET_FOR_APPLICATIONGATEWAY'
+        value: string(vnetForApplicationGateway)
       }
       {
         name: 'APPLICATION_GATEWAY_CERTIFICATE_OPTION'
@@ -236,6 +270,21 @@ resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if 
   ]
 }
 
+// To void space overlap with AKS Vnet, must deploy the Applciation Gateway VNet before AKS deployment
+module vnetForAppgatewayDeployment 'modules/_azure-resoruces/_vnetAppGateway.bicep' = if (enableAppGWIngress) {
+  name: 'vnet-application-gateway'
+  params: {
+    location: location
+    nameSuffix: guidValue
+    newOrExistingVnetForApplicationGateway: newOrExistingVnetForApplicationGateway
+    vnetForApplicationGateway: vnetForApplicationGateway
+    vnetRGNameForApplicationGateway: vnetRGNameForApplicationGateway
+  }
+  dependsOn: [
+    preflightDsDeployment
+  ]
+}
+
 resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-01' = if (createCluster) {
   name: name_clusterName
   location: location
@@ -267,6 +316,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
   }
   dependsOn: [
     acrDeployment
+    vnetForAppgatewayDeployment
   ]
 }
 
@@ -278,8 +328,6 @@ module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   ]
 }
 
-// Workaround arm-ttk test "Parameter Types Should Be Consistent"
-var _useExistingAppGatewaySSLCertificate = appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert
 module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep' = if (enableAppGWIngress && (appGatewayCertificateOption != const_appGatewaySSLCertOptionHaveKeyVault)) {
   name: 'appgateway-certificates-secrets-deployment'
   params: {
@@ -303,6 +351,21 @@ resource existingKeyvault 'Microsoft.KeyVault/vaults@2021-10-01' existing = if (
   scope: resourceGroup(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultResourceGroup : resourceGroup().name)
 }
 
+module queryPrivateIPFromSubnet 'modules/_deployment-scripts/_ds_query_available_private_ip_from_subnet.bicep' = if (enableAppGWIngress && appgwUsePrivateIP) {
+  name: 'query-available-private-ip-for-app-gateway'
+  params: {
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
+    identity: identity
+    location: location
+    subnetId: vnetForAppgatewayDeployment.outputs.subIdForApplicationGateway
+    knownIP: _appGatewaySubnetStartAddress
+  }
+  dependsOn: [
+    vnetForAppgatewayDeployment
+  ]
+}
+
 module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enableAppGWIngress) {
   name: 'app-gateway-deployment'
   params: {
@@ -310,14 +373,16 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddressName
     nameSuffix: guidValue
     location: location
+    gatewaySubnetId: vnetForAppgatewayDeployment.outputs.subIdForApplicationGateway
+    staticPrivateFrontentIP: _appgwUsePrivateIP ? queryPrivateIPFromSubnet.outputs.privateIP : ''
+    usePrivateIP: appgwUsePrivateIP
   }
   dependsOn: [
     appgwStartPid
+    queryPrivateIPFromSubnet
   ]
 }
 
-// Workaround arm-ttk test "Parameter Types Should Be Consistent"
-var _enableAppGWIngress = enableAppGWIngress
 module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' = if (enableAppGWIngress) {
   name: 'networking-deployment'
   params: {
@@ -333,7 +398,7 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
 
     appgwName: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
     appgwAlias: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayAlias : ''
-    appgwVNetName: _enableAppGWIngress ? appgwDeployment.outputs.vnetName : ''
+    appgwUsePrivateIP: appgwUsePrivateIP
     servicePrincipal: servicePrincipal
 
     aksClusterRGName: const_clusterRGName

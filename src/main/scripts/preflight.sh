@@ -40,6 +40,30 @@ function validate_status() {
   fi
 }
 
+# To make sure the subnet only have application gateway
+function validate_appgateway_vnet() {
+  echo_stdout "VNET for application gateway: ${VNET_FOR_APPLICATIONGATEWAY}"
+  local vnetName=$(echo ${VNET_FOR_APPLICATIONGATEWAY} | jq '.name' | tr -d "\"")
+  local vnetResourceGroup=$(echo ${VNET_FOR_APPLICATIONGATEWAY} | jq '.resourceGroup' | tr -d "\"")
+  local newOrExisting=$(echo ${VNET_FOR_APPLICATIONGATEWAY} | jq '.newOrExisting' | tr -d "\"")
+  local subnetName=$(echo ${VNET_FOR_APPLICATIONGATEWAY} | jq '.subnets.gatewaySubnet.name' | tr -d "\"")
+
+  if [[ "${newOrExisting,,}" != "new" ]]; then
+    # the subnet can only have Application Gateway.
+    # query ipConfigurations:
+    # if lenght of ipConfigurations is greater than 0, the subnet fails to meet requirement of Application Gateway.
+    local ret=$(az network vnet show \
+      -g ${vnetResourceGroup} \
+      --name ${vnetName} \
+      | jq ".subnets[] | select(.name==\"${subnetName}\") | .ipConfigurations | length")
+
+    if [ $ret -gt 0 ]; then
+      echo_stderr "ERROR: invalid subnet for Application Gateway, the subnet has ${ret} connected device(s). Make sure the subnet is only for Application Gateway."
+      exit 1
+    fi
+  fi
+}
+
 function get_application_gateway_certificate_from_keyvault() {
   # check key vault accessibility for template deployment
   local enabledForTemplateDeployment=$(az keyvault show --name ${APPLICATION_GATEWAY_SSL_KEYVAULT_NAME} --query "properties.enabledForTemplateDeployment")
@@ -155,6 +179,7 @@ if [ $? == 1 ]; then
 fi
 
 if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
+  validate_appgateway_vnet
   validate_gateway_frontend_certificates
   validate_service_principal
 fi

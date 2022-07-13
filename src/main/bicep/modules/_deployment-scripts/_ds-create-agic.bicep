@@ -35,7 +35,7 @@ param appgwFrontendSSLCertPsw string = newGuid()
 
 param appgwAlias string = 'appgw-contoso-alias'
 param appgwName string = 'appgw-contoso'
-param appgwVNetName string = 'vnet-contoso'
+param appgwUsePrivateIP bool = false
 @secure()
 param servicePrincipal string = newGuid()
 
@@ -89,8 +89,8 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: appgwAlias
       }
       {
-        name: 'APP_GW_VNET_NAME'
-        value: appgwVNetName
+        name: 'APP_GW_USE_PRIVATE_IP'
+        value: string(appgwUsePrivateIP)
       }
       {
         name: 'APP_GW_FRONTEND_SSL_CERT_DATA'
