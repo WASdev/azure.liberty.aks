@@ -317,7 +317,7 @@
                                         },
                                         "constraints": {
                                             "minAddressPrefixSize": "/24",
-                                            "minAddressCount": 38,
+                                            "minAddressCount": 250,
                                             "requireContiguousAddresses": false
                                         }
                                     }
