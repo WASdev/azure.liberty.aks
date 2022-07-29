@@ -152,6 +152,7 @@ var const_availabilityZones = [
 var const_azureSubjectName = format('{0}.{1}.{2}', name_dnsNameforApplicationGateway, location, 'cloudapp.azure.com')
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
 var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
+var const_newVnet = (vnetForApplicationGateway.newOrExisting == 'new') ? true : false
 var const_regionsSupportAvailabilityZones = [
   'australiaeast'
   'brazilsouth'
@@ -184,6 +185,9 @@ var name_dnsNameforApplicationGateway = format('{0}{1}', dnsNameforApplicationGa
 var name_keyVaultName = format('keyvault{0}', guidValue)
 var name_prefilghtDsName = format('preflightds{0}', guidValue)
 var name_primaryDsName = format('primaryds{0}', guidValue)
+var name_subnet = vnetForApplicationGateway.subnets.gatewaySubnet.name
+var name_vnet = vnetForApplicationGateway.name
+var ref_subId = const_newVnet ? resourceId('Microsoft.Network/virtualNetworks/subnets', name_vnet, name_subnet) : existingSubnet.id
 
 // Workaround arm-ttk test "Parameter Types Should Be Consistent"
 var _appgwUsePrivateIP = appgwUsePrivateIP
@@ -268,6 +272,18 @@ resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if 
   dependsOn: [
     preflightDsDeployment
   ]
+}
+
+// Get existing VNET
+resource existingVnet 'Microsoft.Network/virtualNetworks@2021-08-01' existing = if (enableAppGWIngress && !const_newVnet) {
+  name: name_vnet
+  scope: resourceGroup(vnetForApplicationGateway.resourceGroup)
+}
+
+// Get existing subnet
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2021-08-01' existing = if (enableAppGWIngress && !const_newVnet) {
+  name: name_subnet
+  parent: existingVnet
 }
 
 // To void space overlap with AKS Vnet, must deploy the Applciation Gateway VNet before AKS deployment
@@ -358,7 +374,8 @@ module queryPrivateIPFromSubnet 'modules/_deployment-scripts/_ds_query_available
     _artifactsLocationSasToken: _artifactsLocationSasToken
     identity: identity
     location: location
-    subnetId: vnetForAppgatewayDeployment.outputs.subIdForApplicationGateway
+    subnetId: ref_subId
+
     knownIP: _appGatewaySubnetStartAddress
   }
   dependsOn: [
@@ -373,7 +390,7 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
     gatewayPublicIPAddressName: name_appGatewayPublicIPAddressName
     nameSuffix: guidValue
     location: location
-    gatewaySubnetId: vnetForAppgatewayDeployment.outputs.subIdForApplicationGateway
+    gatewaySubnetId: ref_subId
     staticPrivateFrontentIP: _appgwUsePrivateIP ? queryPrivateIPFromSubnet.outputs.privateIP : ''
     usePrivateIP: appgwUsePrivateIP
   }
