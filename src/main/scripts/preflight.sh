@@ -171,13 +171,6 @@ if [ ${roleLength} -ne 1 ]; then
     fi
 fi
 
-# Check if the user assigned managed identity has Directory readers role in the Azure AD
-az ad user list 1>/dev/null
-if [ $? == 1 ]; then
-    echo "The user-assigned managed identity must have Directory readers role in the Azure AD, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
-    exit 1
-fi
-
 if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_appgateway_vnet
   validate_gateway_frontend_certificates
