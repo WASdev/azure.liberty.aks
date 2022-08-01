@@ -15,7 +15,7 @@
 */
 
 @description('Managed identity to be used for the deployment script. Currently, only user-assigned MSI is supported.')
-param identity object
+param identity object = {}
 
 @description('Used to name the new Azure Key Vault resoure.')
 param keyVaultName string = 'kv-${uniqueString(utcValue)}'

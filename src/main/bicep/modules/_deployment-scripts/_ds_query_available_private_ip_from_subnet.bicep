@@ -21,7 +21,7 @@ param _artifactsLocationSasToken string = ''
 param subnetId string = '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/resourcegroupname/providers/Microsoft.Network/virtualNetworks/vnetname/subnets/subnetname'
 param knownIP string = '10.0.0.1'
 
-param identity object
+param identity object = {}
 param location string
 param utcValue string = utcNow()
 

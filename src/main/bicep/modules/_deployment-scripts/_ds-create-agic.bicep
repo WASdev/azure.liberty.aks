@@ -19,7 +19,7 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 param _artifactsLocationSasToken string = ''
 param location string
 
-param identity object
+param identity object = {}
 
 @allowed([
   'haveCert'

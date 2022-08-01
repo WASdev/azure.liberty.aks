@@ -25,7 +25,7 @@ param certificatePasswordValue string = newGuid()
 @description('Property to specify whether Azure Resource Manager is permitted to retrieve secrets from the key vault.')
 param enabledForTemplateDeployment bool = true
 
-param identity object
+param identity object = {}
 param location string
 param permission object = {
   certificates: [
