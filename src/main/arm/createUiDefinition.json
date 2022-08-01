@@ -618,6 +618,7 @@
             "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
             "createACR": "[bool(steps('Cluster').acrInfo.createACR)]",
             "acrName": "[last(split(steps('Cluster').acrInfo.acrSelector.id, '/'))]",
+            "acrRGName": "[last(take(split(steps('Cluster').acrInfo.acrSelector.id, '/'), 5))]",
             "enableAppGWIngress": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
             "vnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway]",
             "newOrExistingVnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.newOrExisting]",

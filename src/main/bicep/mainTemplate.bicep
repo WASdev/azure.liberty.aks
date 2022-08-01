@@ -48,6 +48,9 @@ param createACR bool = true
 @description('Name for the existing ACR')
 param acrName string = ''
 
+@description('Name for the resource group of the existing ACR')
+param acrRGName string = ''
+
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
 
@@ -130,6 +133,7 @@ param appReplicas int = 2
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+var const_acrRGName = (createACR ? resourceGroup().name : acrRGName)
 var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
 var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
 var const_appFrontendTlsSecretName = format('secret{0}', guidValue)
@@ -239,6 +243,12 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
   ]
 }
 
+// Get existing ACR
+resource existingAcr 'Microsoft.ContainerRegistry/registries@2021-09-01' existing = if (!createACR) {
+  name: name_acrName
+  scope: resourceGroup(const_acrRGName)
+}
+
 resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if (createACR) {
   name: name_acrName
   location: location
@@ -278,6 +288,12 @@ module vnetForAppgatewayDeployment 'modules/_azure-resoruces/_vnetAppGateway.bic
   dependsOn: [
     preflightDsDeployment
   ]
+}
+
+// Get existing cluster
+resource existingCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' existing = if (!createCluster) {
+  name: name_clusterName
+  scope: resourceGroup(const_clusterRGName)
 }
 
 resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-01' = if (createCluster) {

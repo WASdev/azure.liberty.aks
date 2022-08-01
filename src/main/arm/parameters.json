@@ -20,6 +20,9 @@
         "acrName": {
             "value": "${acrName}"
         },
+        "acrRGName": {
+            "value": "${acrRGName}"
+        },
         "enableAppGWIngress": {
             "value": "${enableAppGWIngress}"
         },
