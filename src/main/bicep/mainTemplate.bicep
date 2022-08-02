@@ -320,7 +320,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
 }
 
 module acrPullRoleAssignment 'modules/_rolesAssignment/_acrPullRoleAssignment.bicep' = {
-  name: 'allow-agic-access-current-resource-group'
+  name: 'assign-acrpull-role-to-kubelet-identity'
   scope: resourceGroup(const_acrRGName)
   params: {
     aksClusterName: name_clusterName
