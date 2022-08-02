@@ -441,6 +441,7 @@ module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
     _artifactsLocationSasToken: _artifactsLocationSasToken
     identity: obj_uamiForDeploymentScript
     arguments: const_arguments
+    deployApplication: deployApplication
     enableAppGWIngress: enableAppGWIngress
     appFrontendTlsSecretName: const_appFrontendTlsSecretName
     enableCookieBasedAffinity: enableCookieBasedAffinity

@@ -21,6 +21,7 @@ param location string
 param name string = ''
 param identity object = {}
 param arguments string = ''
+param deployApplication bool = false
 param enableAppGWIngress bool = false
 param appFrontendTlsSecretName string =''
 param enableCookieBasedAffinity bool = false
@@ -65,5 +66,5 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   }
 }
 
-output appEndpoint string = deploymentScript.properties.outputs.appEndpoint
+output appEndpoint string = (deployApplication && !enableAppGWIngress) ? deploymentScript.properties.outputs.appEndpoint : ''
 output appDeploymentYaml string = deploymentScript.properties.outputs.appDeploymentYaml
