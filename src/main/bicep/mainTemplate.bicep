@@ -243,12 +243,6 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
   ]
 }
 
-// Get existing ACR
-resource existingAcr 'Microsoft.ContainerRegistry/registries@2021-09-01' existing = if (!createACR) {
-  name: name_acrName
-  scope: resourceGroup(const_acrRGName)
-}
-
 resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if (createACR) {
   name: name_acrName
   location: location
@@ -290,12 +284,6 @@ module vnetForAppgatewayDeployment 'modules/_azure-resoruces/_vnetAppGateway.bic
   ]
 }
 
-// Get existing cluster
-resource existingCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' existing = if (!createCluster) {
-  name: name_clusterName
-  scope: resourceGroup(const_clusterRGName)
-}
-
 resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-01' = if (createCluster) {
   name: name_clusterName
   location: location
@@ -331,11 +319,23 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
   ]
 }
 
+module acrPullRoleAssignment 'modules/_rolesAssignment/_acrPullRoleAssignment.bicep' = {
+  name: 'allow-agic-access-current-resource-group'
+  scope: resourceGroup(const_acrRGName)
+  params: {
+    aksClusterName: name_clusterName
+    aksClusterRGName: const_clusterRGName
+  }
+  dependsOn: [
+    clusterDeployment
+  ]
+}
+
 module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   name: '43c417c4-4f5a-555e-a9ba-b2d01d88de1f'
   params: {}
   dependsOn: [
-    clusterDeployment
+    acrPullRoleAssignment
   ]
 }
 
@@ -446,7 +446,7 @@ module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
     enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
-    clusterDeployment
+    acrPullRoleAssignment
     appgwEndPid
   ]
 }
