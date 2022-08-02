@@ -158,8 +158,10 @@ apk add docker-cli
 az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
-# Attach the acr instance to the AKS cluster
-az aks update -g $clusterRGName -n $clusterName --attach-acr $acrName >> $logFile
+# Assign AcrPull role to the kubelet identity of the AKS cluster
+AKS_IDENTITY_ID=$(az aks show -g $clusterRGName -n $clusterName --query "identityProfile.kubeletidentity.objectId" --output tsv)
+ACR_ID=$(az acr show -n $acrName --query id -o tsv)
+az role assignment create --assignee-object-id $AKS_IDENTITY_ID --scope $ACR_ID --role acrpull >> $logFile
 
 # Install Open Liberty Operator
 OPERATOR_VERSION=0.8.2
