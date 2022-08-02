@@ -14,8 +14,8 @@
  limitations under the License.
 */
 
-param aksClusterName string 
-param aksClusterRGName string
+param aksClusterName string = ''
+param aksClusterRGName string = ''
 param utcValue string = utcNow()
 
 var const_APIVersion = '2020-12-01'
