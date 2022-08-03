@@ -17,9 +17,9 @@
 param location string
 
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
-var const_roleDefinitionIdOfOwner = '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
+var const_roleDefinitionIdOfContributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var name_deploymentScriptUserDefinedManagedIdentity = 'ol-aks-deployment-script-user-defined-managed-itentity'
-var name_deploymentScriptOwnerRoleAssignmentName = guid('${resourceGroup().id}${name_deploymentScriptUserDefinedManagedIdentity}Deployment Script')
+var name_deploymentScriptContributorRoleAssignmentName = guid('${resourceGroup().id}${name_deploymentScriptUserDefinedManagedIdentity}Deployment Script')
 
 // UAMI for deployment script
 resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@2021-09-30-preview' = {
@@ -27,12 +27,12 @@ resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentiti
   location: location
 }
 
-// Assign Owner role in subscription scope, we need the permission to get/update resource cross resource group.
+// Assign Contributor role in subscription scope, we need the permission to get/update resource cross resource groups.
 module deploymentScriptUAMICotibutorRoleAssignment '_rolesAssignment/_roleAssignmentinSubscription.bicep' = {
-  name: name_deploymentScriptOwnerRoleAssignmentName
+  name: name_deploymentScriptContributorRoleAssignmentName
   scope: subscription()
   params: {
-    roleDefinitionId: const_roleDefinitionIdOfOwner
+    roleDefinitionId: const_roleDefinitionIdOfContributor
     principalId: reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', name_deploymentScriptUserDefinedManagedIdentity)).principalId
   }
 }

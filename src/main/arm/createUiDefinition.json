@@ -10,7 +10,7 @@
                 "visible": true,
                 "options": {
                     "icon": "Info",
-                    "text": "The Azure identity deploying this offer must have <a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner'>Owner</a> role of the current subscription.</li>"
+                    "text": "The Azure identity deploying this offer must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
                 }
             },
             {

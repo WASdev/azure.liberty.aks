@@ -160,11 +160,11 @@ fi
 # Query principal Id of the user-assigned managed identity
 principalId=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "principalId" -o tsv)
 
-# Check if the user assigned managed identity has Owner role
+# Check if the user assigned managed identity has Contributor role
 roleAssignments=$(az role assignment list --assignee ${principalId})
-roleLength=$(echo $roleAssignments | jq '[ .[] | select(.roleDefinitionName=="Owner") ] | length')
+roleLength=$(echo $roleAssignments | jq '[ .[] | select(.roleDefinitionName=="Contributor") ] | length')
 if [ ${roleLength} -ne 1 ]; then
-  echo "The user-assigned managed identity must have the Owner role in the subscription, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
+  echo "The user-assigned managed identity must have the Contributor role in the subscription, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
   exit 1
 fi
 
