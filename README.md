@@ -11,7 +11,7 @@
 ## Prerequisites
 
 1. You will need an Azure subscription. If you don't have one, you can get one for free for one year [here](https://azure.microsoft.com/free).
-1. You need to have an **Owner** role in the subscription.
+1. You need to have either an **Owner** role or **Contributor** and **User Access Administrator** roles in the subscription.
 1. Install a Java SE implementation (for example, [AdoptOpenJDK OpenJDK 8 LTS/OpenJ9](https://adoptopenjdk.net/?variant=openjdk8&jvmVariant=openj9)).
 1. Install [Maven](https://maven.apache.org/download.cgi) 3.5.0 or higher.
 1. Install [Docker](https://docs.docker.com/get-docker/) for your OS.
