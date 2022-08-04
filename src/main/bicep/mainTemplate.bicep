@@ -325,6 +325,8 @@ module acrPullRoleAssignment 'modules/_rolesAssignment/_acrPullRoleAssignment.bi
   params: {
     aksClusterName: name_clusterName
     aksClusterRGName: const_clusterRGName
+    acrName: name_acrName
+    acrRGName: const_acrRGName
   }
   dependsOn: [
     clusterDeployment
