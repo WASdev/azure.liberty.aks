@@ -261,3 +261,6 @@ if [ "$deployApplication" = True ] && [ "$ENABLE_APP_GW_INGRESS" = False ]; then
 fi
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
+
+# Delete uami generated before
+az identity delete --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}
