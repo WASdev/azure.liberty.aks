@@ -5,27 +5,12 @@
     "parameters": {
         "basics": [
             {
-                "name": "errInfo",
+                "name": "infoForBeforeDeployment",
                 "type": "Microsoft.Common.InfoBox",
-                "visible": "[not(equals(length(basics('identity').userAssignedIdentities), 1))]",
+                "visible": true,
                 "options": {
-                    "icon": "Error",
-                    "text": "<b>The deployment will fail unless the roles specified here are assigned to the user-assigned managed identity.</b><br><br>Select <b>only one</b> user-assigned managed identity that has (1) an <b>Owner</b> role in the subscription, and (2) a <b>Directory readers</b> role in Azure AD.<br><br>You can find more details from the following articles:<li><a href='https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities?pivots=identity-mi-methods-azp#create-a-user-assigned-managed-identity' target='_blank'>Create a user-assigned managed identity</a></li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/role-assignments-portal-managed-identity#user-assigned-managed-identity' target='_blank'>Assign a role to a user-assigned managed identity</a></li><li><a href='https://docs.microsoft.com/azure/active-directory/roles/manage-roles-portal#assign-a-role' target='_blank'>Assign Azure AD roles to a user-assigned managed identity</a></li>"
-                }
-            },
-            {
-                "name": "identity",
-                "type": "Microsoft.ManagedIdentity.IdentitySelector",
-                "label": "Managed Identity Configuration",
-                "toolTip": {
-                    "userAssignedIdentity": "Add a user-assigned managed identity that has (1) an <b>Owner</b> role in the subscription, and (2) a <b>Directory readers</b> role in Azure AD to enable the application deployment."
-                },
-                "defaultValue": {
-                    "systemAssignedIdentity": "Off"
-                },
-                "options": {
-                    "hideSystemAssignedIdentity": true,
-                    "hideUserAssignedIdentity": false
+                    "icon": "Info",
+                    "text": "The Azure identity deploying this offer must have one of the following two sets of Azure role-based access control roles:<br> <li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor'>Contributor</a> <b>and</b> <a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator'>User Access Administrator</a> of the current subscription.</li><li><a href='https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner'>Owner</a> of the current subscription.</li>"
                 }
             },
             {
@@ -625,7 +610,6 @@
         ],
         "outputs": {
             "location": "[location()]",
-            "identity": "[basics('identity')]",
             "createCluster": "[bool(steps('Cluster').clusterInfo.createCluster)]",
             "vmSize": "[steps('Cluster').clusterInfo.vmSizeSelect]",
             "minCount": "[int(steps('Cluster').clusterInfo.minCount)]",
@@ -634,6 +618,7 @@
             "clusterRGName": "[last(take(split(steps('Cluster').clusterInfo.clusterSelector.id, '/'), 5))]",
             "createACR": "[bool(steps('Cluster').acrInfo.createACR)]",
             "acrName": "[last(split(steps('Cluster').acrInfo.acrSelector.id, '/'))]",
+            "acrRGName": "[last(take(split(steps('Cluster').acrInfo.acrSelector.id, '/'), 5))]",
             "enableAppGWIngress": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
             "vnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway]",
             "newOrExistingVnetForApplicationGateway": "[steps('section_appGateway').appgwIngress.vnetForApplicationGateway.newOrExisting]",

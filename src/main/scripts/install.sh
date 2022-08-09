@@ -158,9 +158,6 @@ apk add docker-cli
 az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
-# Attach the acr instance to the AKS cluster
-az aks update -g $clusterRGName -n $clusterName --attach-acr $acrName >> $logFile
-
 # Install Open Liberty Operator
 OPERATOR_VERSION=0.8.2
 mkdir -p overlays/watch-all-namespaces
@@ -264,3 +261,6 @@ if [ "$deployApplication" = True ] && [ "$ENABLE_APP_GW_INGRESS" = False ]; then
 fi
 echo "Result is: $result" >> $logFile
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
+
+# Delete uami generated before
+az identity delete --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}

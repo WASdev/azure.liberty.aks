@@ -24,9 +24,6 @@ param _artifactsLocationSasToken string = ''
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
-@description('User-assigned managed identity granted with contributor role of the same subscription')
-param identity object
-
 @description('Flag indicating whether to create a new cluster or not')
 param createCluster bool = true
 
@@ -50,6 +47,9 @@ param createACR bool = true
 
 @description('Name for the existing ACR')
 param acrName string = ''
+
+@description('Name for the resource group of the existing ACR')
+param acrRGName string = ''
 
 @description('true to set up Application Gateway ingress.')
 param enableAppGWIngress bool = false
@@ -133,6 +133,7 @@ param appReplicas int = 2
 
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
+var const_acrRGName = (createACR ? resourceGroup().name : acrRGName)
 var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
 var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
 var const_appFrontendTlsSecretName = format('secret{0}', guidValue)
@@ -177,7 +178,6 @@ var const_regionsSupportAvailabilityZones = [
   'westus2'
   'westus3'
 ]
-var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var name_acrName = createACR ? format('acr{0}', guidValue) : acrName
 var name_appGatewayPublicIPAddressName = format('{0}{1}', appGatewayPublicIPAddressName, guidValue)
 var name_clusterName = createCluster ? format('cluster{0}', guidValue) : clusterName
@@ -188,6 +188,13 @@ var name_primaryDsName = format('primaryds{0}', guidValue)
 var name_subnet = vnetForApplicationGateway.subnets.gatewaySubnet.name
 var name_vnet = vnetForApplicationGateway.name
 var ref_subId = const_newVnet ? resourceId('Microsoft.Network/virtualNetworks/subnets', name_vnet, name_subnet) : existingSubnet.id
+
+var obj_uamiForDeploymentScript = {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    '${uamiDeployment.outputs.uamiIdForDeploymentScript}': {}
+  }
+}
 
 // Workaround arm-ttk test "Parameter Types Should Be Consistent"
 var _appgwUsePrivateIP = appgwUsePrivateIP
@@ -200,64 +207,40 @@ module partnerCenterPid './modules/_pids/_empty.bicep' = {
   params: {}
 }
 
+module uamiDeployment 'modules/_uamiAndRoles.bicep' = {
+  name: 'uami-deployment'
+  params: {
+    location: location
+  }
+}
+
 module aksStartPid './modules/_pids/_empty.bicep' = {
   name: '628cae16-c133-5a2e-ae93-2b44748012fe'
   params: {}
 }
 
-resource preflightDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' = {
   name: name_prefilghtDsName
-  location: location
-  kind: 'AzureCLI'
-  identity: identity
-  properties: {
-    azCliVersion: '2.15.0'
-    primaryScriptUri: uri(const_scriptLocation, format('preflight.sh{0}', _artifactsLocationSasToken))
-    environmentVariables: [
-      {
-        name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
-        value: string(enableAppGWIngress)
-      }
-      {
-        name: 'VNET_FOR_APPLICATIONGATEWAY'
-        value: string(vnetForApplicationGateway)
-      }
-      {
-        name: 'APPLICATION_GATEWAY_CERTIFICATE_OPTION'
-        value: appGatewayCertificateOption
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_NAME'
-        value: keyVaultName
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_RESOURCEGROUP'
-        value: keyVaultResourceGroup
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_DATA_SECRET_NAME'
-        value: keyVaultSSLCertDataSecretName
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_PASSWORD_SECRET_NAME'
-        value: keyVaultSSLCertPasswordSecretName
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_DATA'
-        secureValue: appGatewaySSLCertData
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'
-        secureValue: appGatewaySSLCertPassword
-      }
-      {
-        name: 'BASE64_FOR_SERVICE_PRINCIPAL'
-        secureValue: servicePrincipal
-      }
-    ]
-    cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P1D'
+  params: {
+    name: name_prefilghtDsName
+    location: location
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
+    enableAppGWIngress: enableAppGWIngress
+    vnetForApplicationGateway: vnetForApplicationGateway
+    appGatewayCertificateOption: appGatewayCertificateOption
+    keyVaultName: keyVaultName
+    keyVaultResourceGroup: keyVaultResourceGroup
+    keyVaultSSLCertDataSecretName: keyVaultSSLCertDataSecretName
+    keyVaultSSLCertPasswordSecretName: keyVaultSSLCertPasswordSecretName
+    appGatewaySSLCertData: appGatewaySSLCertData
+    appGatewaySSLCertPassword: appGatewaySSLCertPassword
+    servicePrincipal: servicePrincipal
   }
+  dependsOn: [
+    uamiDeployment
+  ]
 }
 
 resource acrDeployment 'Microsoft.ContainerRegistry/registries@2021-09-01' = if (createACR) {
@@ -336,11 +319,25 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-0
   ]
 }
 
+module acrPullRoleAssignment 'modules/_rolesAssignment/_acrPullRoleAssignment.bicep' = {
+  name: 'assign-acrpull-role-to-kubelet-identity'
+  scope: resourceGroup(const_acrRGName)
+  params: {
+    aksClusterName: name_clusterName
+    aksClusterRGName: const_clusterRGName
+    acrName: name_acrName
+    acrRGName: const_acrRGName
+  }
+  dependsOn: [
+    clusterDeployment
+  ]
+}
+
 module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   name: '43c417c4-4f5a-555e-a9ba-b2d01d88de1f'
   params: {}
   dependsOn: [
-    clusterDeployment
+    acrPullRoleAssignment
   ]
 }
 
@@ -349,7 +346,7 @@ module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep
   params: {
     certificateDataValue: appGatewaySSLCertData
     certificatePasswordValue: appGatewaySSLCertPassword
-    identity: identity
+    identity: obj_uamiForDeploymentScript
     location: location
     sku: keyVaultSku
     subjectName: format('CN={0}', const_azureSubjectName)
@@ -372,7 +369,7 @@ module queryPrivateIPFromSubnet 'modules/_deployment-scripts/_ds_query_available
   params: {
     _artifactsLocation: _artifactsLocation
     _artifactsLocationSasToken: _artifactsLocationSasToken
-    identity: identity
+    identity: obj_uamiForDeploymentScript
     location: location
     subnetId: ref_subId
 
@@ -407,7 +404,7 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
     _artifactsLocationSasToken: _artifactsLocationSasToken
     location: location
 
-    identity: identity
+    identity: obj_uamiForDeploymentScript
 
     appgwCertificateOption: appGatewayCertificateOption
     appgwFrontendSSLCertData: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertDataSecretName : appgwSecretDeployment.outputs.sslCertDataSecretName)
@@ -437,38 +434,22 @@ module appgwEndPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   ]
 }
 
-resource primaryDsDeployment 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
   name: name_primaryDsName
-  location: location
-  kind: 'AzureCLI'
-  identity: identity
-  properties: {
-    azCliVersion: '2.15.0'
+  params: {
+    name: name_primaryDsName
+    location: location
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
+    identity: obj_uamiForDeploymentScript
     arguments: const_arguments
-    primaryScriptUri: uri(const_scriptLocation, format('install.sh{0}', _artifactsLocationSasToken))
-    supportingScriptUris: [
-      uri(const_scriptLocation, format('open-liberty-application.yaml.template{0}', _artifactsLocationSasToken))
-      uri(const_scriptLocation, format('open-liberty-application-agic.yaml.template{0}', _artifactsLocationSasToken))
-    ]
-    environmentVariables: [
-      {
-        name: 'ENABLE_APP_GW_INGRESS'
-        value: string(enableAppGWIngress)
-      }
-      {
-        name: 'APP_FRONTEND_TLS_SECRET_NAME'
-        value: string(const_appFrontendTlsSecretName)
-      }
-      {
-        name: 'ENABLE_COOKIE_BASED_AFFINITY'
-        value: string(enableCookieBasedAffinity)
-      }
-    ]
-    cleanupPreference: 'OnSuccess'
-    retentionInterval: 'P1D'
+    deployApplication: deployApplication
+    enableAppGWIngress: enableAppGWIngress
+    appFrontendTlsSecretName: const_appFrontendTlsSecretName
+    enableCookieBasedAffinity: enableCookieBasedAffinity
   }
   dependsOn: [
-    clusterDeployment
+    acrPullRoleAssignment
     appgwEndPid
   ]
 }
@@ -481,7 +462,7 @@ module aksEndPid './modules/_pids/_empty.bicep' = {
   ]
 }
 
-output appHttpEndpoint string = deployApplication ? (enableAppGWIngress ? appgwDeployment.outputs.appGatewayURL : primaryDsDeployment.properties.outputs.appEndpoint ) : ''
+output appHttpEndpoint string = deployApplication ? (enableAppGWIngress ? appgwDeployment.outputs.appGatewayURL : primaryDsDeployment.outputs.appEndpoint ) : ''
 output appHttpsEndoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
 output clusterName string = name_clusterName
 output clusterRGName string = const_clusterRGName
@@ -499,6 +480,6 @@ output cmdToLoginInRegistry string = format('az acr login -n {0}', name_acrName)
 output cmdToPullImageFromRegistry string = deployApplication ? format('docker pull $({0})/{1}', const_cmdToGetAcrLoginServer, const_appImage) : ''
 output cmdToTagImageWithRegistry string = format('docker tag <source-image-path> $({0})/<target-image-name:tag>', const_cmdToGetAcrLoginServer)
 output cmdToPushImageToRegistry string = format('docker push $({0})/<target-image-name:tag>', const_cmdToGetAcrLoginServer)
-output appDeploymentYaml string = deployApplication? format('echo "{0}" | base64 -d', primaryDsDeployment.properties.outputs.appDeploymentYaml) : ''
-output appDeploymentTemplateYaml string =  !deployApplication ? format('echo "{0}" | base64 -d', primaryDsDeployment.properties.outputs.appDeploymentYaml) : ''
+output appDeploymentYaml string = deployApplication? format('echo "{0}" | base64 -d', primaryDsDeployment.outputs.appDeploymentYaml) : ''
+output appDeploymentTemplateYaml string =  !deployApplication ? format('echo "{0}" | base64 -d', primaryDsDeployment.outputs.appDeploymentYaml) : ''
 output cmdToUpdateOrCreateApplication string = 'kubectl apply -f <application-yaml-file-path>'

@@ -17,41 +17,54 @@
 param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
-
-param subnetId string = '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/resourcegroupname/providers/Microsoft.Network/virtualNetworks/vnetname/subnets/subnetname'
-param knownIP string = '10.0.0.1'
-
-param identity object = {}
 param location string
+param name string = ''
+param identity object = {}
+param arguments string = ''
+param deployApplication bool = false
+param enableAppGWIngress bool = false
+param appFrontendTlsSecretName string =''
+param enableCookieBasedAffinity bool = false
+
 param utcValue string = utcNow()
 
-var const_azcliVersion='2.15.0'
-var const_deploymentName='ds-query-private-ip'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_primaryScript='queryPrivateIPForAppGateway.sh'
+var const_olaTemplate='open-liberty-application.yaml.template'
+var const_olaAgicTemplate='open-liberty-application-agic.yaml.template'
+var const_primaryScript = 'install.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: const_deploymentName
+  name: name
   location: location
   kind: 'AzureCLI'
   identity: identity
   properties: {
-    azCliVersion: const_azcliVersion
+    azCliVersion: '2.15.0'
     environmentVariables: [
       {
-        name: 'SUBNET_ID'
-        value: subnetId
+        name: 'ENABLE_APP_GW_INGRESS'
+        value: string(enableAppGWIngress)
       }
       {
-        name: 'KNOWN_IP'
-        value: knownIP
+        name: 'APP_FRONTEND_TLS_SECRET_NAME'
+        value: string(appFrontendTlsSecretName)
+      }
+      {
+        name: 'ENABLE_COOKIE_BASED_AFFINITY'
+        value: string(enableCookieBasedAffinity)
       }
     ]
+    arguments: arguments
     primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    supportingScriptUris: [
+      uri(const_scriptLocation, format('{0}{1}', const_olaTemplate, _artifactsLocationSasToken))
+      uri(const_scriptLocation, format('{0}{1}', const_olaAgicTemplate, _artifactsLocationSasToken))
+    ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
   }
 }
 
-output privateIP string = string(reference(const_deploymentName).outputs.privateIP)
+output appEndpoint string = (deployApplication && !enableAppGWIngress) ? deploymentScript.properties.outputs.appEndpoint : ''
+output appDeploymentYaml string = deploymentScript.properties.outputs.appDeploymentYaml
