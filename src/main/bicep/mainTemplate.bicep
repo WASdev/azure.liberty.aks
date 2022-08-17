@@ -115,10 +115,6 @@ param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
 @description('The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate of Appliation Gateway frontend TLS/SSL')
 param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
 
-@secure()
-@description('Base64 string of service principal. use the command to generate a testing string: az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/<AZURE_SUBSCRIPTION_ID> | base64 -w0')
-param servicePrincipal string = newGuid()
-
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
 
@@ -236,7 +232,6 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     keyVaultSSLCertPasswordSecretName: keyVaultSSLCertPasswordSecretName
     appGatewaySSLCertData: appGatewaySSLCertData
     appGatewaySSLCertPassword: appGatewaySSLCertPassword
-    servicePrincipal: servicePrincipal
   }
   dependsOn: [
     uamiDeployment
@@ -397,7 +392,36 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
   ]
 }
 
-module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' = if (enableAppGWIngress) {
+module enableAgic 'modules/_deployment-scripts/_ds_enable_agic.bicep' = if (enableAppGWIngress) {
+  name: 'enable-agic'
+  params: {
+    _artifactsLocation: _artifactsLocation
+    _artifactsLocationSasToken: _artifactsLocationSasToken
+    location: location
+
+    identity: obj_uamiForDeploymentScript
+
+    aksClusterName: name_clusterName
+    aksClusterRGName: const_clusterRGName
+    appgwName: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
+  }
+  dependsOn: [
+    appgwDeployment
+  ]
+}
+
+module agicRoleAssignment 'modules/_rolesAssignment/_agicRoleAssignment.bicep' = if (enableAppGWIngress) {
+  name: 'allow-agic-access-current-resource-group'
+  params: {
+    aksClusterName: name_clusterName
+    aksClusterRGName: const_clusterRGName
+  }
+  dependsOn: [
+    enableAgic
+  ]
+}
+
+module networkingDeployment 'modules/_deployment-scripts/_ds-networking.bicep' = if (enableAppGWIngress) {
   name: 'networking-deployment'
   params: {
     _artifactsLocation: _artifactsLocation
@@ -411,9 +435,6 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
     appgwFrontendSSLCertPsw: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertPasswordSecretName : appgwSecretDeployment.outputs.sslCertPwdSecretName)
 
     appgwName: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
-    appgwAlias: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayAlias : ''
-    appgwUsePrivateIP: appgwUsePrivateIP
-    servicePrincipal: servicePrincipal
 
     aksClusterRGName: const_clusterRGName
     aksClusterName: name_clusterName
@@ -422,7 +443,7 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-create-agic.bicep' 
   }
   dependsOn: [
     appgwSecretDeployment
-    appgwDeployment
+    agicRoleAssignment
   ]
 }
 

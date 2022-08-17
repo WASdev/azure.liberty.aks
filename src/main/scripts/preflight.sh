@@ -116,34 +116,6 @@ function validate_gateway_frontend_certificates() {
   validate_status "access application gateway frontend key." "Make sure the Application Gateway frontend certificate is correct."
 }
 
-function validate_service_principal() {
-  local spObject=$(echo "${BASE64_FOR_SERVICE_PRINCIPAL}" | base64 -d)
-  validate_status "decode the service principal base64 string." "Invalid service principal."
-
-  local principalId=$(echo ${spObject} | jq '.clientId')
-  validate_status "get client id from the service principal." "Invalid service principal."
-
-  if [[ "${principalId}" == "null" ]] || [[ "${principalId}" == "" ]]; then
-    echo_stderr "the service principal is invalid."
-    exit 1
-  fi
-
-  echo_stdout "check if the service principal has Contributor or Owner role."
-  local roleLength=$(az role assignment list --assignee ${principalId} |
-    jq '[.[] | select(.roleDefinitionName=="Contributor" or .roleDefinitionName=="Owner")] | length')
-  
-  local re='^[0-9]+$'
-  if ! [[ $roleLength =~ $re ]] ; then
-    echo_stderr "You must grant the service principal with at least Contributor role."
-  fi
-
-  if [ ${roleLength} -lt 1 ]; then
-    echo_stderr "You must grant the service principal with at least Contributor role."
-  fi
-
-  echo_stdout "Check service principal: passed!"
-}
-
 # Get the type of managed identity
 uamiType=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "type" -o tsv)
 if [ $? == 1 ]; then
@@ -171,5 +143,4 @@ fi
 if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_appgateway_vnet
   validate_gateway_frontend_certificates
-  validate_service_principal
 fi

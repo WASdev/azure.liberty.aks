@@ -30,11 +30,7 @@
    1. Create a new AKS cluster and a new Azure Container Registry (ACR) instance with Application Gateway Ingress Controller (AGIC) enabled:
 
       ```bash
-      # Generate a base64 encoded service principal which is granted with contributor role of the subscription
-      subID=$(az account show --query 'id' -o tsv)
-      spBase64Encoded=$(az ad sp create-for-rbac --role Contributor --scopes /subscriptions/${subID} --sdk-auth | base64 -w0)
-
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=true -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DservicePrincipal=${spBase64Encoded} -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=true -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
    1. Or use an existing AKS cluster and an existing ACR instance without AGIC:

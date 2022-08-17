@@ -33,11 +33,7 @@ param appgwFrontendSSLCertData string = newGuid()
 @secure()
 param appgwFrontendSSLCertPsw string = newGuid()
 
-param appgwAlias string = 'appgw-contoso-alias'
 param appgwName string = 'appgw-contoso'
-param appgwUsePrivateIP bool = false
-@secure()
-param servicePrincipal string = newGuid()
 
 param aksClusterRGName string = 'aks-contoso-rg'
 param aksClusterName string = 'aks-contoso'
@@ -46,8 +42,6 @@ param appProjName string = 'default'
 
 param utcValue string = utcNow()
 
-var const_appgwHelmConfigTemplate='appgw-helm-config.yaml.template'
-var const_appgwSARoleBindingFile='appgw-ingress-clusterAdmin-roleBinding.yaml'
 var const_createGatewayIngressSvcScript = 'createAppGatewayIngress.sh'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 var const_primaryScript = 'createAppGatewayIngress.sh'
@@ -69,28 +63,12 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: aksClusterName
       }
       {
-        name: 'SUBSCRIPTION_ID'
-        value: subscription().id
-      }
-      {
-        name: 'CUR_RG_NAME'
+        name: 'CURRENT_RG_NAME'
         value: resourceGroup().name
-      }
-      {
-        name: 'SERVICE_PRINCIPAL'
-        secureValue: servicePrincipal
       }
       {
         name: 'APP_GW_NAME'
         value: appgwName
-      }
-      {
-        name: 'APP_GW_ALIAS'
-        value: appgwAlias
-      }
-      {
-        name: 'APP_GW_USE_PRIVATE_IP'
-        value: string(appgwUsePrivateIP)
       }
       {
         name: 'APP_GW_FRONTEND_SSL_CERT_DATA'
@@ -115,8 +93,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
     supportingScriptUris: [
-      uri(const_scriptLocation, '${const_appgwHelmConfigTemplate}${_artifactsLocationSasToken}')
-      uri(const_scriptLocation, '${const_appgwSARoleBindingFile}${_artifactsLocationSasToken}')
       uri(const_scriptLocation, '${const_createGatewayIngressSvcScript}${_artifactsLocationSasToken}')
     ]
     cleanupPreference: 'OnSuccess'

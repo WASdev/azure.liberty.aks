@@ -31,8 +31,6 @@ param keyVaultSSLCertPasswordSecretName string = ''
 param appGatewaySSLCertData string = ''
 @secure()
 param appGatewaySSLCertPassword string = ''
-@secure()
-param servicePrincipal string = ''
 
 param utcValue string = utcNow()
 
@@ -82,10 +80,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'
         secureValue: appGatewaySSLCertPassword
-      }
-      {
-        name: 'BASE64_FOR_SERVICE_PRINCIPAL'
-        secureValue: servicePrincipal
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
