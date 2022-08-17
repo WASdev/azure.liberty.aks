@@ -17,8 +17,8 @@
 param _artifactsLocation string = deployment().properties.templateLink.uri
 @secure()
 param _artifactsLocationSasToken string = ''
-param aksClusterName string 
-param aksClusterRGName string
+param aksClusterName string = ''
+param aksClusterRGName string = ''
 param appgwName string = 'appgw-contoso'
 param identity object = {}
 param location string
