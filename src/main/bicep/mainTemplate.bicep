@@ -471,6 +471,7 @@ module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
     enableAppGWIngress: enableAppGWIngress
     appFrontendTlsSecretName: const_appFrontendTlsSecretName
     enableCookieBasedAffinity: enableCookieBasedAffinity
+    appgwUsePrivateIP: appgwUsePrivateIP
   }
   dependsOn: [
     acrPullRoleAssignment

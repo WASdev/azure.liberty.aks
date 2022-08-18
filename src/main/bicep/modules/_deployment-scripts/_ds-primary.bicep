@@ -25,6 +25,7 @@ param deployApplication bool = false
 param enableAppGWIngress bool = false
 param appFrontendTlsSecretName string =''
 param enableCookieBasedAffinity bool = false
+param appgwUsePrivateIP bool = false
 
 param utcValue string = utcNow()
 
@@ -49,6 +50,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       {
         name: 'ENABLE_COOKIE_BASED_AFFINITY'
         value: string(enableCookieBasedAffinity)
+      }
+      {
+        name: 'APP_GW_USE_PRIVATE_IP'
+        value: string(appgwUsePrivateIP)
       }
     ]
     arguments: arguments

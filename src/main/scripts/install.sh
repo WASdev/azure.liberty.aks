@@ -198,6 +198,7 @@ fi
 
 appDeploymentFile=open-liberty-application.yaml
 export Enable_Cookie_Based_Affinity="${ENABLE_COOKIE_BASED_AFFINITY,,}"
+export App_Gw_Use_Private_Ip="${APP_GW_USE_PRIVATE_IP,,}"
 export Frontend_Tls_Secret=${APP_FRONTEND_TLS_SECRET_NAME}
 
 # Deploy application image if it's requested by the user
@@ -250,6 +251,7 @@ else
         | sed -e "s/\${Project_Name}/${Project_Name}/g" -e "s/\${Application_Replicas}/${Application_Replicas}/g" \
         | sed -e "s#\${Application_Image}#${Application_Image}#g" \
         | sed -e "s#\${Enable_Cookie_Based_Affinity}#${Enable_Cookie_Based_Affinity}#g" \
+        | sed -e "s#\${App_Gw_Use_Private_Ip}#${App_Gw_Use_Private_Ip}#g" \
         | sed -e "s#\${Frontend_Tls_Secret}#${Frontend_Tls_Secret}#g" \
         | base64)
 fi
