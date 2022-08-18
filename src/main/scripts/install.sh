@@ -14,7 +14,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-MAX_RETRIES=99
+MAX_RETRIES=299
 
 wait_deployment_complete() {
     deploymentName=$1
@@ -131,7 +131,7 @@ wait_ingress_available() {
         fi
         cnt=$((cnt+1))
 
-        sleep 5
+        sleep 30
         echo "Wait until the IP address of the ingress ${ingressName} is available, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
         ip=$(kubectl get ingress ${ingressName} -n ${namespaceName} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
         echo "ip is ${ip}" >> $logFile
