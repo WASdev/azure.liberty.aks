@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #      Copyright (c) Microsoft Corporation.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,33 +13,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
-echo "Script ${0} starts"
-
-function echo_stderr() {
-    echo >&2 "$@"
-    # The function is used for scripts running within Azure Deployment Script
-    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/errors.log
-}
-
-function echo_stdout() {
-    echo "$@"
-    # The function is used for scripts running within Azure Deployment Script
-    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/debug.log
-}
-
-# Validate teminal status with $?, exit with exception if errors happen.
-function utility_validate_status() {
-  if [ $? == 1 ]; then
-    echo_stderr "$@"
-    echo_stderr "Errors happen, exit 1."
-    exit 1
-  else
-    echo_stdout "$@"
-  fi
-}
 
 # Create network peers for aks and appgw
 function network_peers_aks_appgw() {
@@ -58,7 +33,7 @@ function network_peers_aks_appgw() {
         # assume all the agent pools are in the same vnet
         # e.g. /subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/foo-rg/providers/Microsoft.Network/virtualNetworks/foo-aks-vnet/subnets/default
         local aksAgent1Subnet=$(az aks show -n $AKS_CLUSTER_NAME -g $AKS_CLUSTER_RG_NAME | jq '.agentPoolProfiles[0] | .vnetSubnetId' | tr -d "\"")
-        utility_validate_status "Get subnet id of aks agent 0."
+        validate_status "Get subnet id of aks agent 0."
         aksNetWorkId=${aksAgent1Subnet%\/subnets\/*}
     fi
 
@@ -96,7 +71,7 @@ function network_peers_aks_appgw() {
             --resource-group ${appGatewayVnetResourceGroup} \
             --vnet-name ${appgwVnetName} \
             --allow-vnet-access
-        utility_validate_status "Create network peers for $aksNetWorkId and ${appgwNetworkId}."
+        validate_status "Create network peers for $aksNetWorkId and ${appgwNetworkId}."
 
         az network vnet peering create \
             --name aks-appgw-peer \
@@ -105,7 +80,7 @@ function network_peers_aks_appgw() {
             --vnet-name ${aksNetworkName} \
             --allow-vnet-access
 
-        utility_validate_status "Complete creating network peers for $aksNetWorkId and ${appgwNetworkId}."
+        validate_status "Complete creating network peers for $aksNetWorkId and ${appgwNetworkId}."
     fi
 
     # For Kubectl network plugin: https://azure.github.io/application-gateway-kubernetes-ingress/how-tos/networking/#with-kubenet
@@ -120,7 +95,7 @@ function network_peers_aks_appgw() {
             --ids $appGatewaySubnetId \
             --route-table $routeTableId
 
-        utility_validate_status "Associate the route table ${routeTableId} to Application Gateway's subnet ${appGatewaySubnetId}"
+        validate_status "Associate the route table ${routeTableId} to Application Gateway's subnet ${appGatewaySubnetId}"
     fi
 }
 
@@ -141,13 +116,13 @@ function output_create_gateway_ssl_k8s_secret() {
         -passin pass:${appgwFrontendSSLCertPassin} \
         -passout pass:${appgwFrontendSSLCertPsw}
 
-    utility_validate_status "Export key from frontend certificate."
+    validate_status "Export key from frontend certificate."
 
     openssl rsa -in ${scriptDir}/$appgwFrontCertKeyFileName \
         -out ${scriptDir}/$appgwFrontCertKeyDecrytedFileName \
         -passin pass:${appgwFrontendSSLCertPsw}
 
-    utility_validate_status "Decryte private key."
+    validate_status "Decryte private key."
 
     openssl pkcs12 \
         -in ${scriptDir}/$appgwFrontCertFileName \
@@ -156,7 +131,12 @@ function output_create_gateway_ssl_k8s_secret() {
         -out ${scriptDir}/$appgwFrontPublicCertFileName \
         -passin pass:${appgwFrontendSSLCertPassin}
 
-    utility_validate_status "Export cert from frontend certificate."
+    validate_status "Export cert from frontend certificate."
+
+    # Connect to cluster
+    install_kubectl
+    az aks get-credentials --resource-group ${AKS_CLUSTER_RG_NAME} --name ${AKS_CLUSTER_NAME} --overwrite-existing
+    validate_status "Connect to the AKS cluster."
 
     # Create namespace if it doesn't exist before
     kubectl get namespace ${appNamespace}
@@ -168,24 +148,10 @@ function output_create_gateway_ssl_k8s_secret() {
         --key="${scriptDir}/$appgwFrontCertKeyDecrytedFileName" \
         --cert="${scriptDir}/$appgwFrontPublicCertFileName"
 
-    utility_validate_status "create k8s tsl secret for app gateway frontend ssl termination."
-}
-
-function connect_to_aks_cluster() {
-    # Install kubectl
-    az aks install-cli 2>/dev/null
-    kubectl --help
-    utility_validate_status "Install kubectl."
-
-    # Connect to cluster
-    az aks get-credentials --resource-group ${AKS_CLUSTER_RG_NAME} --name ${AKS_CLUSTER_NAME} --overwrite-existing
-    utility_validate_status "Connect to the AKS cluster."
+    validate_status "create k8s tsl secret for app gateway frontend ssl termination."
 }
 
 function create_gateway_ingress() {
-    # connect to the aks cluster
-    connect_to_aks_cluster
-
     # create network peers between gateway vnet and aks vnet
     network_peers_aks_appgw
 
@@ -196,7 +162,9 @@ function create_gateway_ingress() {
 # Initialize
 script="${BASH_SOURCE[0]}"
 scriptDir="$(cd "$(dirname "${script}")" && pwd)"
+source ${scriptDir}/utility.sh
 
+# Main script
 appgwFrontendSSLCertData=${APP_GW_FRONTEND_SSL_CERT_DATA}
 appgwFrontendSSLCertPsw=${APP_GW_FRONTEND_SSL_CERT_PSW}
 appgwCertificateOption=${APP_GW_CERTIFICATE_OPTION}

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #      Copyright (c) Microsoft Corporation.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +14,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-function connect_to_aks_cluster() {
-    # Install kubectl
-    az aks install-cli 2>/dev/null
-    kubectl --help
-    utility_validate_status "Install kubectl."
-
-    # Connect to cluster
-    az aks get-credentials --resource-group ${AKS_CLUSTER_RG_NAME} --name ${AKS_CLUSTER_NAME} --overwrite-existing
-    utility_validate_status "Connect to the AKS cluster."
-}
-
 function install_azure_ingress() {
     local identityLength=$(az aks show -g ${AKS_CLUSTER_RG_NAME} -n ${AKS_CLUSTER_NAME} | jq '.identity | length')
     echo "identityLength ${identityLength}"
@@ -33,7 +24,7 @@ function install_azure_ingress() {
         # After updating, your cluster's control plane and addon pods will switch to use managed identity, but kubelet will KEEP USING SERVICE PRINCIPAL until you upgrade your agentpool.
         az aks update -y -g ${AKS_CLUSTER_RG_NAME} -n ${AKS_CLUSTER_NAME} --enable-managed-identity
 
-        utility_validate_status "Enable Applciation Gateway Ingress Controller for ${AKS_CLUSTER_NAME}."
+        validate_status "Enable Applciation Gateway Ingress Controller for ${AKS_CLUSTER_NAME}."
     fi
 
     local agicEnabled=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} | jq '.addonProfiles.ingressApplicationGateway.enabled')
@@ -50,11 +41,16 @@ function install_azure_ingress() {
 
     if [[ "${agicGatewayId}" != "${appgwId}" ]]; then
         az aks enable-addons -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} --addons ingress-appgw --appgw-id $appgwId
-        utility_validate_status "Install app gateway ingress controller."
+        validate_status "Install app gateway ingress controller."
     fi
 }
 
 function validate_azure_ingress() {
+    # Connect to cluster
+    install_kubectl
+    az aks get-credentials --resource-group ${AKS_CLUSTER_RG_NAME} --name ${AKS_CLUSTER_NAME} --overwrite-existing
+    validate_status "Connect to the AKS cluster."
+
     local ret=$(kubectl get pod -n kube-system | grep "ingress-appgw-deployment-*" | grep "Running")
     if [[ -z "$ret" ]]; then
         echo_stderr "Failed to enable azure ingress."
@@ -64,10 +60,13 @@ function validate_azure_ingress() {
     echo "appgw ingress is running."
 }
 
+# Initialize
+script="${BASH_SOURCE[0]}"
+scriptDir="$(cd "$(dirname "${script}")" && pwd)"
+source ${scriptDir}/utility.sh
+
 # Main script
 set -Eo pipefail
-
-connect_to_aks_cluster
 
 install_azure_ingress
 

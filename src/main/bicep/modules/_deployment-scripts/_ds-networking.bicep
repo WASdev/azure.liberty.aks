@@ -42,9 +42,7 @@ param appProjName string = 'default'
 
 param utcValue string = utcNow()
 
-var const_createGatewayIngressSvcScript = 'createAppGatewayIngress.sh'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_primaryScript = 'createAppGatewayIngress.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'ds-networking-deployment'
@@ -91,9 +89,9 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: appProjName
       }
     ]
-    primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, 'createAppGatewayIngress.sh${_artifactsLocationSasToken}')
     supportingScriptUris: [
-      uri(const_scriptLocation, '${const_createGatewayIngressSvcScript}${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'utility.sh${_artifactsLocationSasToken}')
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'

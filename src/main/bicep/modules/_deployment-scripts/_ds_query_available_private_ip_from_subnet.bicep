@@ -28,7 +28,6 @@ param utcValue string = utcNow()
 var const_azcliVersion='2.15.0'
 var const_deploymentName='ds-query-private-ip'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_primaryScript='queryPrivateIPForAppGateway.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: const_deploymentName
@@ -47,7 +46,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         value: knownIP
       }
     ]
-    primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, 'queryPrivateIPForAppGateway.sh${_artifactsLocationSasToken}')
+    supportingScriptUris: [
+      uri(const_scriptLocation, 'utility.sh${_artifactsLocationSasToken}')
+    ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue

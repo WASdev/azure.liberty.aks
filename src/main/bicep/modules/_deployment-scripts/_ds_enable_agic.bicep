@@ -24,9 +24,7 @@ param identity object = {}
 param location string
 param utcValue string = utcNow()
 
-var const_enableAgicScript = 'enableAgic.sh'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_primaryScript = 'enableAgic.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'ds-enable-agic'
@@ -35,9 +33,9 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   identity: identity
   properties: {
     azCliVersion: '2.33.1'
-    primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, 'enableAgic.sh${_artifactsLocationSasToken}')
     supportingScriptUris: [
-      uri(const_scriptLocation, '${const_enableAgicScript}${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'utility.sh${_artifactsLocationSasToken}')
     ]
     environmentVariables: [
       {

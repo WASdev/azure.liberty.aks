@@ -14,32 +14,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-function echo_stderr() {
-  echo "$@" 1>&2
-  # The function is used for scripts running within Azure Deployment Script
-  # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-  echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/errors.log
-}
-
-function echo_stdout() {
-  echo "$@"
-  # The function is used for scripts running within Azure Deployment Script
-  # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-  echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/debug.log
-}
-
-#Validate teminal status with $?, exit with exception if errors happen.
-# $1 - error message
-# $2 -  root cause message
-function validate_status() {
-  if [ $? != 0 ]; then
-    echo_stderr "Errors happen during: $1." $2
-    exit 1
-  else
-    echo_stdout "$1"
-  fi
-}
-
 # To make sure the subnet only have application gateway
 function validate_appgateway_vnet() {
   echo_stdout "VNET for application gateway: ${VNET_FOR_APPLICATIONGATEWAY}"
@@ -113,9 +87,15 @@ function validate_gateway_frontend_certificates() {
     -passin pass:${APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD} \
     -passout pass:${APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD}
   
-  validate_status "access application gateway frontend key." "Make sure the Application Gateway frontend certificate is correct."
+  validate_status_with_hint "access application gateway frontend key." "Make sure the Application Gateway frontend certificate is correct."
 }
 
+# Initialize
+script="${BASH_SOURCE[0]}"
+scriptDir="$(cd "$(dirname "${script}")" && pwd)"
+source ${scriptDir}/utility.sh
+
+# Main script
 # Get the type of managed identity
 uamiType=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "type" -o tsv)
 if [ $? == 1 ]; then

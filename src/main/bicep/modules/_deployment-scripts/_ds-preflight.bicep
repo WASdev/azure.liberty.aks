@@ -35,7 +35,6 @@ param appGatewaySSLCertPassword string = ''
 param utcValue string = utcNow()
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_primaryScript = 'preflight.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: name
@@ -82,7 +81,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         secureValue: appGatewaySSLCertPassword
       }
     ]
-    primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, 'preflight.sh${_artifactsLocationSasToken}')
+    supportingScriptUris: [
+      uri(const_scriptLocation, 'utility.sh${_artifactsLocationSasToken}')
+    ]
 
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
