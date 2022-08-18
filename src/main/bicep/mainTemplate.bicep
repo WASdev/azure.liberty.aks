@@ -223,6 +223,9 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     _artifactsLocation: _artifactsLocation
     _artifactsLocationSasToken: _artifactsLocationSasToken
     identity: obj_uamiForDeploymentScript
+    createCluster: createCluster
+    aksClusterName: name_clusterName
+    aksClusterRGName: const_clusterRGName
     enableAppGWIngress: enableAppGWIngress
     vnetForApplicationGateway: vnetForApplicationGateway
     appGatewayCertificateOption: appGatewayCertificateOption

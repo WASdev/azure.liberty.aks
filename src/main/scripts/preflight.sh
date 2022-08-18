@@ -14,6 +14,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# Validate that the agic addon hasn't been enabled for an existing aks cluster
+function validate_aks_agic() {
+  local agicEnabled=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} | jq '.addonProfiles.ingressApplicationGateway.enabled')
+  if [[ "${agicEnabled,,}" == "true" ]]; then
+    echo_stderr "The AGIC addon has already been enabled for the existing AKS cluster. It can't be enabled again with another Azure Application Gatway."
+    exit 1
+  fi
+}
+
 # To make sure the subnet only have application gateway
 function validate_appgateway_vnet() {
   echo_stdout "VNET for application gateway: ${VNET_FOR_APPLICATIONGATEWAY}"
@@ -118,6 +127,10 @@ roleLength=$(echo $roleAssignments | jq '[ .[] | select(.roleDefinitionName=="Co
 if [ ${roleLength} -ne 1 ]; then
   echo "The user-assigned managed identity must have the Contributor role in the subscription, please check ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY}" >&2
   exit 1
+fi
+
+if [[ "${CREATE_CLUSTER,,}" == "false" ]] && [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
+  validate_aks_agic
 fi
 
 if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then

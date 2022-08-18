@@ -20,6 +20,9 @@ param _artifactsLocationSasToken string = ''
 param location string
 param name string = ''
 param identity object = {}
+param createCluster bool = true
+param aksClusterName string = ''
+param aksClusterRGName string = ''
 param enableAppGWIngress bool = false
 param vnetForApplicationGateway object = {}
 param appGatewayCertificateOption string = ''
@@ -44,6 +47,18 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   properties: {
     azCliVersion: '2.15.0'
     environmentVariables: [
+      {
+        name: 'CREATE_CLUSTER'
+        value: string(createCluster)
+      }
+      {
+        name: 'AKS_CLUSTER_NAME'
+        value: aksClusterName
+      }
+      {
+        name: 'AKS_CLUSTER_RG_NAME'
+        value: aksClusterRGName
+      }      
       {
         name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
         value: string(enableAppGWIngress)
