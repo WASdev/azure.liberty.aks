@@ -29,9 +29,6 @@ param enableCookieBasedAffinity bool = false
 param utcValue string = utcNow()
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_olaTemplate='open-liberty-application.yaml.template'
-var const_olaAgicTemplate='open-liberty-application-agic.yaml.template'
-var const_primaryScript = 'install.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: name
@@ -55,10 +52,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       }
     ]
     arguments: arguments
-    primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, 'install.sh${_artifactsLocationSasToken}')
     supportingScriptUris: [
-      uri(const_scriptLocation, format('{0}{1}', const_olaTemplate, _artifactsLocationSasToken))
-      uri(const_scriptLocation, format('{0}{1}', const_olaAgicTemplate, _artifactsLocationSasToken))
+      uri(const_scriptLocation, 'open-liberty-application.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'open-liberty-application-agic.yaml.template${_artifactsLocationSasToken}')
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
