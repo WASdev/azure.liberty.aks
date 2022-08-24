@@ -20,6 +20,9 @@ param _artifactsLocationSasToken string = ''
 param location string
 param name string = ''
 param identity object = {}
+param createCluster bool = true
+param aksClusterName string = ''
+param aksClusterRGName string = ''
 param enableAppGWIngress bool = false
 param vnetForApplicationGateway object = {}
 param appGatewayCertificateOption string = ''
@@ -31,13 +34,10 @@ param keyVaultSSLCertPasswordSecretName string = ''
 param appGatewaySSLCertData string = ''
 @secure()
 param appGatewaySSLCertPassword string = ''
-@secure()
-param servicePrincipal string = ''
 
 param utcValue string = utcNow()
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
-var const_primaryScript = 'preflight.sh'
 
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: name
@@ -47,6 +47,18 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   properties: {
     azCliVersion: '2.15.0'
     environmentVariables: [
+      {
+        name: 'CREATE_CLUSTER'
+        value: string(createCluster)
+      }
+      {
+        name: 'AKS_CLUSTER_NAME'
+        value: aksClusterName
+      }
+      {
+        name: 'AKS_CLUSTER_RG_NAME'
+        value: aksClusterRGName
+      }      
       {
         name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
         value: string(enableAppGWIngress)
@@ -83,12 +95,11 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'
         secureValue: appGatewaySSLCertPassword
       }
-      {
-        name: 'BASE64_FOR_SERVICE_PRINCIPAL'
-        secureValue: servicePrincipal
-      }
     ]
-    primaryScriptUri: uri(const_scriptLocation, '${const_primaryScript}${_artifactsLocationSasToken}')
+    primaryScriptUri: uri(const_scriptLocation, 'preflight.sh${_artifactsLocationSasToken}')
+    supportingScriptUris: [
+      uri(const_scriptLocation, 'utility.sh${_artifactsLocationSasToken}')
+    ]
 
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'

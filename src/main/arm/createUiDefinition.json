@@ -469,31 +469,6 @@
                                 "visible": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveKeyVault')]"
                             },
                             {
-                                "name": "agicSpInfo",
-                                "type": "Microsoft.Common.InfoBox",
-                                "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
-                                "options": {
-                                    "icon": "Info",
-                                    "text": "You must input an Active Directory Service Principal that is encoded with base64 to create the Application Gateway Ingress Controller. See this <a href=https://aka.ms/azure-liberty-aks-agic-sp-doc target='_blank'>document</a> for more information.</br>You can generate one with command <b>az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; | base64 -w0</b>. On macOS omit the <b>-w0</b>."
-                                }
-                            },
-                            {
-                                "name": "servicePrincipal",
-                                "type": "Microsoft.Common.PasswordBox",
-                                "label": {
-                                    "password": "Service principal",
-                                    "confirmPassword": "Confirm service principal"
-                                },
-                                "toolTip": "Base64 encoded JSON blob of the service principal. You can generate one with command 'az ad sp create-for-rbac --sdk-auth --role Contributor --scopes /subscriptions/&lt;AZURE_SUBSCRIPTION_ID&gt; | base64 -w0' On macOS omit the -w0.",
-                                "constraints": {
-                                    "required": true
-                                },
-                                "options": {
-                                    "hideConfirmation": false
-                                },
-                                "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]"
-                            },
-                            {
                                 "name": "enableCookieBasedAffinity",
                                 "type": "Microsoft.Common.CheckBox",
                                 "label": "Enable cookie based affinity",
@@ -631,7 +606,6 @@
             "keyVaultName": "[steps('section_appGateway').appgwIngress.keyVaultName]",
             "keyVaultSSLCertDataSecretName": "[steps('section_appGateway').appgwIngress.keyVaultSSLCertDataSecretName]",
             "keyVaultSSLCertPasswordSecretName": "[steps('section_appGateway').appgwIngress.keyVaultSSLCertPasswordSecretName]",
-            "servicePrincipal": "[steps('section_appGateway').appgwIngress.servicePrincipal]",
             "enableCookieBasedAffinity": "[bool(steps('section_appGateway').appgwIngress.enableCookieBasedAffinity)]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
             "appImagePath": "[if(equals(steps('Application').appImageInfo.appImageOption, '2'), 'icr.io/appcafe/open-liberty/samples/getting-started', if(equals(steps('Application').appImageInfo.appImageOption, '3'), 'docker.io/ibmcom/websphere-liberty-sample:1.0.0', steps('Application').appImageInfo.appImagePath))]",

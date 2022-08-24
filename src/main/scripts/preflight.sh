@@ -14,29 +14,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-function echo_stderr() {
-  echo "$@" 1>&2
-  # The function is used for scripts running within Azure Deployment Script
-  # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-  echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/errors.log
-}
-
-function echo_stdout() {
-  echo "$@"
-  # The function is used for scripts running within Azure Deployment Script
-  # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-  echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/debug.log
-}
-
-#Validate teminal status with $?, exit with exception if errors happen.
-# $1 - error message
-# $2 -  root cause message
-function validate_status() {
-  if [ $? != 0 ]; then
-    echo_stderr "Errors happen during: $1." $2
+# Validate that the agic addon hasn't been enabled for an existing aks cluster
+function validate_aks_agic() {
+  local agicEnabled=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} | jq '.addonProfiles.ingressApplicationGateway.enabled')
+  if [[ "${agicEnabled,,}" == "true" ]]; then
+    echo_stderr "The AGIC addon has already been enabled for the existing AKS cluster. It can't be enabled again with another Azure Application Gatway."
     exit 1
-  else
-    echo_stdout "$1"
   fi
 }
 
@@ -113,37 +96,15 @@ function validate_gateway_frontend_certificates() {
     -passin pass:${APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD} \
     -passout pass:${APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD}
   
-  validate_status "access application gateway frontend key." "Make sure the Application Gateway frontend certificate is correct."
+  validate_status_with_hint "access application gateway frontend key." "Make sure the Application Gateway frontend certificate is correct."
 }
 
-function validate_service_principal() {
-  local spObject=$(echo "${BASE64_FOR_SERVICE_PRINCIPAL}" | base64 -d)
-  validate_status "decode the service principal base64 string." "Invalid service principal."
+# Initialize
+script="${BASH_SOURCE[0]}"
+scriptDir="$(cd "$(dirname "${script}")" && pwd)"
+source ${scriptDir}/utility.sh
 
-  local principalId=$(echo ${spObject} | jq '.clientId')
-  validate_status "get client id from the service principal." "Invalid service principal."
-
-  if [[ "${principalId}" == "null" ]] || [[ "${principalId}" == "" ]]; then
-    echo_stderr "the service principal is invalid."
-    exit 1
-  fi
-
-  echo_stdout "check if the service principal has Contributor or Owner role."
-  local roleLength=$(az role assignment list --assignee ${principalId} |
-    jq '[.[] | select(.roleDefinitionName=="Contributor" or .roleDefinitionName=="Owner")] | length')
-  
-  local re='^[0-9]+$'
-  if ! [[ $roleLength =~ $re ]] ; then
-    echo_stderr "You must grant the service principal with at least Contributor role."
-  fi
-
-  if [ ${roleLength} -lt 1 ]; then
-    echo_stderr "You must grant the service principal with at least Contributor role."
-  fi
-
-  echo_stdout "Check service principal: passed!"
-}
-
+# Main script
 # Get the type of managed identity
 uamiType=$(az identity show --ids ${AZ_SCRIPTS_USER_ASSIGNED_IDENTITY} --query "type" -o tsv)
 if [ $? == 1 ]; then
@@ -168,8 +129,11 @@ if [ ${roleLength} -ne 1 ]; then
   exit 1
 fi
 
+if [[ "${CREATE_CLUSTER,,}" == "false" ]] && [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
+  validate_aks_agic
+fi
+
 if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_appgateway_vnet
   validate_gateway_frontend_certificates
-  validate_service_principal
 fi

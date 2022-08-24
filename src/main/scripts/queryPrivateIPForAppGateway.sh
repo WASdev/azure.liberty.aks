@@ -14,20 +14,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-function echo_stderr() {
-    echo >&2 "$@"
-    # The function is used for scripts running within Azure Deployment Script
-    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/errors.log
-}
-
-function echo_stdout() {
-    echo "$@"
-    # The function is used for scripts running within Azure Deployment Script
-    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/debug.log
-}
-
 function query_ip() {
     echo_stdout "Subnet Id: ${SUBNET_ID}"
 
@@ -58,7 +44,12 @@ function output_result() {
   echo $result >$AZ_SCRIPTS_OUTPUT_PATH
 }
 
-# main script
+# Initialize
+script="${BASH_SOURCE[0]}"
+scriptDir="$(cd "$(dirname "${script}")" && pwd)"
+source ${scriptDir}/utility.sh
+
+# Main script
 outputPrivateIP="10.0.0.1"
 
 query_ip

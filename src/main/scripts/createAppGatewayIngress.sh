@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #      Copyright (c) Microsoft Corporation.
 # 
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,51 +14,38 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-echo "Script ${0} starts"
-
-function echo_stderr() {
-    echo >&2 "$@"
-    # The function is used for scripts running within Azure Deployment Script
-    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/errors.log
-}
-
-function echo_stdout() {
-    echo "$@"
-    # The function is used for scripts running within Azure Deployment Script
-    # The value of AZ_SCRIPTS_OUTPUT_PATH is /mnt/azscripts/azscriptoutput
-    echo -e "$@" >>${AZ_SCRIPTS_PATH_OUTPUT_DIRECTORY}/debug.log
-}
-
-# Validate teminal status with $?, exit with exception if errors happen.
-function utility_validate_status() {
-  if [ $? == 1 ]; then
-    echo_stderr "$@"
-    echo_stderr "Errors happen, exit 1."
-    exit 1
-  else
-    echo_stdout "$@"
-  fi
-}
-
 # Create network peers for aks and appgw
 function network_peers_aks_appgw() {
     # To successfully peer two virtual networks command 'az network vnet peering create' must be called twice with the values
     # for --vnet-name and --remote-vnet reversed.
-    aksMCRGName=$(az aks show -n $aksClusterName -g $aksClusterRGName -o tsv --query "nodeResourceGroup")
-    ret=$(az group exists -n ${aksMCRGName})
+    local aksMCRGName=$(az aks show -n $AKS_CLUSTER_NAME -g $AKS_CLUSTER_RG_NAME -o tsv --query "nodeResourceGroup")
+    local ret=$(az group exists -n ${aksMCRGName})
     if [ "${ret,,}" == "false" ]; then
-        echo "AKS namaged resource group ${aksMCRGName} does not exist."
+        echo_stderr "AKS namaged resource group ${aksMCRGName} does not exist."
         exit 1
     fi
 
-    aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
-    aksNetworkName=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].name')
-    appGatewaySubnetId=$(az network application-gateway show -g ${curRGName} --name ${appgwName} -o tsv --query "gatewayIpConfigurations[0].subnet.id")
-    appGatewayVnetResourceGroup=$(az network application-gateway show -g ${curRGName} --name ${appgwName} -o tsv --query "gatewayIpConfigurations[0].subnet.resourceGroup")
-    appGatewaySubnetName=$(az resource show --ids ${appGatewaySubnetId} --query "name" -o tsv)
-    appgwNetworkId=$(echo $appGatewaySubnetId | sed s/"\/subnets\/${appGatewaySubnetName}"//)
-    appgwVnetName=$(az resource show --ids ${appgwNetworkId} --query "name" -o tsv)
+    # query vnet from managed resource group
+    local aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
+    
+    # no vnet in managed resource group, then query vnet from aks agent
+    if [ -z "${aksNetWorkId}" ]; then
+        # assume all the agent pools are in the same vnet
+        # e.g. /subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/foo-rg/providers/Microsoft.Network/virtualNetworks/foo-aks-vnet/subnets/default
+        local aksAgent1Subnet=$(az aks show -n $AKS_CLUSTER_NAME -g $AKS_CLUSTER_RG_NAME | jq '.agentPoolProfiles[0] | .vnetSubnetId' | tr -d "\"")
+        validate_status "Get subnet id of aks agent 0."
+        aksNetWorkId=${aksAgent1Subnet%\/subnets\/*}
+    fi
+
+    local aksNetworkName=${aksNetWorkId#*\/virtualNetworks\/}
+    local aksNetworkRgName=${aksNetWorkId#*\/resourceGroups\/}
+    local aksNetworkRgName=${aksNetworkRgName%\/providers\/*}
+
+    local appGatewaySubnetId=$(az network application-gateway show -g ${CURRENT_RG_NAME} --name ${APP_GW_NAME} -o tsv --query "gatewayIpConfigurations[0].subnet.id")
+    local appGatewayVnetResourceGroup=$(az network application-gateway show -g ${CURRENT_RG_NAME} --name ${APP_GW_NAME} -o tsv --query "gatewayIpConfigurations[0].subnet.resourceGroup")
+    local appGatewaySubnetName=$(az resource show --ids ${appGatewaySubnetId} --query "name" -o tsv)
+    local appgwNetworkId=$(echo $appGatewaySubnetId | sed s/"\/subnets\/${appGatewaySubnetName}"//)
+    local appgwVnetName=$(az resource show --ids ${appgwNetworkId} --query "name" -o tsv)
 
     local toPeer=true
     # if the AKS and App Gateway have the same VNET, need not peer.
@@ -82,7 +71,7 @@ function network_peers_aks_appgw() {
             --resource-group ${appGatewayVnetResourceGroup} \
             --vnet-name ${appgwVnetName} \
             --allow-vnet-access
-        utility_validate_status "Create network peers for $aksNetWorkId and ${appgwNetworkId}."
+        validate_status "Create network peers for $aksNetWorkId and ${appgwNetworkId}."
 
         az network vnet peering create \
             --name aks-appgw-peer \
@@ -91,82 +80,22 @@ function network_peers_aks_appgw() {
             --vnet-name ${aksNetworkName} \
             --allow-vnet-access
 
-        utility_validate_status "Complete creating network peers for $aksNetWorkId and ${appgwNetworkId}."
+        validate_status "Complete creating network peers for $aksNetWorkId and ${appgwNetworkId}."
     fi
 
-    # For Kbectl network plugin: https://azure.github.io/application-gateway-kubernetes-ingress/how-tos/networking/#with-kubenet
+    # For Kubectl network plugin: https://azure.github.io/application-gateway-kubernetes-ingress/how-tos/networking/#with-kubenet
     # find route table used by aks cluster
-    routeTableId=$(az network route-table list -g $aksMCRGName --query "[].id | [0]" -o tsv)
+    local networkPlugin=$(az aks show -n $AKS_CLUSTER_NAME -g $AKS_CLUSTER_RG_NAME --query "networkProfile.networkPlugin" -o tsv)
+    if [[ "${networkPlugin}" == "kubenet" ]]; then
+        # the route table is in MC_ resource group
+        routeTableId=$(az network route-table list -g $aksMCRGName --query "[].id | [0]" -o tsv)
 
-    # associate the route table to Application Gateway's subnet
-    az network vnet subnet update \
-        --ids $appGatewaySubnetId \
-        --route-table $routeTableId
+        # associate the route table to Application Gateway's subnet
+        az network vnet subnet update \
+            --ids $appGatewaySubnetId \
+            --route-table $routeTableId
 
-    utility_validate_status "Associate the route table ${routeTableId} to Application Gateway's subnet ${appGatewaySubnetId}"
-}
-
-function install_helm() {
-    # Install Helm
-    browserURL=$(curl -m ${curlMaxTime} -s https://api.github.com/repos/helm/helm/releases/latest |
-        grep "browser_download_url.*linux-amd64.tar.gz.asc" |
-        cut -d : -f 2,3 |
-        tr -d \")
-    helmLatestVersion=${browserURL#*download\/}
-    helmLatestVersion=${helmLatestVersion%%\/helm*}
-    helmPackageName=helm-${helmLatestVersion}-linux-amd64.tar.gz
-    curl -m ${curlMaxTime} -fL https://get.helm.sh/${helmPackageName} -o /tmp/${helmPackageName}
-    tar -zxvf /tmp/${helmPackageName} -C /tmp
-    mv /tmp/linux-amd64/helm /usr/local/bin/helm
-    echo "Helm version"
-    helm version
-    utility_validate_status "Finished installing Helm."
-}
-
-function install_azure_ingress() {
-    # create sa and bind cluster-admin role to grant azure ingress required permissions
-    kubectl apply -f ${scriptDir}/appgw-ingress-clusterAdmin-roleBinding.yaml
-
-    install_helm
-    helm repo add application-gateway-kubernetes-ingress ${appgwIngressHelmRepo}
-    helm repo update
-
-    # generate Helm config for azure ingress
-    customAppgwHelmConfig=${scriptDir}/appgw-helm-config.yaml
-    cp ${scriptDir}/appgw-helm-config.yaml.template ${customAppgwHelmConfig}
-    subID=${subID#*\/subscriptions\/}
-    sed -i -e "s:@SUB_ID@:${subID}:g" ${customAppgwHelmConfig}
-    sed -i -e "s:@APPGW_RG_NAME@:${curRGName}:g" ${customAppgwHelmConfig}
-    sed -i -e "s:@APPGW_NAME@:${appgwName}:g" ${customAppgwHelmConfig}
-    sed -i -e "s:@WATCH_NAMESPACE@:${watchNamespace}:g" ${customAppgwHelmConfig}
-    sed -i -e "s:@SP_ENCODING_CREDENTIALS@:${spBase64String}:g" ${customAppgwHelmConfig}
-    sed -i -e "s:@USE_PRIVATE_IP@:${appgwUsePrivateIP,,}:g" ${customAppgwHelmConfig}
-
-    helm upgrade --install ingress-azure \
-        -f ${customAppgwHelmConfig} \
-        application-gateway-kubernetes-ingress/ingress-azure \
-        --version ${azureAppgwIngressVersion}
-
-    utility_validate_status "Install app gateway ingress controller."
-
-    attempts=0
-    podState="running"
-    while [ "$podState" == "running" ] && [ $attempts -lt ${checkPodStatusMaxAttemps} ]; do
-        podState="completed"
-        attempts=$((attempts + 1))
-        echo Waiting for Pod running...${attempts}
-        sleep ${checkPodStatusInterval}
-
-        ret=$(kubectl get pod -o json |
-            jq '.items[] | .status.containerStatuses[] | select(.name=="ingress-azure") | .ready')
-        if [[ "${ret}" == "false" ]]; then
-            podState="running"
-        fi
-    done
-
-    if [ "$podState" == "running" ] && [ $attempts -ge ${checkPodStatusMaxAttemps} ]; then
-        echo "Failed to install app gateway ingress controller."
-        exit 1
+        validate_status "Associate the route table ${routeTableId} to Application Gateway's subnet ${appGatewaySubnetId}"
     fi
 }
 
@@ -187,13 +116,13 @@ function output_create_gateway_ssl_k8s_secret() {
         -passin pass:${appgwFrontendSSLCertPassin} \
         -passout pass:${appgwFrontendSSLCertPsw}
 
-    utility_validate_status "Export key from frontend certificate."
+    validate_status "Export key from frontend certificate."
 
     openssl rsa -in ${scriptDir}/$appgwFrontCertKeyFileName \
         -out ${scriptDir}/$appgwFrontCertKeyDecrytedFileName \
         -passin pass:${appgwFrontendSSLCertPsw}
 
-    utility_validate_status "Decryte private key."
+    validate_status "Decryte private key."
 
     openssl pkcs12 \
         -in ${scriptDir}/$appgwFrontCertFileName \
@@ -202,7 +131,12 @@ function output_create_gateway_ssl_k8s_secret() {
         -out ${scriptDir}/$appgwFrontPublicCertFileName \
         -passin pass:${appgwFrontendSSLCertPassin}
 
-    utility_validate_status "Export cert from frontend certificate."
+    validate_status "Export cert from frontend certificate."
+
+    # Connect to cluster
+    install_kubectl
+    az aks get-credentials --resource-group ${AKS_CLUSTER_RG_NAME} --name ${AKS_CLUSTER_NAME} --overwrite-existing
+    validate_status "Connect to the AKS cluster."
 
     # Create namespace if it doesn't exist before
     kubectl get namespace ${appNamespace}
@@ -214,27 +148,13 @@ function output_create_gateway_ssl_k8s_secret() {
         --key="${scriptDir}/$appgwFrontCertKeyDecrytedFileName" \
         --cert="${scriptDir}/$appgwFrontPublicCertFileName"
 
-    utility_validate_status "create k8s tsl secret for app gateway frontend ssl termination."
-}
-
-function connect_to_aks_cluster() {
-    # Install kubectl
-    az aks install-cli 2>/dev/null
-    kubectl --help
-    utility_validate_status "Install kubectl."
-
-    # Connect to cluster
-    az aks get-credentials --resource-group ${aksClusterRGName} --name ${aksClusterName} --overwrite-existing
-    utility_validate_status "Connect to the AKS cluster."
+    validate_status "create k8s tsl secret for app gateway frontend ssl termination."
 }
 
 function create_gateway_ingress() {
-    # connect to the aks cluster
-    connect_to_aks_cluster
     # create network peers between gateway vnet and aks vnet
     network_peers_aks_appgw
-    # install azure ingress controllor
-    install_azure_ingress
+
     # create tsl/ssl frontend secrets
     output_create_gateway_ssl_k8s_secret
 }
@@ -242,36 +162,19 @@ function create_gateway_ingress() {
 # Initialize
 script="${BASH_SOURCE[0]}"
 scriptDir="$(cd "$(dirname "${script}")" && pwd)"
+source ${scriptDir}/utility.sh
 
-aksClusterRGName=${AKS_CLUSTER_RG_NAME}
-aksClusterName=${AKS_CLUSTER_NAME}
-
-subID=${SUBSCRIPTION_ID}
-curRGName=${CUR_RG_NAME}
-spBase64String=${SERVICE_PRINCIPAL}
-
-appgwName=${APP_GW_NAME}
-appgwAlias=${APP_GW_ALIAS}
-appgwUsePrivateIP=${APP_GW_USE_PRIVATE_IP}
-
+# Main script
 appgwFrontendSSLCertData=${APP_GW_FRONTEND_SSL_CERT_DATA}
 appgwFrontendSSLCertPsw=${APP_GW_FRONTEND_SSL_CERT_PSW}
 appgwCertificateOption=${APP_GW_CERTIFICATE_OPTION}
 appgwFrontendSecretName=${APP_FRONTEND_TLS_SECRET_NAME}
 appNamespace=${APP_PROJ_NAME}
 
-appgwIngressHelmRepo="https://appgwingress.blob.core.windows.net/ingress-azure-helm-package/"
 appgwFrontCertFileName="appgw-frontend-cert.pfx"
 appgwFrontCertKeyDecrytedFileName="appgw-frontend-cert-decryted.key"
 appgwFrontCertKeyFileName="appgw-frontend-cert.key"
 appgwFrontPublicCertFileName="appgw-frontend-cert.crt"
-
 appgwSelfsignedCert="generateCert"
-azureAppgwIngressVersion="1.5.1"
-watchNamespace='""'
-
-curlMaxTime=120
-checkPodStatusMaxAttemps=50
-checkPodStatusInterval=20
 
 create_gateway_ingress
