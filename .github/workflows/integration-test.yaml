@@ -23,8 +23,8 @@ env:
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
   userName: ${{ secrets.USER_NAME }}
   msTeamsWebhook: ${{ secrets.MSTEAMS_WEBHOOK }}
-  testResourceGroup: twasClusterTestRG${{ github.run_id }}${{ github.run_number }}
-  testDeploymentName: twasClusterTestDeployment${{ github.run_id }}${{ github.run_number }}
+  testResourceGroup: libertyAksTestRG${{ github.run_id }}${{ github.run_number }}
+  testDeploymentName: libertyAksTestDeployment${{ github.run_id }}${{ github.run_number }}
   location: eastus
 jobs:
   integration-test:
@@ -64,7 +64,7 @@ jobs:
           cd ${{ env.repoName }}
           mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=$GITHUB_REF_NAME -DcreateCluster=true -DcreateACR=true \
             -DenableAppGWIngress=true -DappgwUsePrivateIP=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true \
-            -DdeployApplication=true -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started \
+            -DdeployApplication=true -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
             -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       - uses: azure/login@v1
         id: azure-login
