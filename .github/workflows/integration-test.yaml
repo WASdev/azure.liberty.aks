@@ -79,7 +79,7 @@ jobs:
         run: |
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
           appHttpsEndoint=$(echo $outputs | jq -r '.appHttpsEndoint.value')
-          curl $appHttpsEndoint -k
+          curl --connect-timeout 300 $appHttpsEndoint -k
           if [[ $? -ne 0 ]]; then
             echo "Failed to access ${appHttpsEndoint}."
             exit 1
