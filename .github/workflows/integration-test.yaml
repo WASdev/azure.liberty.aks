@@ -92,9 +92,12 @@ jobs:
             echo "Failed to access ${appHttpsEndoint}."
             exit 1
           fi
+      - name: Setup tmate session
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
       - name: Delete all Azure resources
         id: delete-resources-in-group
-        if: always()
+        if: success()
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
