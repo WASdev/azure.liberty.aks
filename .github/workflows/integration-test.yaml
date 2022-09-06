@@ -78,16 +78,18 @@ jobs:
       - name: Verify the deployment
         run: |
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
-          appHttpsEndoint=$(echo $outputs | jq -r '.appHttpsEndoint.value')
-          curl --connect-timeout 300 $appHttpsEndoint -k
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to access ${appHttpsEndoint}."
-            exit 1
-          fi
           appHttpEndpoint=$(echo $outputs | jq -r '.appHttpEndpoint.value')
-          curl $appHttpEndpoint
+          echo "appHttpEndpoint: ${appHttpEndpoint}."
+          appHttpsEndoint=$(echo $outputs | jq -r '.appHttpsEndoint.value')
+          echo "appHttpsEndoint: ${appHttpsEndoint}."
+          curl --verbose $appHttpEndpoint
           if [[ $? -ne 0 ]]; then
             echo "Failed to access ${appHttpEndpoint}."
+            exit 1
+          fi
+          curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
+          if [[ $? -ne 0 ]]; then
+            echo "Failed to access ${appHttpsEndoint}."
             exit 1
           fi
       - name: Delete all Azure resources
