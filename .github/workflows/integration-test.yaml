@@ -104,7 +104,7 @@ jobs:
               exit 1
             fi
           fi
-      - name: Setup tmate session
+      - name: Debugging with tmate if verification failed
         if: failure()
         uses: mxschmitt/action-tmate@v3
       - name: Delete all Azure resources
