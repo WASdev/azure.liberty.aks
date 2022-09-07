@@ -109,7 +109,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
       - name: Delete all Azure resources
         id: delete-resources-in-group
-        if: success()
+        if: always()
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
