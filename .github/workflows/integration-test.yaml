@@ -9,7 +9,7 @@ on:
       deleteAzureResources:
         description: 'If set to true, Azure resources will be deleted'
         required: true
-        default: true
+        default: 'true'
   repository_dispatch:
     types: [integration-test]
   # sample request
@@ -114,7 +114,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
       - name: Delete all Azure resources
         id: delete-resources-in-group
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources == 'true' }}
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
