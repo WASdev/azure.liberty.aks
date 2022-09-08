@@ -5,6 +5,11 @@ on:
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
   # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main"}'
+    inputs:
+      deleteAzureResources:
+        description: 'If set to true, Azure resources will be deleted'
+        required: true
+        default: true
   repository_dispatch:
     types: [integration-test]
   # sample request
@@ -109,7 +114,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
       - name: Delete all Azure resources
         id: delete-resources-in-group
-        if: always()
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources }}
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
