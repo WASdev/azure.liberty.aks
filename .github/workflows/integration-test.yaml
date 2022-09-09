@@ -1,0 +1,167 @@
+name: integration-test
+on:
+  workflow_dispatch:
+    inputs:
+      deleteAzureResources:
+        description: 'Delete Azure resources at the end'
+        required: true
+        type: boolean
+        default: true
+  # Allows you to run this workflow using GitHub APIs
+  # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
+  # REPO_NAME=WASdev/azure.liberty.aks
+  # Delete Azure resources at the end
+  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main"}'
+  # Keep Azure resources at the end
+  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"deleteAzureResources": "false"}}'
+  repository_dispatch:
+    types: [integration-test]
+  # sample request
+  # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
+  # REPO_NAME=WASdev/azure.liberty.aks
+  # Delete Azure resources at the end
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"deleteAzureResources": true}}'
+  # Keep Azure resources at the end
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"deleteAzureResources": false}}'
+env:
+  # Latest version is at https://github.com/Azure/azure-cli/releases
+  azCliVersion: 2.31.0
+  # Commit hash from https://github.com/Azure/arm-ttk/commits/master
+  refArmttk: cf5c927eaf1f5652556e86a6b67816fc910d1b74
+  # Commit hash from https://github.com/Azure/azure-javaee-iaas/commits/main
+  refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
+  bicepVersion: v0.7.4
+  repoName: "azure.liberty.aks"
+  azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
+  isInternalSub: ${{ secrets.IS_INTERNAL_SUBSCRIPTION }}
+  userName: ${{ secrets.USER_NAME }}
+  msTeamsWebhook: ${{ secrets.MSTEAMS_WEBHOOK }}
+  testResourceGroup: libertyAksTestRG${{ github.run_id }}${{ github.run_number }}
+  testDeploymentName: libertyAksTestDeployment${{ github.run_id }}${{ github.run_number }}
+  location: eastus
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Set up bicep
+        run: |
+          curl -Lo bicep https://github.com/Azure/bicep/releases/download/${{ env.bicepVersion }}/bicep-linux-x64
+          chmod +x ./bicep
+          sudo mv ./bicep /usr/local/bin/bicep
+          bicep --version
+      - name: Checkout azure-javaee-iaas
+        uses: actions/checkout@v2
+        with:
+          repository: Azure/azure-javaee-iaas
+          path: azure-javaee-iaas
+          ref: ${{ env.refJavaee }}
+      - name: Checkout arm-ttk
+        uses: actions/checkout@v2
+        with:
+          repository: Azure/arm-ttk
+          path: arm-ttk
+          ref: ${{ env.refArmttk }}
+      - name: Checkout ${{ env.repoName }}
+        uses: actions/checkout@v2
+        with:
+          path: ${{ env.repoName }}
+          ref: ${{ github.event.inputs.ref }}
+      - name: Build azure-javaee-iaas
+        run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
+      - name: Build ${{ env.repoName }}
+        run: |
+          cd ${{ env.repoName }}
+          mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=$GITHUB_REF_NAME -DcreateCluster=true -DcreateACR=true \
+            -DenableAppGWIngress=true -DappgwUsePrivateIP=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true \
+            -DdeployApplication=true -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
+            -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+          creds: ${{ env.azureCredentials }}
+      - name: Deploy an Open Liberty Application sample app on AKS
+        run: |
+          cd ${{ env.repoName }}/target/cli
+          chmod a+x deploy.azcli
+          ./deploy.azcli -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} -l ${{ env.location }}
+      - name: Verify the deployment
+        run: |
+          outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
+          appHttpEndpoint=$(echo $outputs | jq -r '.appHttpEndpoint.value')
+          echo "appHttpEndpoint: ${appHttpEndpoint}"
+          appHttpsEndoint=$(echo $outputs | jq -r '.appHttpsEndoint.value')
+          echo "appHttpsEndoint: ${appHttpsEndoint}"
+          if [[ "${{ env.isInternalSub }}" == "false" ]]; then 
+            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
+            if [[ $? -ne 0 ]]; then
+              echo "Failed to access ${appHttpEndpoint}."
+              exit 1
+            fi
+            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
+            if [[ $? -ne 0 ]]; then
+              echo "Failed to access ${appHttpsEndoint}."
+              exit 1
+            fi
+          else
+            if [[ -z "$appHttpEndpoint" ]]; then
+              echo "The ${appHttpEndpoint} is empty."
+              exit 1
+            fi
+            if [[ -z "$appHttpsEndoint" ]]; then
+              echo "The ${appHttpsEndoint} is empty."
+              exit 1
+            fi
+          fi
+      - name: Debugging with tmate if verification failed
+        if: failure()
+        uses: mxschmitt/action-tmate@v3
+      - name: Delete all Azure resources
+        id: delete-resources-in-group
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            az group delete -n ${{ env.testResourceGroup }} --yes
+      - name: Generate artifact file name and path
+        id: artifact_file
+        run: |
+          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/pom.xml)
+          artifactName=${{ env.repoName }}-$version-arm-assembly
+          unzip ${{ env.repoName }}/target/$artifactName.zip -d ${{ env.repoName }}/target/$artifactName
+          echo "##[set-output name=artifactName;]${artifactName}"
+          echo "##[set-output name=artifactPath;]${{ env.repoName }}/target/$artifactName"
+      - name: Archive ${{ env.repoName }} template
+        uses: actions/upload-artifact@v1
+        if: success()
+        with:
+          name: ${{steps.artifact_file.outputs.artifactName}}
+          path: ${{steps.artifact_file.outputs.artifactPath}}
+  notification:
+    needs: integration-test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification
+        if: always()
+        run: |
+            workflowJobs=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.userName }}/${{ env.repoName }}/actions/runs/${{ github.run_id }}/jobs)
+            successIntegrationTestJob=$(echo $workflowJobs | jq '.jobs | map(select(.name=="integration-test" and .conclusion=="success")) | length')
+            if (($successIntegrationTestJob == 0));then
+                echo "Job integration-test failed, send notification to Teams"
+                curl ${{ env.msTeamsWebhook }} \
+                -H 'Content-Type: application/json' \
+                --data-binary @- << EOF
+                {
+                "@context":"http://schema.org/extensions",
+                "@type":"MessageCard",
+                "text":"Workflow integration-test of repo ${{ env.repoName }} failed, please take a look at: https://github.com/${{ env.userName }}/${{ env.repoName }}/actions/runs/${{ github.run_id }}"
+                }
+            EOF
+            else
+                echo "Job integration-test succeeded."
+            fi
