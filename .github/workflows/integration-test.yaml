@@ -146,6 +146,10 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Output inputs from workflow_dispatch
+        run: echo "${{ toJSON(github.event.inputs) }}"
+      - name: Output client_payload from repository_dispatch
+        run: echo "${{ toJSON(github.event.client_payload) }}"
       - name: Send notification
         if: always()
         run: |
