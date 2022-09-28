@@ -2,6 +2,11 @@ name: integration-test
 on:
   workflow_dispatch:
     inputs:
+      enableAppGWIngress:
+        description: 'Application Gateway Ingress Controller'
+        required: true
+        type: boolean
+        default: true
       deleteAzureResources:
         description: 'Delete Azure resources at the end'
         required: true
@@ -10,19 +15,27 @@ on:
   # Allows you to run this workflow using GitHub APIs
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
-  # Delete Azure resources at the end
+  # Enable AGIC and delete Azure resources at the end
   # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main"}'
-  # Keep Azure resources at the end
+  # Enable AGIC and keep Azure resources at the end
   # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"deleteAzureResources": "false"}}'
+  # Disable AGIC and delete Azure resources at the end
+  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"enableAppGWIngress": "false"}}'
+  # Disable AGIC and keep Azure resources at the end
+  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"enableAppGWIngress": "false", "deleteAzureResources": "false"}}'
   repository_dispatch:
     types: [integration-test]
   # sample request
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
-  # Delete Azure resources at the end
-  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"deleteAzureResources": true}}'
-  # Keep Azure resources at the end
-  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"deleteAzureResources": false}}'
+  # Enable AGIC and delete Azure resources at the end
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": true, "deleteAzureResources": true}}'
+  # Enable AGIC and keep Azure resources at the end
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": true, "deleteAzureResources": false}}'
+  # Disable AGIC and delete Azure resources at the end
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": false, "deleteAzureResources": true}}'
+  # Disable AGIC and keep Azure resources at the end
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": false, "deleteAzureResources": false}}'
 env:
   # Latest version is at https://github.com/Azure/azure-cli/releases
   azCliVersion: 2.31.0
@@ -74,9 +87,14 @@ jobs:
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
       - name: Build ${{ env.repoName }}
         run: |
+          enableAppGWIngress=false
+          if ${{ inputs.enableAppGWIngress || github.event.client_payload.enableAppGWIngress }}; then
+            enableAppGWIngress=true
+          fi
+          echo "enableAppGWIngress=${enableAppGWIngress}" >> $GITHUB_ENV
           cd ${{ env.repoName }}
           mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=$GITHUB_REF_NAME -DcreateCluster=true -DcreateACR=true \
-            -DenableAppGWIngress=true -DappgwUsePrivateIP=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true \
+            -DenableAppGWIngress=${enableAppGWIngress} -DappgwUsePrivateIP=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true \
             -DdeployApplication=true -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
             -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       - uses: azure/login@v1
@@ -93,27 +111,28 @@ jobs:
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
           appHttpEndpoint=$(echo $outputs | jq -r '.appHttpEndpoint.value')
           echo "appHttpEndpoint: ${appHttpEndpoint}"
+          if [[ -z "$appHttpEndpoint" ]]; then
+            echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
+            exit 1
+          fi
           appHttpsEndoint=$(echo $outputs | jq -r '.appHttpsEndoint.value')
           echo "appHttpsEndoint: ${appHttpsEndoint}"
+          if [[ $enableAppGWIngress == "true" && -z "$appHttpsEndoint" ]] || [[ $enableAppGWIngress == "false" && -n "$appHttpsEndoint" ]]; then
+            echo "Invalid value of appHttpsEndoint: ${appHttpsEndoint}"
+            exit 1
+          fi
           if [[ "${{ env.isInternalSub }}" == "false" ]]; then 
             curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
             if [[ $? -ne 0 ]]; then
               echo "Failed to access ${appHttpEndpoint}."
               exit 1
             fi
-            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
-            if [[ $? -ne 0 ]]; then
-              echo "Failed to access ${appHttpsEndoint}."
-              exit 1
-            fi
-          else
-            if [[ -z "$appHttpEndpoint" ]]; then
-              echo "The ${appHttpEndpoint} is empty."
-              exit 1
-            fi
-            if [[ -z "$appHttpsEndoint" ]]; then
-              echo "The ${appHttpsEndoint} is empty."
-              exit 1
+            if [[ $enableAppGWIngress == "true" ]]; then
+              curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
+              if [[ $? -ne 0 ]]; then
+                echo "Failed to access ${appHttpsEndoint}."
+                exit 1
+              fi
             fi
           fi
       - name: Debugging with tmate if verification failed
