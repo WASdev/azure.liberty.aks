@@ -130,6 +130,7 @@ wait_ingress_available() {
             return 1
         fi
         cnt=$((cnt+1))
+        kubectl get ingress ${ingressName} -n ${namespaceName} -o yaml | kubectl replace --force -f -
 
         sleep 30
         echo "Wait until the IP address of the ingress ${ingressName} is available, retry ${cnt} of ${MAX_RETRIES}..." >> $logFile
