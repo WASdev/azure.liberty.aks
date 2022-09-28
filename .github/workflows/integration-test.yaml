@@ -170,7 +170,7 @@ jobs:
       - name: Output client_payload from repository_dispatch
         run: echo "${{ toJSON(github.event.client_payload) }}"
       - name: Send notification
-        if: always()
+        if: ${{ env.msTeamsWebhook != 'NA' }}
         run: |
             workflowJobs=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ env.userName }}/${{ env.repoName }}/actions/runs/${{ github.run_id }}/jobs)
             successIntegrationTestJob=$(echo $workflowJobs | jq '.jobs | map(select(.name=="integration-test" and .conclusion=="success")) | length')
