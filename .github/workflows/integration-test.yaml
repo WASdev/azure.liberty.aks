@@ -88,7 +88,7 @@ jobs:
       - name: Build ${{ env.repoName }}
         run: |
           enableAppGWIngress=false
-          if ${{ inputs.enableAppGWIngress || github.event.client_payload.enableAppGWIngress }}; then
+          if ${{ inputs.enableAppGWIngress == true || github.event.client_payload.enableAppGWIngress == true }}; then
             enableAppGWIngress=true
           fi
           echo "enableAppGWIngress=${enableAppGWIngress}" >> $GITHUB_ENV
