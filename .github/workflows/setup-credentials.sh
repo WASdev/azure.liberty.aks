@@ -65,6 +65,8 @@ if [ "$DISAMBIG_PREFIX" == '' ] ; then
     exit 1;
 fi
 
+DISAMBIG_PREFIX=${DISAMBIG_PREFIX}`date +%m%d`
+
 # get USER_NAME if not set at the beginning of this file
 if [ "$USER_NAME" == '' ] ; then
     read -r -p "Enter user name of GitHub account: " USER_NAME
