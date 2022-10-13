@@ -12,9 +12,9 @@ on:
   # REPO_NAME=WASdev/azure.liberty.aks
   # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "package"}'
 env:
-  refArmttk: cf5c927eaf1f5652556e86a6b67816fc910d1b74
+  refArmttk: b98c03608a20bbee4f2061b23bdeece1c2d214b8
   refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
-  bicepVersion: v0.7.4
+  bicepVersion: v0.11.1
   repoName: "azure.liberty.aks"
 
 jobs:
