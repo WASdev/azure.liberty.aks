@@ -40,7 +40,7 @@ env:
   # Latest version is at https://github.com/Azure/azure-cli/releases
   azCliVersion: 2.40.0
   # Commit hash from https://github.com/Azure/arm-ttk/commits/master
-  refArmttk: b98c03608a20bbee4f2061b23bdeece1c2d214b8
+  refArmttk: 06356206f9a8a5173fc124458a1486a1cc67fa31
   # Commit hash from https://github.com/Azure/azure-javaee-iaas/commits/main
   refJavaee: f25ab89a2a8848da39b84e5d6c927f4c4cb47200
   bicepVersion: v0.11.1
