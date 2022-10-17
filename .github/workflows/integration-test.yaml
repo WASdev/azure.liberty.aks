@@ -115,10 +115,10 @@ jobs:
             echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
             exit 1
           fi
-          appHttpsEndoint=$(echo $outputs | jq -r '.appHttpsEndoint.value')
-          echo "appHttpsEndoint: ${appHttpsEndoint}"
-          if [[ $enableAppGWIngress == "true" && -z "$appHttpsEndoint" ]] || [[ $enableAppGWIngress == "false" && -n "$appHttpsEndoint" ]]; then
-            echo "Invalid value of appHttpsEndoint: ${appHttpsEndoint}"
+          appHttpsEndpoint=$(echo $outputs | jq -r '.appHttpsEndpoint.value')
+          echo "appHttpsEndpoint: ${appHttpsEndpoint}"
+          if [[ $enableAppGWIngress == "true" && -z "$appHttpsEndpoint" ]] || [[ $enableAppGWIngress == "false" && -n "$appHttpsEndpoint" ]]; then
+            echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
             exit 1
           fi
           curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
@@ -127,9 +127,9 @@ jobs:
             exit 1
           fi
           if [[ $enableAppGWIngress == "true" ]]; then
-            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
+            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndpoint -k
             if [[ $? -ne 0 ]]; then
-              echo "Failed to access ${appHttpsEndoint}."
+              echo "Failed to access ${appHttpsEndpoint}."
               exit 1
             fi
           fi
