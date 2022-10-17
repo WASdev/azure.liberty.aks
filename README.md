@@ -56,4 +56,4 @@
    1. Open the resource group `resourceGroupName`;
    1. Navigate to "Deployments > `deploymentName` > Outputs";
    1. Copy value of property `appHttpEndpoint` > append context root defined in the 'server.xml' of your application if it's not equal to '/' > open it in the browser;
-   1. If you enabled AGIC: copy value of property `appHttpsEndoint` > append context root defined in the 'server.xml' of your application if it's not equal to '/' > open it in the browser;
+   1. If you enabled AGIC: copy value of property `appHttpsEndpoint` > append context root defined in the 'server.xml' of your application if it's not equal to '/' > open it in the browser;
