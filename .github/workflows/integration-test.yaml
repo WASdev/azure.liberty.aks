@@ -39,7 +39,6 @@ on:
 env:
   repoName: "azure.liberty.aks"
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
-  isInternalSub: ${{ secrets.IS_INTERNAL_SUBSCRIPTION }}
   userName: ${{ secrets.USER_NAME }}
   msTeamsWebhook: ${{ secrets.MSTEAMS_WEBHOOK }}
   testResourceGroup: libertyAksTestRG${{ github.run_id }}${{ github.run_number }}
@@ -122,18 +121,16 @@ jobs:
             echo "Invalid value of appHttpsEndoint: ${appHttpsEndoint}"
             exit 1
           fi
-          if [[ "${{ env.isInternalSub }}" == "false" ]]; then 
-            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
+          curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
+          if [[ $? -ne 0 ]]; then
+            echo "Failed to access ${appHttpEndpoint}."
+            exit 1
+          fi
+          if [[ $enableAppGWIngress == "true" ]]; then
+            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
             if [[ $? -ne 0 ]]; then
-              echo "Failed to access ${appHttpEndpoint}."
+              echo "Failed to access ${appHttpsEndoint}."
               exit 1
-            fi
-            if [[ $enableAppGWIngress == "true" ]]; then
-              curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndoint -k
-              if [[ $? -ne 0 ]]; then
-                echo "Failed to access ${appHttpsEndoint}."
-                exit 1
-              fi
             fi
           fi
       - name: Debugging with tmate if verification failed

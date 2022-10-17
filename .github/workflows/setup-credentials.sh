@@ -27,8 +27,6 @@ DISAMBIG_PREFIX=
 USER_NAME=
 # Owner/reponame, e.g., <USER_NAME>/azure.liberty.aks
 OWNER_REPONAME=
-# Set to true if your subscription is a Microsoft internal subscription
-IS_INTERNAL_SUBSCRIPTION=
 # Optional: Web hook for Microsoft Teams channel
 MSTEAMS_WEBHOOK=
 
@@ -81,11 +79,6 @@ if [ -z "${OWNER_REPONAME}" ] ; then
     GH_FLAGS=""
 else
     GH_FLAGS="--repo ${OWNER_REPONAME}"
-fi
-
-# get IS_INTERNAL_SUBSCRIPTION if not set at the beginning of this file
-if [ "$IS_INTERNAL_SUBSCRIPTION" == '' ] ; then
-    read -r -p "Enter true if your subscription is a Microsoft internal subscription, otherwise enter false: " IS_INTERNAL_SUBSCRIPTION
 fi
 
 # Optional: get MSTEAMS_WEBHOOK if not set at the beginning of this file
@@ -146,7 +139,6 @@ if $USE_GITHUB_CLI; then
     msg "${YELLOW}\"AZURE_CREDENTIALS\""
     msg "${GREEN}${AZURE_CREDENTIALS}"
     gh ${GH_FLAGS} secret set USER_NAME -b"${USER_NAME}"
-    gh ${GH_FLAGS} secret set IS_INTERNAL_SUBSCRIPTION -b"${IS_INTERNAL_SUBSCRIPTION}"
     gh ${GH_FLAGS} secret set MSTEAMS_WEBHOOK -b"${MSTEAMS_WEBHOOK}"
     msg "${YELLOW}\"DISAMBIG_PREFIX\""
     msg "${GREEN}${DISAMBIG_PREFIX}"
@@ -165,8 +157,6 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${GREEN}${AZURE_CREDENTIALS}"
   msg "${YELLOW}\"USER_NAME\""
   msg "${GREEN}${USER_NAME}"
-  msg "${YELLOW}\"IS_INTERNAL_SUBSCRIPTION\""
-  msg "${GREEN}${IS_INTERNAL_SUBSCRIPTION}"
   msg "${YELLOW}\"MSTEAMS_WEBHOOK\""
   msg "${GREEN}${MSTEAMS_WEBHOOK}"
   msg "${NOFORMAT}========================================================================"
