@@ -12,7 +12,6 @@ on:
   # REPO_NAME=WASdev/azure.liberty.aks
   # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "package"}'
 env:
-  refJavaee: b728442f1921282f5f3902fe5bdf7f4d2c7872ca
   repoName: "azure.liberty.aks"
 
 jobs:
@@ -21,11 +20,12 @@ jobs:
     steps:
       - name: Get versions of external dependencies
         run: |
-          curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/arm-parent/src/main/resources/external-deps-versions.properties
+          curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
           source external-deps-versions.properties
           echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
           echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
           echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
+          echo "refJavaee=${AZURE_JAVAEE_IAAS_REFERENCE}" >> $GITHUB_ENV
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
