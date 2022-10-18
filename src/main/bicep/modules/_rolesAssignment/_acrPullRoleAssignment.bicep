@@ -34,7 +34,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' existing = {
 }
 
 // https://github.com/Azure/azure-quickstart-templates/issues/4205
-resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid('${aksCluster.id}${acr.id}ForKubeletIdentity')
   properties: {
     description: 'Assign Resource Group Contributor role to User Assigned Managed Identity '
