@@ -125,7 +125,10 @@ USE_GITHUB_CLI=false
 msg "${GREEN}(3/4) Create service principal ${SERVICE_PRINCIPAL_NAME}"
 SUBSCRIPTION_ID=$(az account show --query id --output tsv --only-show-errors)
 SERVICE_PRINCIPAL=$(az ad sp create-for-rbac --name ${SERVICE_PRINCIPAL_NAME} --role="Contributor" --scopes="/subscriptions/${SUBSCRIPTION_ID}" --sdk-auth --only-show-errors | base64 -w0)
-SP_ID=$( az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query [0].id -o tsv)
+msg "${YELLOW}\"DISAMBIG_PREFIX\""
+msg "${GREEN}${DISAMBIG_PREFIX}"
+
+SP_ID=$(az ad sp list --display-name $SERVICE_PRINCIPAL_NAME --query [0].id -o tsv)
 az role assignment create --assignee ${SP_ID} --role "User Access Administrator"
 
 # Create GitHub action secrets
@@ -140,8 +143,6 @@ if $USE_GITHUB_CLI; then
     msg "${GREEN}${AZURE_CREDENTIALS}"
     gh ${GH_FLAGS} secret set USER_NAME -b"${USER_NAME}"
     gh ${GH_FLAGS} secret set MSTEAMS_WEBHOOK -b"${MSTEAMS_WEBHOOK}"
-    msg "${YELLOW}\"DISAMBIG_PREFIX\""
-    msg "${GREEN}${DISAMBIG_PREFIX}"
     msg "${GREEN}Secrets configured"
   } || {
     USE_GITHUB_CLI=false
