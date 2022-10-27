@@ -159,17 +159,33 @@ apk add docker-cli
 az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
-# Install Open Liberty Operator
-OPERATOR_VERSION=0.8.2
-mkdir -p overlays/watch-all-namespaces
-wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
-wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
-wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/overlays/watch-all-namespaces/kustomization.yaml -q -P ./overlays/watch-all-namespaces
-mkdir base
-wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/base/kustomization.yaml -q -P ./base
-wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/base/open-liberty-crd.yaml -q -P ./base
-wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OPERATOR_VERSION}/kustomize/base/open-liberty-operator.yaml -q -P ./base
-kubectl apply -k overlays/watch-all-namespaces
+if [ "$DEPLOY_WLO" = False ]; then
+    # Install Open Liberty Operator
+    OLO_VERSION=0.8.2
+    mkdir -p overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/kustomization.yaml -q -P ./overlays/watch-all-namespaces
+    mkdir base
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/kustomization.yaml -q -P ./base
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-crd.yaml -q -P ./base
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-operator.yaml -q -P ./base
+    kubectl apply -k overlays/watch-all-namespaces
+else
+    # Install WebSphere Liberty Operator
+    WLO_VERSION=1.0.2
+    mkdir -p overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/wlo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/kustomization.yaml -q -P ./overlays/watch-all-namespaces
+    mkdir base
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/kustomization.yaml -q -P ./base
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-crd.yaml -q -P ./base
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-deployment.yaml -q -P ./base
+    wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-roles.yaml -q -P ./base
+    kubectl apply -k overlays/watch-all-namespaces
+fi
+
 if [[ $? -ne 0 ]]; then
   echo "Failed to install Open Liberty Operator, please check if required directories and files exist" >&2
   exit 1
@@ -193,14 +209,21 @@ PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o ts
 
 # Choose right template by checking if AGIC is enabled
 appDeploymentTemplate=open-liberty-application.yaml.template
-if [ "$ENABLE_APP_GW_INGRESS" = True ]; then
+if [ "$ENABLE_APP_GW_INGRESS" = True ] && [ "$DEPLOY_WLO" = True ]; then
+    appDeploymentTemplate=websphere-liberty-application-agic.yaml.template
+elif [ "$ENABLE_APP_GW_INGRESS" = True ] && [ "$DEPLOY_WLO" = False ]; then
     appDeploymentTemplate=open-liberty-application-agic.yaml.template
+elif [ "$ENABLE_APP_GW_INGRESS" = False ] && [ "$DEPLOY_WLO" = True ]; then
+    appDeploymentTemplate=websphere-liberty-application.yaml.template
 fi
 
 appDeploymentFile=open-liberty-application.yaml
 export Enable_Cookie_Based_Affinity="${ENABLE_COOKIE_BASED_AFFINITY,,}"
 export App_Gw_Use_Private_Ip="${APP_GW_USE_PRIVATE_IP,,}"
 export Frontend_Tls_Secret=${APP_FRONTEND_TLS_SECRET_NAME}
+export WLA_Edition="${WLA_EDITION}"
+export WLA_Product_Entitlement_Source="${WLA_PRODUCT_ENTITLEMENT_SOURCE}"
+export WLA_Metric="${WLA_METRIC}"
 
 # Deploy application image if it's requested by the user
 if [ "$deployApplication" = True ]; then
@@ -254,6 +277,9 @@ else
         | sed -e "s#\${Enable_Cookie_Based_Affinity}#${Enable_Cookie_Based_Affinity}#g" \
         | sed -e "s#\${App_Gw_Use_Private_Ip}#${App_Gw_Use_Private_Ip}#g" \
         | sed -e "s#\${Frontend_Tls_Secret}#${Frontend_Tls_Secret}#g" \
+        | sed -e "s#\${WLA_Edition}#${WLA_Edition}#g" \
+        | sed -e "s#\${WLA_Product_Entitlement_Source}#${WLA_Product_Entitlement_Source}#g" \
+        | sed -e "s#\${WLA_Metric}#${WLA_Metric}#g" \
         | base64)
 fi
 
