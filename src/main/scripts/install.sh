@@ -157,7 +157,7 @@ apk add docker-cli
 
 # Install `kubectl` and connect to the AKS cluster
 az aks install-cli 2>/dev/null
-az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
+az aks get-credentials -g $clusterRGName -n $clusterName --admin --overwrite-existing >> $logFile
 
 operatorDeploymentName=
 if [ "$DEPLOY_WLO" = False ]; then
