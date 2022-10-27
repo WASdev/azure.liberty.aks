@@ -532,6 +532,7 @@
                     {
                         "name": "edition",
                         "type": "Microsoft.Common.OptionsGroup",
+                        "defaultValue": "IBM WebSphere Application Server",
                         "label": "Edition",
                         "toolTip": "Product edition",
                         "constraints": {
@@ -556,6 +557,7 @@
                     {
                         "name": "productEntitlementSource",
                         "type": "Microsoft.Common.OptionsGroup",
+                        "defaultValue": "Standalone",
                         "label": "Product entitlement source",
                         "toolTip": "Entitlement source for the product",
                         "constraints": {
