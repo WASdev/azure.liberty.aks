@@ -21,6 +21,10 @@ param location string
 param name string = ''
 param identity object = {}
 param arguments string = ''
+param deployWLO bool = false
+param edition string = 'IBM WebSphere Application Server'
+param productEntitlementSource string = 'Standalone'
+param metric string = 'Processor Value Unit (PVU)'
 param deployApplication bool = false
 param enableAppGWIngress bool = false
 param appFrontendTlsSecretName string =''
@@ -55,12 +59,30 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
         name: 'APP_GW_USE_PRIVATE_IP'
         value: string(appgwUsePrivateIP)
       }
+      {
+        name: 'DEPLOY_WLO'
+        value: string(deployWLO)
+      }
+      {
+        name: 'WLA_EDITION'
+        value: string(edition)
+      }
+      {
+        name: 'WLA_PRODUCT_ENTITLEMENT_SOURCE'
+        value: string(productEntitlementSource)
+      }
+      {
+        name: 'WLA_METRIC'
+        value: string(metric)
+      }
     ]
     arguments: arguments
     primaryScriptUri: uri(const_scriptLocation, 'install.sh${_artifactsLocationSasToken}')
     supportingScriptUris: [
       uri(const_scriptLocation, 'open-liberty-application.yaml.template${_artifactsLocationSasToken}')
       uri(const_scriptLocation, 'open-liberty-application-agic.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'websphere-liberty-application.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'websphere-liberty-application-agic.yaml.template${_artifactsLocationSasToken}')
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
