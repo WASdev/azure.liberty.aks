@@ -159,6 +159,7 @@ apk add docker-cli
 az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --overwrite-existing >> $logFile
 
+operatorDeploymentName=
 if [ "$DEPLOY_WLO" = False ]; then
     # Install Open Liberty Operator
     OLO_VERSION=0.8.2
@@ -171,6 +172,7 @@ if [ "$DEPLOY_WLO" = False ]; then
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-crd.yaml -q -P ./base
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-operator.yaml -q -P ./base
     kubectl apply -k overlays/watch-all-namespaces
+    operatorDeploymentName=olo-controller-manager
 else
     # Install WebSphere Liberty Operator
     WLO_VERSION=1.0.2
@@ -184,15 +186,16 @@ else
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-deployment.yaml -q -P ./base
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-roles.yaml -q -P ./base
     kubectl apply -k overlays/watch-all-namespaces
+    operatorDeploymentName=websphere-liberty-controller-manager
 fi
 
 if [[ $? -ne 0 ]]; then
   echo "Failed to install Open Liberty Operator, please check if required directories and files exist" >&2
   exit 1
 fi
-wait_deployment_complete olo-controller-manager default ${logFile}
+wait_deployment_complete ${operatorDeploymentName} default ${logFile}
 if [[ $? -ne 0 ]]; then
-  echo "The Open Liberty Operator is not available." >&2
+  echo "The Open/WebSphere Liberty Operator is not available: ${operatorDeploymentName}." >&2
   exit 1
 fi
 
