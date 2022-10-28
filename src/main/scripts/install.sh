@@ -190,7 +190,7 @@ else
 fi
 
 if [[ $? -ne 0 ]]; then
-  echo "Failed to install Open Liberty Operator, please check if required directories and files exist" >&2
+  echo "Failed to install Open/WebSphere Liberty Operator, please check if required directories and files exist" >&2
   exit 1
 fi
 wait_deployment_complete ${operatorDeploymentName} default ${logFile}
@@ -239,7 +239,7 @@ if [ "$deployApplication" = True ]; then
     fi
     Application_Image=${LOGIN_SERVER}/${Application_Image}
 
-    # Deploy open liberty application and output its base64 encoded deployment yaml file content
+    # Deploy open/websphere liberty application and output its base64 encoded deployment yaml file content
     envsubst < "$appDeploymentTemplate" > "$appDeploymentFile"
     appDeploymentYaml=$(cat $appDeploymentFile | base64)
     kubectl apply -f $appDeploymentFile >> $logFile
@@ -247,7 +247,7 @@ if [ "$deployApplication" = True ]; then
     # Wait until the application deployment completes
     wait_deployment_complete ${Application_Name} ${Project_Name} ${logFile}
     if [[ $? != 0 ]]; then
-        echo "The OpenLibertyApplication ${Application_Name} is not available." >&2
+        echo "The Open/WebSphere Liberty application ${Application_Name} is not available." >&2
         exit 1
     fi
 
