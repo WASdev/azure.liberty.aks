@@ -109,7 +109,7 @@ jobs:
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
-      - name: Deploy an Open Liberty Application sample app on AKS
+      - name: Start the deployment
         run: |
           cd ${{ env.repoName }}/target/cli
           chmod a+x deploy.azcli
