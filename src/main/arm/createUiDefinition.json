@@ -575,8 +575,8 @@
                                     "value": "IBM Cloud Pak for Applications"
                                 },
                                 {
-                                    "label": "IBM WebSphere Server Family Edition",
-                                    "value": "IBM WebSphere Server Family Edition"
+                                    "label": "IBM WebSphere Application Server Family Edition",
+                                    "value": "IBM WebSphere Application Server Family Edition"
                                 }
                             ],
                             "required": true

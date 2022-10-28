@@ -133,7 +133,7 @@ param edition string = 'IBM WebSphere Application Server'
   'Standalone'
   'IBM WebSphere Hybrid Edition'
   'IBM Cloud Pak for Applications'
-  'IBM WebSphere Server Family Edition'
+  'IBM WebSphere Application Server Family Edition'
 ])
 @description('Entitlement source for the product')
 param productEntitlementSource string = 'Standalone'
@@ -169,7 +169,7 @@ var const_availabilityZones = [
 var const_azureSubjectName = format('{0}.{1}.{2}', name_dnsNameforApplicationGateway, location, 'cloudapp.azure.com')
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
 var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
-var const_metric = productEntitlementSource == 'Standalone' || productEntitlementSource == 'IBM WebSphere Server Family Edition' ? 'Processor Value Unit (PVU)' : 'Virtual Processor Core (VPC)'
+var const_metric = productEntitlementSource == 'Standalone' || productEntitlementSource == 'IBM WebSphere Application Server Family Edition' ? 'Processor Value Unit (PVU)' : 'Virtual Processor Core (VPC)'
 var const_newVnet = (vnetForApplicationGateway.newOrExisting == 'new') ? true : false
 var const_regionsSupportAvailabilityZones = [
   'australiaeast'
