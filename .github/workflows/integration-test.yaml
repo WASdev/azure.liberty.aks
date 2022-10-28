@@ -119,29 +119,35 @@ jobs:
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
           appHttpEndpoint=$(echo $outputs | jq -r '.appHttpEndpoint.value')
           echo "appHttpEndpoint: ${appHttpEndpoint}"
-          if [[ $deployApplication == "true" && -z "$appHttpsEndpoint" ]] || [[ $deployApplication == "false" && -n "$appHttpEndpoint" ]]; then
-            echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
-            exit 1
-          fi
           appHttpsEndpoint=$(echo $outputs | jq -r '.appHttpsEndpoint.value')
           echo "appHttpsEndpoint: ${appHttpsEndpoint}"
-          if [[ $enableAppGWIngress == "true" && -z "$appHttpsEndpoint" ]] || [[ $enableAppGWIngress == "false" && -n "$appHttpsEndpoint" ]]; then
-            echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
-            exit 1
-          fi
           if [[ $deployApplication == "true" ]]; then
+            if [[ -z "$appHttpEndpoint" ]]; then
+              echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
+              exit 1
+            fi
             curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
             if [[ $? -ne 0 ]]; then
               echo "Failed to access ${appHttpEndpoint}."
               exit 1
             fi
+          elif [[ -n "$appHttpEndpoint" ]]; then
+            echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
+            exit 1
           fi
           if [[ $deployApplication == "true" && $enableAppGWIngress == "true" ]]; then
+            if [[ -z "$appHttpsEndpoint" ]]; then
+              echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
+              exit 1
+            fi
             curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndpoint -k
             if [[ $? -ne 0 ]]; then
               echo "Failed to access ${appHttpsEndpoint}."
               exit 1
             fi
+          elif [[ -n "$appHttpsEndpoint" ]]; then
+            echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
+            exit 1 
           fi
       - name: Debugging with tmate if verification failed
         if: failure()
