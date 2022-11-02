@@ -162,6 +162,7 @@ az aks get-credentials -g $clusterRGName -n $clusterName --admin --overwrite-exi
 operatorDeploymentName=
 if [ "$DEPLOY_WLO" = False ]; then
     # Install Open Liberty Operator
+    operatorDeploymentName=olo-controller-manager
     OLO_VERSION=0.8.2
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
@@ -172,9 +173,9 @@ if [ "$DEPLOY_WLO" = False ]; then
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-crd.yaml -q -P ./base
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-operator.yaml -q -P ./base
     kubectl apply -k overlays/watch-all-namespaces
-    operatorDeploymentName=olo-controller-manager
 else
     # Install WebSphere Liberty Operator
+    operatorDeploymentName=websphere-liberty-controller-manager
     WLO_VERSION=1.0.2
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/wlo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
@@ -186,7 +187,6 @@ else
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-deployment.yaml -q -P ./base
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-roles.yaml -q -P ./base
     kubectl apply -k overlays/watch-all-namespaces
-    operatorDeploymentName=websphere-liberty-controller-manager
 fi
 
 if [[ $? -ne 0 ]]; then
@@ -210,7 +210,7 @@ LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
 USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
 PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
 
-# Choose right template by checking if AGIC is enabled
+# Choose right template
 appDeploymentTemplate=open-liberty-application.yaml.template
 if [ "$ENABLE_APP_GW_INGRESS" = True ] && [ "$DEPLOY_WLO" = True ]; then
     appDeploymentTemplate=websphere-liberty-application-agic.yaml.template
@@ -220,7 +220,7 @@ elif [ "$ENABLE_APP_GW_INGRESS" = False ] && [ "$DEPLOY_WLO" = True ]; then
     appDeploymentTemplate=websphere-liberty-application.yaml.template
 fi
 
-appDeploymentFile=open-liberty-application.yaml
+appDeploymentFile=liberty-application.yaml
 export Enable_Cookie_Based_Affinity="${ENABLE_COOKIE_BASED_AFFINITY,,}"
 export App_Gw_Use_Private_Ip="${APP_GW_USE_PRIVATE_IP,,}"
 export Frontend_Tls_Secret=${APP_FRONTEND_TLS_SECRET_NAME}
