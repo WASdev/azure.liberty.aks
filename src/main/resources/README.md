@@ -47,7 +47,7 @@
 - Summary
   - Provisions IBM WebSphere Liberty on Azure Kubernetes Service
 - Long Summary
-  - Provisions IBM WebSphere Liberty on Azure Kubernetes Service with built in container registry, WAR/EAR deployment, and the Open Liberty Kubernetes operator.
+  - Provisions IBM WebSphere Liberty on Azure Kubernetes Service with built in container registry, WAR/EAR deployment, and the Open/WebSphere Liberty Kubernetes Operator.
 - Description
   - IBM WebSphere Liberty provides a flexible, secure server runtime environment for large-scale and mission critical application deployments. This offer provisions an IBM WebSphere Liberty environment on Azure Kubernetes Service.
 - Search Keywords
@@ -158,7 +158,7 @@
 - Summary
   - Provisions IBM WebSphere Liberty on Azure Kubernetes Service
 - Description
-  - Provisions IBM WebSphere Liberty on Azure Kubernetes Service with built in container registry, WAR/EAR deployment, and the Open Liberty Kubernetes operator.
+  - Provisions IBM WebSphere Liberty on Azure Kubernetes Service with built in container registry, WAR/EAR deployment, and the Open/WebSphere Liberty Kubernetes Operator.
 
 ### Availability
 

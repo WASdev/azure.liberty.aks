@@ -118,7 +118,7 @@ param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
 
-@description('Flag indicating whether to deploy WebSphere Liberty operator.')
+@description('Flag indicating whether to deploy WebSphere Liberty Operator.')
 param deployWLO bool = false
 
 @allowed([
