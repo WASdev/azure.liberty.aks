@@ -8,7 +8,7 @@ on:
         type: boolean
         default: true
       deployWLO:
-        description: 'WebSphere Liberty operator'
+        description: 'WebSphere Liberty Operator'
         required: true
         type: boolean
         default: false
