@@ -514,8 +514,6 @@ module aksEndPid './modules/_pids/_empty.bicep' = {
 
 output appHttpEndpoint string = deployApplication ? (enableAppGWIngress ? appgwDeployment.outputs.appGatewayURL : primaryDsDeployment.outputs.appEndpoint ) : ''
 output appHttpsEndpoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
-// Must copy code rather than reference appHttpsEndpoint. See https://github.com/Azure/bicep/issues/8710
-output appHttpsEndoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
 output clusterName string = name_clusterName
 output clusterRGName string = const_clusterRGName
 output acrName string = name_acrName
