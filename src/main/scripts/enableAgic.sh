@@ -24,7 +24,7 @@ function install_azure_ingress() {
         # After updating, your cluster's control plane and addon pods will switch to use managed identity, but kubelet will KEEP USING SERVICE PRINCIPAL until you upgrade your agentpool.
         az aks update -y -g ${AKS_CLUSTER_RG_NAME} -n ${AKS_CLUSTER_NAME} --enable-managed-identity
 
-        validate_status "Enable Applciation Gateway Ingress Controller for ${AKS_CLUSTER_NAME}."
+        validate_status "Enable managed identity for ${AKS_CLUSTER_NAME}."
     fi
 
     local agicEnabled=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} | jq '.addonProfiles.ingressApplicationGateway.enabled')

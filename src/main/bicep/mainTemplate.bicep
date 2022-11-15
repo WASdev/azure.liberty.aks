@@ -118,6 +118,26 @@ param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
 
+@description('Flag indicating whether to deploy WebSphere Liberty Operator.')
+param deployWLO bool = false
+
+@allowed([
+  'IBM WebSphere Application Server'
+  'IBM WebSphere Application Server Liberty Core'
+  'IBM WebSphere Application Server Network Deployment'
+])
+@description('Product edition')
+param edition string = 'IBM WebSphere Application Server'
+
+@allowed([
+  'Standalone'
+  'IBM WebSphere Hybrid Edition'
+  'IBM Cloud Pak for Applications'
+  'IBM WebSphere Application Server Family Edition'
+])
+@description('Entitlement source for the product')
+param productEntitlementSource string = 'Standalone'
+
 @description('Flag indicating whether to deploy an application')
 param deployApplication bool = false
 
@@ -149,6 +169,7 @@ var const_availabilityZones = [
 var const_azureSubjectName = format('{0}.{1}.{2}', name_dnsNameforApplicationGateway, location, 'cloudapp.azure.com')
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
 var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
+var const_metric = productEntitlementSource == 'Standalone' || productEntitlementSource == 'IBM WebSphere Application Server Family Edition' ? 'Processor Value Unit (PVU)' : 'Virtual Processor Core (VPC)'
 var const_newVnet = (vnetForApplicationGateway.newOrExisting == 'new') ? true : false
 var const_regionsSupportAvailabilityZones = [
   'australiaeast'
@@ -467,6 +488,10 @@ module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
     _artifactsLocationSasToken: _artifactsLocationSasToken
     identity: obj_uamiForDeploymentScript
     arguments: const_arguments
+    deployWLO: deployWLO
+    edition: edition
+    productEntitlementSource: productEntitlementSource
+    metric: const_metric
     deployApplication: deployApplication
     enableAppGWIngress: enableAppGWIngress
     appFrontendTlsSecretName: const_appFrontendTlsSecretName
@@ -489,8 +514,6 @@ module aksEndPid './modules/_pids/_empty.bicep' = {
 
 output appHttpEndpoint string = deployApplication ? (enableAppGWIngress ? appgwDeployment.outputs.appGatewayURL : primaryDsDeployment.outputs.appEndpoint ) : ''
 output appHttpsEndpoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
-// Must copy code rather than reference appHttpsEndpoint. See https://github.com/Azure/bicep/issues/8710
-output appHttpsEndoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
 output clusterName string = name_clusterName
 output clusterRGName string = const_clusterRGName
 output acrName string = name_acrName

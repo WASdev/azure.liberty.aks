@@ -30,13 +30,13 @@
    1. Create a new AKS cluster and a new Azure Container Registry (ACR) instance with Application Gateway Ingress Controller (AGIC) enabled:
 
       ```bash
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DcreateCluster=true -DcreateACR=true -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=true -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DcreateCluster=true -DcreateACR=true -DdeployWLO=<true|false> -Dedition=<edition> -DproductEntitlementSource=<productEntitlementSource> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=true -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
    1. Or use an existing AKS cluster and an existing ACR instance without AGIC:
 
       ```bash
-      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DcreateCluster=false -DclusterName=<aks-cluster-name> -DclusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DacrRGName=<acr-group-name> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=false -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
+      mvn -Dgit.repo=<repo_user> -Dgit.tag=<repo_tag> -DcreateCluster=false -DclusterName=<aks-cluster-name> -DclusterRGName=<cluster-group-name> -DcreateACR=false -DacrName=<acr-instance-name> -DacrRGName=<acr-group-name> -DdeployWLO=<true|false> -Dedition=<edition> -DproductEntitlementSource=<productEntitlementSource> -DdeployApplication=<true|false> -DappImagePath=<app-image-path> -DappReplicas=<number of replicas> -DenableAppGWIngress=false -DappgwUsePrivateIP=<true|false> -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       ```
 
 1. Change to `./target/cli` directory

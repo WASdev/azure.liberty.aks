@@ -53,6 +53,15 @@
         "enableCookieBasedAffinity": {
             "value": "${enableCookieBasedAffinity}"
         },
+        "deployWLO": {
+            "value": "${deployWLO}"
+        },
+        "edition": {
+            "value": "${edition}"
+        },
+        "productEntitlementSource": {
+            "value": "${productEntitlementSource}"
+        },
         "deployApplication": {
             "value": "${deployApplication}"
         },

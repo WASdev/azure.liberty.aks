@@ -122,6 +122,8 @@ appgwUsePrivateIP=$( echo $parametersJson | jq '.appgwUsePrivateIP.value' | sed 
 parametersJson=$( echo $parametersJson | jq --argjson appgwUsePrivateIP "$appgwUsePrivateIP" '.appgwUsePrivateIP.value = $appgwUsePrivateIP' )
 enableCookieBasedAffinity=$( echo $parametersJson | jq '.enableCookieBasedAffinity.value' | sed 's/"//g' )
 parametersJson=$( echo $parametersJson | jq --argjson enableCookieBasedAffinity "$enableCookieBasedAffinity" '.enableCookieBasedAffinity.value = $enableCookieBasedAffinity' )
+deployWLO=$( echo $parametersJson | jq '.deployWLO.value' | sed 's/"//g' )
+parametersJson=$( echo $parametersJson | jq --argjson deployWLO "$deployWLO" '.deployWLO.value = $deployWLO' )
 deployApplication=$( echo $parametersJson | jq '.deployApplication.value' | sed 's/"//g' )
 parametersJson=$( echo $parametersJson | jq --argjson deployApp "$deployApplication" '.deployApplication.value = $deployApp' )
 appReplicas=$( echo $parametersJson | jq '.appReplicas.value' | sed 's/"//g' )

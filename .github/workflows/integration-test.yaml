@@ -7,35 +7,33 @@ on:
         required: true
         type: boolean
         default: true
+      deployWLO:
+        description: 'WebSphere Liberty Operator'
+        required: true
+        type: boolean
+        default: false
+      deployApplication:
+        description: 'Sample application'
+        required: true
+        type: boolean
+        default: true
       deleteAzureResources:
         description: 'Delete Azure resources at the end'
         required: true
         type: boolean
         default: true
-  # Allows you to run this workflow using GitHub APIs
+  # Allows you to run this workflow using GitHub workflow dispatch APIs
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
-  # Enable AGIC and delete Azure resources at the end
-  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main"}'
-  # Enable AGIC and keep Azure resources at the end
-  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"deleteAzureResources": "false"}}'
-  # Disable AGIC and delete Azure resources at the end
-  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"enableAppGWIngress": "false"}}'
-  # Disable AGIC and keep Azure resources at the end
-  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"enableAppGWIngress": "false", "deleteAzureResources": "false"}}'
+  # Enable/disable AGIC, WebSphere Liberty Operator and sample application. Keep/delete Azure resources at the end.
+  # curl --verbose -XPOST -u "WASdev:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/actions/workflows/integration-test.yaml/dispatches --data '{"ref": "main", "inputs":{"enableAppGWIngress": "true|false", "deployWLO": "true|false", "deployApplication": "true|false", "deleteAzureResources": "true|false"}}'
   repository_dispatch:
     types: [integration-test]
-  # sample request
+  # Allows you to run this workflow using GitHub repository dispatch APIs
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
-  # Enable AGIC and delete Azure resources at the end
-  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": true, "deleteAzureResources": true}}'
-  # Enable AGIC and keep Azure resources at the end
-  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": true, "deleteAzureResources": false}}'
-  # Disable AGIC and delete Azure resources at the end
-  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": false, "deleteAzureResources": true}}'
-  # Disable AGIC and keep Azure resources at the end
-  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": false, "deleteAzureResources": false}}'
+  # Enable/disable AGIC, WebSphere Liberty Operator and sample application. Keep/delete Azure resources at the end.
+  # curl --verbose -X POST https://api.github.com/repos/${REPO_NAME}/dispatches -H "Accept: application/vnd.github.everest-preview+json" -H "Authorization: token ${PERSONAL_ACCESS_TOKEN}" --data '{"event_type": "integration-test", "client_payload": {"enableAppGWIngress": true|false, "deployWLO": true|false, "deployApplication": true|false, "deleteAzureResources": true|false}}'
 env:
   repoName: "azure.liberty.aks"
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
@@ -92,16 +90,26 @@ jobs:
             enableAppGWIngress=true
           fi
           echo "enableAppGWIngress=${enableAppGWIngress}" >> $GITHUB_ENV
+          deployWLO=false
+          if ${{ inputs.deployWLO == true || github.event.client_payload.deployWLO == true }}; then
+            deployWLO=true
+          fi
+          deployApplication=false
+          if ${{ inputs.deployApplication == true || github.event.client_payload.deployApplication == true }}; then
+            deployApplication=true
+          fi
+          echo "deployApplication=${deployApplication}" >> $GITHUB_ENV
           cd ${{ env.repoName }}
           mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=$GITHUB_REF_NAME -DcreateCluster=true -DcreateACR=true \
             -DenableAppGWIngress=${enableAppGWIngress} -DappgwUsePrivateIP=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true \
-            -DdeployApplication=true -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
+            -DdeployWLO=${deployWLO} -Dedition="IBM WebSphere Application Server" -DproductEntitlementSource="Standalone" \
+            -DdeployApplication=${deployApplication} -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
             -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
       - uses: azure/login@v1
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
-      - name: Deploy an Open Liberty Application sample app on AKS
+      - name: Start the deployment
         run: |
           cd ${{ env.repoName }}/target/cli
           chmod a+x deploy.azcli
@@ -111,27 +119,35 @@ jobs:
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
           appHttpEndpoint=$(echo $outputs | jq -r '.appHttpEndpoint.value')
           echo "appHttpEndpoint: ${appHttpEndpoint}"
-          if [[ -z "$appHttpEndpoint" ]]; then
+          appHttpsEndpoint=$(echo $outputs | jq -r '.appHttpsEndpoint.value')
+          echo "appHttpsEndpoint: ${appHttpsEndpoint}"
+          if [[ $deployApplication == "true" ]]; then
+            if [[ -z "$appHttpEndpoint" ]]; then
+              echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
+              exit 1
+            fi
+            curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
+            if [[ $? -ne 0 ]]; then
+              echo "Failed to access ${appHttpEndpoint}."
+              exit 1
+            fi
+          elif [[ -n "$appHttpEndpoint" ]]; then
             echo "Invalid value of appHttpEndpoint: ${appHttpEndpoint}"
             exit 1
           fi
-          appHttpsEndpoint=$(echo $outputs | jq -r '.appHttpsEndpoint.value')
-          echo "appHttpsEndpoint: ${appHttpsEndpoint}"
-          if [[ $enableAppGWIngress == "true" && -z "$appHttpsEndpoint" ]] || [[ $enableAppGWIngress == "false" && -n "$appHttpsEndpoint" ]]; then
-            echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
-            exit 1
-          fi
-          curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpEndpoint
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to access ${appHttpEndpoint}."
-            exit 1
-          fi
-          if [[ $enableAppGWIngress == "true" ]]; then
+          if [[ $deployApplication == "true" && $enableAppGWIngress == "true" ]]; then
+            if [[ -z "$appHttpsEndpoint" ]]; then
+              echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
+              exit 1
+            fi
             curl --verbose --connect-timeout 60 --max-time 180 --retry 10 --retry-delay 30 --retry-max-time 180 --retry-connrefused $appHttpsEndpoint -k
             if [[ $? -ne 0 ]]; then
               echo "Failed to access ${appHttpsEndpoint}."
               exit 1
             fi
+          elif [[ -n "$appHttpsEndpoint" ]]; then
+            echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
+            exit 1 
           fi
       - name: Debugging with tmate if verification failed
         if: failure()
