@@ -85,12 +85,12 @@
         "steps": [
             {
                 "name": "Cluster",
-                "label": "Configure cluster",
+                "label": "AKS",
                 "subLabel": {
                     "preValidation": "Provide required info for cluster configuration",
                     "postValidation": "Done"
                 },
-                "bladeTitle": "Configure cluster",
+                "bladeTitle": "AKS",
                 "elements": [
                     {
                         "name": "clusterInfo",
@@ -228,12 +228,12 @@
             },
             {
                 "name": "section_appGateway",
-                "label": "Networking",
+                "label": "Load balancing",
                 "subLabel": {
-                    "preValidation": "Provide required information for networking",
+                    "preValidation": "Provide required information for load balancing",
                     "postValidation": "Done"
                 },
-                "bladeTitle": "Networking",
+                "bladeTitle": "Load balancing",
                 "elements": [
                     {
                         "name": "appgwIngress",
@@ -245,7 +245,7 @@
                                 "type": "Microsoft.Common.TextBlock",
                                 "visible": true,
                                 "options": {
-                                    "text": "Select 'Yes' to configure an Application Gateway Ingress Controller",
+                                    "text": "Select 'Yes' to configure an Application Gateway Ingress Controller. If Application Gateway is not enabled, the user can simply use the standard load balancer that AKS comes with.",
                                     "link": {
                                         "label": "Learn more",
                                         "uri": "https://aka.ms/azure-liberty-aks-app-gateway-ingress-controller"
@@ -654,24 +654,17 @@
                         "visible": "[bool(steps('Application').deployApplication)]"
                     },
                     {
-                        "name": "appLoadBalancingInfo",
-                        "type": "Microsoft.Common.Section",
-                        "label": "Load balancing",
-                        "elements": [
-                            {
-                                "name": "appReplicas",
-                                "type": "Microsoft.Common.Slider",
-                                "min": 1,
-                                "max": 20,
-                                "label": "Number of application replicas",
-                                "defaultValue": 2,
-                                "showStepMarkers": false,
-                                "toolTip": "The number of application replicas to deploy.",
-                                "constraints": {
-                                    "required": true
-                                }
-                            }
-                        ],
+                        "name": "appReplicas",
+                        "type": "Microsoft.Common.Slider",
+                        "min": 1,
+                        "max": 20,
+                        "label": "Number of application replicas",
+                        "defaultValue": 2,
+                        "showStepMarkers": false,
+                        "toolTip": "The number of application replicas to deploy.",
+                        "constraints": {
+                            "required": true
+                        },
                         "visible": "[bool(steps('Application').deployApplication)]"
                     }
                 ]
@@ -706,7 +699,7 @@
             "productEntitlementSource": "[steps('Application').productEntitlementSource]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
             "appImagePath": "[if(equals(steps('Application').appImageInfo.appImageOption, '2'), 'icr.io/appcafe/open-liberty/samples/getting-started', if(equals(steps('Application').appImageInfo.appImageOption, '3'), 'docker.io/ibmcom/websphere-liberty-sample:1.0.0', steps('Application').appImageInfo.appImagePath))]",
-            "appReplicas": "[int(steps('Application').appLoadBalancingInfo.appReplicas)]"
+            "appReplicas": "[int(steps('Application').appReplicas)]"
         }
     }
 }
