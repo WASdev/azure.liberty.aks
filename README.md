@@ -57,3 +57,30 @@
    1. Navigate to "Deployments > `deploymentName` > Outputs";
    1. Copy value of property `appHttpEndpoint` > append context root defined in the 'server.xml' of your application if it's not equal to '/' > open it in the browser;
    1. If you enabled AGIC: copy value of property `appHttpsEndpoint` > append context root defined in the 'server.xml' of your application if it's not equal to '/' > open it in the browser;
+
+## Deployment Description
+
+The offer provisions the following Azure resources and a WebSphere Liberty Operator or Open Liberty Operator.
+
+* Network resources
+  * A virtual network and one subnet if user selects to deploy an Azure Application Gateway Ingress Controller (AGIC) and create a new virtual network.
+  * A network security group if user selects to create a new virtual network.
+  * An Application Gateway acting as Ingress controller for pods running in the AKS cluster if user selects to deploy AGIC, with the following configurables:
+    * Create a new virtual network or bring user's own virtual network.
+    * Options to provide TLS/SSL certificate (upload, identify an Azure Key Vault and generate a self-signed certificate).
+    * Enable/disable cookie based affinity.
+  * A public IP address assigned to the Azure Application Gateway if user selects to deploy AGIC.
+* Storage resources
+  * A container registry for storing images of application deployed to the AKS cluster if user selects to create a new one.
+  * A keyvault for storing TLS/SSL certificate if user selects to deploy AGIC.
+* Computing resources
+  * An AKS cluster if user selects to create a new one, with the followings configurables:
+    * VM size.
+    * Minimum node count.
+    * Maximum node count.
+* Key software components
+  * A WebSphere Liberty Operator or Open Liberty Operator installed and running on the AKS cluster, per user selection.
+  * An WebSphere Liberty or Open Liberty application deployed and running on the AKS cluster, per user selection:
+    * User can select to deploy an application or not.
+    * User can deploy own application or a sample application.
+    * User need to provide additional entitlement info to deploy the application if a WebSphere Liberty Operator (IBM supported) is deployed.
