@@ -62,24 +62,24 @@
 
 The offer provisions the following Azure resources and a WebSphere Liberty Operator or Open Liberty Operator.
 
+* Computing resources
+    * Azure Kubernetes Service cluster
+        * Dynamically created AKS cluster with
+           * Choice of Node count.
+           * Choice of Node size.
+           * Network plugin: Azure CNI.
+        * You can also bring your own AKS cluster
+    * An Azure Container Registry. You can also bring your own container registry. The registry is used to store the Liberty and application image.
 * Network resources
   * A virtual network and one subnet if user selects to deploy an Azure Application Gateway Ingress Controller (AGIC) and create a new virtual network.
   * A network security group if user selects to create a new virtual network.
-  * An Application Gateway acting as Ingress controller for pods running in the AKS cluster if user selects to deploy AGIC, with the following configurables:
-    * Create a new virtual network or bring user's own virtual network.
+  * An Application Gateway acting as Ingress controller for pods running in the AKS cluster if user selects to deploy AGIC, with the following configuration:
+    * Create a new virtual network or use a pre-existing virtual network.
     * Options to provide TLS/SSL certificate (upload, identify an Azure Key Vault and generate a self-signed certificate).
     * Enable/disable cookie based affinity.
   * A public IP address assigned to the Azure Application Gateway if user selects to deploy AGIC.
-* Storage resources
-  * A container registry for storing images of application deployed to the AKS cluster if user selects to create a new one.
-  * A keyvault for storing TLS/SSL certificate if user selects to deploy AGIC.
-* Computing resources
-  * An AKS cluster if user selects to create a new one, with the followings configurables:
-    * VM size.
-    * Minimum node count.
-    * Maximum node count.
 * Key software components
-  * A WebSphere Liberty Operator or Open Liberty Operator installed and running on the AKS cluster, per user selection.
+  * A WebSphere Liberty Operator version 1.1.0 or Open Liberty Operator version 0.8.2 installed and running on the AKS cluster, per user selection.
   * An WebSphere Liberty or Open Liberty application deployed and running on the AKS cluster, per user selection:
     * User can select to deploy an application or not.
     * User can deploy own application or a sample application.
