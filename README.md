@@ -68,7 +68,7 @@ The offer provisions the following Azure resources and a WebSphere Liberty Opera
            * Choice of Node count.
            * Choice of Node size.
            * Network plugin: Azure CNI.
-        * You can also bring your own AKS cluster
+        * You can choose to deploy into a pre-existing AKS cluster
     * An Azure Container Registry. You can also bring your own container registry. The registry is used to store the Liberty and application image.
 * Network resources
   * A virtual network and one subnet if user selects to deploy an Azure Application Gateway Ingress Controller (AGIC) and create a new virtual network.
