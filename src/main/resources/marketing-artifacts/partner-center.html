@@ -1,0 +1,51 @@
+<h1>Name</h1>
+<p>IBM WebSphere Liberty and Open Liberty on Azure Kubernetes Service</p>
+<h1>Search results summary</h1>
+<p>Run IBM WebSphere Liberty and Open Liberty on the Azure Kubernetes Service</p>
+<h1>Short description</h1>
+<p>Run IBM WebSphere Liberty or Open Liberty on the Azure Kubernetes Service (AKS) leveraging the Liberty Operator.</p>
+<h1>Description</h1>
+<p>The offer provisions the WebSphere Liberty Operator or Open Liberty Operator and supporting Azure resources.</p>
+<ul>
+    <li>Computing resources<ul>
+        <li>Azure Kubernetes Service cluster<ul>
+            <li>Dynamically created AKS cluster with<ul>
+                <li>Choice of Node count.</li>
+                <li>Choice of Node size.</li>
+                <li>Network plugin: Azure CNI.</li>
+            </ul>
+            </li>
+            <li>You can choose to deploy into a pre-existing AKS cluster</li>
+        </ul>
+        </li>
+        <li>An Azure Container Registry. You can also bring your own container registry. The registry is used to store the Liberty and application image.</li>
+    </ul>
+    </li>
+    <li>Network resources<ul>
+        <li>A virtual network and one subnet if user selects to deploy an Azure Application Gateway Ingress Controller (AGIC) and create a new virtual network.</li>
+        <li>A network security group if user selects to create a new virtual network.</li>
+        <li>An Application Gateway acting as Ingress controller for pods running in the AKS cluster if user selects to deploy AGIC, with the following configuration:<ul>
+            <li>Create a new virtual network or use a pre-existing virtual network.</li>
+            <li>Options to provide TLS/SSL certificate (upload, identify an Azure Key Vault and generate a self-signed certificate).</li>
+            <li>Enable/disable cookie based affinity.</li>
+        </ul>
+        </li>
+        <li>A public IP address assigned to the Azure Application Gateway if user selects to deploy AGIC.</li>
+    </ul>
+    </li>
+    <li>Key software components<ul>
+        <li>A WebSphere Liberty Operator version 1.1.0 or Open Liberty Operator version 0.8.1 installed and running on the AKS cluster, per user selection.</li>
+        <li>An WebSphere Liberty or Open Liberty application deployed and running on the AKS cluster, per user selection:<ul>
+            <li>User can select to deploy an application or not.</li>
+            <li>User can deploy own application or a sample application.</li>
+            <li>User need to provide additional entitlement info to deploy the application if a WebSphere Liberty Operator (IBM supported) is deployed.</li>
+        </ul>
+        </li>
+    </ul>
+    </li>
+</ul>
+<p>This offer automatically provisions several Azure resources to quickly move to IBM WebSphere Liberty or Open Liberty on the Azure Kubernetes Service (AKS). The provisioned resources include an Azure Container Registry (ACR) instance, an AKS cluster and the Liberty Operator. The offer can also deploy Open Liberty or WebSphere Liberty Container (e.g., Docker) images. After initial provisioning you can focus on deploying your Liberty application to AKS, using DevOps tools such as GitHub Actions, UrbanCode Deploy or Gitlab Ultimate.</p>
+<p>This offer is Bring-Your-Own-License, and assumes you have sufficient entitlements. WebSphere Liberty is available as a limited Trial option before entitlement is required. Open Liberty is open source and free to use unsupported.  You can also use OpenLiberty supported through WebSphere Liberty entitlements. When using WebSphere Liberty or Open Liberty supported, usage should be tracked using the <a href="https://github.com/IBM/ibm-licensing-operator">License Service Operator</a>. </p>
+<p><b>WebSphere Solutions Overview</b><br>The IBM WebSphere product portfolio is a set of industry-leading runtimes powering some of the most mission critical enterprise applications around the world. The WebSphere portfolio includes the traditional WebSphere Application Server, and the lightweight WebSphere Liberty, and Open Liberty runtimes.</p>
+<p>WebSphere products are key components in enabling enterprise Java workloads on Azure. IBM and Microsoft are collaborating on solutions for the product family. Other offers include WebSphere Application Server (Traditional) on VMs, and OpenLiberty/WebSphere Liberty on Azure Red Hat OpenShift (ARO).</p>
+<p>If you want to provide feedback on these offers, stay updated on the roadmap, or work closely on your migration scenarios with the engineering team developing these offers, select the CONTACT ME button on the marketplace <a href="https://ibm.biz/WebSphereOnAzureContactMe">offer overview</a> page. The opportunity to collaborate on a migration scenario is free while the offers are under active development.</p><p>The currently available offers are listed in the Learn More section at the bottom of the <a href="https://ibm.biz/WebSphereOnAzureContactMe">overview page</a>.</p>
