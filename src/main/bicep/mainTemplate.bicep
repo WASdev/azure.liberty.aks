@@ -303,7 +303,7 @@ module vnetForAppgatewayDeployment 'modules/_azure-resoruces/_vnetAppGateway.bic
   ]
 }
 
-resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2021-02-01' = if (createCluster) {
+resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2022-09-01' = if (createCluster) {
   name: name_clusterName
   location: location
   properties: {
