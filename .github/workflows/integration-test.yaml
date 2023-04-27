@@ -159,7 +159,7 @@ jobs:
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            az group delete -n ${{ env.testResourceGroup }} --yes
+            az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
       - name: Generate artifact file name and path
         id: artifact_file
         run: |
