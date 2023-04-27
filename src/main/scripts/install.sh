@@ -176,7 +176,7 @@ if [ "$DEPLOY_WLO" = False ]; then
 else
     # Install WebSphere Liberty Operator
     operatorDeploymentName=websphere-liberty-controller-manager
-    WLO_VERSION=1.1.0
+    WLO_VERSION=1.2.0
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/wlo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
