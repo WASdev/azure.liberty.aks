@@ -159,6 +159,29 @@ apk add docker-cli
 az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --admin --overwrite-existing >> $logFile
 
+# Install cert-manager
+CERT_MANAGER_VERSION=v1.11.2
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
+if [[ $? -ne 0 ]]; then
+  echo "Failed to install cert-manager!" >&2
+  exit 1
+fi
+wait_deployment_complete cert-manager cert-manager ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "The deployment of cert-manager is not available." >&2
+  exit 1
+fi
+wait_deployment_complete cert-manager-cainjector cert-manager ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "The deployment of cert-manager-cainjector is not available." >&2
+  exit 1
+fi
+wait_deployment_complete cert-manager-webhook cert-manager ${logFile}
+if [[ $? -ne 0 ]]; then
+  echo "The deployment of cert-manager-webhook is not available." >&2
+  exit 1
+fi
+
 operatorDeploymentName=
 operatorNamespaceName=
 if [ "$DEPLOY_WLO" = False ]; then
