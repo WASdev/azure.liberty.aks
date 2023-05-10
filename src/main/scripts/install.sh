@@ -160,10 +160,12 @@ az aks install-cli 2>/dev/null
 az aks get-credentials -g $clusterRGName -n $clusterName --admin --overwrite-existing >> $logFile
 
 operatorDeploymentName=
+operatorNamespaceName=
 if [ "$DEPLOY_WLO" = False ]; then
-    # Install Open Liberty Operator
     operatorDeploymentName=olo-controller-manager
+    operatorNamespaceName=open-liberty
     OLO_VERSION=1.2.0
+    # Install Open Liberty Operator, see https://github.com/OpenLiberty/open-liberty-operator/blob/main/deploy/releases/${OLO_VERSION}/kustomize/README.adoc
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
@@ -172,11 +174,14 @@ if [ "$DEPLOY_WLO" = False ]; then
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/kustomization.yaml -q -P ./base
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-crd.yaml -q -P ./base
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-operator.yaml -q -P ./base
-    kubectl apply -k overlays/watch-all-namespaces
+    wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/base/open-liberty-roles.yaml -q -P ./base
+    kubectl create namespace ${operatorNamespaceName}
+    kubectl apply --server-side -k overlays/watch-all-namespaces
 else
-    # Install WebSphere Liberty Operator
     operatorDeploymentName=websphere-liberty-controller-manager
+    operatorNamespaceName=websphere-liberty
     WLO_VERSION=1.2.0
+    # Install WebSphere Liberty Operator, see https://www.ibm.com/docs/en/was-liberty/base?topic=cli-installing-kustomize
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/wlo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
@@ -186,6 +191,7 @@ else
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-crd.yaml -q -P ./base
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-deployment.yaml -q -P ./base
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-roles.yaml -q -P ./base
+    kubectl create namespace ${operatorNamespaceName}
     kubectl apply -k overlays/watch-all-namespaces
 fi
 
@@ -193,7 +199,7 @@ if [[ $? -ne 0 ]]; then
   echo "Failed to install Open/WebSphere Liberty Operator, please check if required directories and files exist" >&2
   exit 1
 fi
-wait_deployment_complete ${operatorDeploymentName} default ${logFile}
+wait_deployment_complete ${operatorDeploymentName} ${operatorNamespaceName} ${logFile}
 if [[ $? -ne 0 ]]; then
   echo "The Open/WebSphere Liberty Operator is not available: ${operatorDeploymentName}." >&2
   exit 1
