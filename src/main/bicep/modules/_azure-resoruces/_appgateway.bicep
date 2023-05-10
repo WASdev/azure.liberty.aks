@@ -146,6 +146,7 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2022-07-01' = {
       {
         name: 'HTTPRoutingRule'
         properties: {
+          priority: 3
           httpListener: {
             id: ref_httpListener
           }
