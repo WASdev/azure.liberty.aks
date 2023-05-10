@@ -70,7 +70,7 @@ var obj_frontendIPConfigurations2 = [
   }
 ]
 
-resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: gatewayPublicIPAddressName
   sku: {
     name: 'Standard'
