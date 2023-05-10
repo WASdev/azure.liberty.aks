@@ -163,7 +163,7 @@ operatorDeploymentName=
 if [ "$DEPLOY_WLO" = False ]; then
     # Install Open Liberty Operator
     operatorDeploymentName=olo-controller-manager
-    OLO_VERSION=0.8.2
+    OLO_VERSION=1.2.0
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/cluster-roles.yaml -q -P ./overlays/watch-all-namespaces
