@@ -70,7 +70,7 @@ var obj_frontendIPConfigurations2 = [
   }
 ]
 
-resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
+resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2022-07-01' = {
   name: gatewayPublicIPAddressName
   sku: {
     name: 'Standard'
@@ -84,7 +84,7 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   }
 }
 
-resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2021-05-01' = {
+resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2022-07-01' = {
   name: name_appGateway
   location: location
   tags: {
@@ -146,6 +146,7 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@2021-05-01' = {
       {
         name: 'HTTPRoutingRule'
         properties: {
+          priority: 3
           httpListener: {
             id: ref_httpListener
           }

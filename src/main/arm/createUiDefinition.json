@@ -407,9 +407,7 @@
                                 },
                                 "toolTip": "Front-End TLS/SSL certificate password",
                                 "constraints": {
-                                    "required": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveCert')]",
-                                    "regex": "^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,128}$",
-                                    "validationMessage": "The password must contain at least 6 characters, with at least 1 uppercase letter, 1 lowercase letter, 1 number and 1 special character."
+                                    "required": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveCert')]"
                                 },
                                 "options": {
                                     "hideConfirmation": false
