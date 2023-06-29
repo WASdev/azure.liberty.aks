@@ -31,7 +31,6 @@ USER_NAME=
 OWNER_REPONAME=
 # Optional: Web hook for Microsoft Teams channel
 MSTEAMS_WEBHOOK=
-#
 
 # End set environment variables
 ################################################
