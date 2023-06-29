@@ -30,7 +30,7 @@ USER_NAME=
 # Owner/reponame, e.g., <USER_NAME>/azure.liberty.aks
 OWNER_REPONAME=
 # Optional: Web hook for Microsoft Teams channel
-#      Copyright (c) IBM Corporation.STEAMS_WEBHOOK=
+MSTEAMS_WEBHOOK=
 #
 
 # End set environment variables
