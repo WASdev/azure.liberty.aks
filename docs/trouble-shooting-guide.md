@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Copyright (c) IBM Corporation. -->
+
 ## Check the permissions of user-assigned managed identity
 
 The offer depends on a user-assigned managed identity to facilitate the deployment:

@@ -1,3 +1,6 @@
+<!-- Copyright (c) Microsoft Corporation. -->
+<!-- Copyright (c) IBM Corporation. -->
+
 ## How to update the version of Open Liberty Operator and WebSphere Liberty Operator
 
 If there are no breaking changes in the new version of Open Liberty Operator / WebSphere Liberty Operator, you can easily update to that version with instructions below:
