@@ -29,6 +29,12 @@ DISAMBIG_PREFIX=
 USER_NAME=
 # Owner/reponame, e.g., <USER_NAME>/azure.liberty.aks
 OWNER_REPONAME=
+# Client ID for an Azure AD application registered in the Partner Center
+CLIENT_ID=
+# Secret value of the Azure AD application registered in the Partner Center
+SECRET_VALUE=
+# Tenant ID of the Azure AD application registered in the Partner Center
+TENANT_ID=
 # Optional: Web hook for Microsoft Teams channel
 MSTEAMS_WEBHOOK=
 
@@ -81,6 +87,21 @@ if [ -z "${OWNER_REPONAME}" ] ; then
     GH_FLAGS=""
 else
     GH_FLAGS="--repo ${OWNER_REPONAME}"
+fi
+
+# get CLIENT_ID if not set at the beginning of this file
+if [ "$CLIENT_ID" == '' ] ; then
+    read -r -p "Enter client ID for an Azure AD application registered in the Partner Center: " CLIENT_ID
+fi
+
+# get SECRET_VALUE if not set at the beginning of this file
+if [ "$SECRET_VALUE" == '' ] ; then
+    read -r -p "Enter secret value for the Azure AD application registered in the Partner Center: " SECRET_VALUE
+fi
+
+# get TENANT_ID if not set at the beginning of this file
+if [ "$TENANT_ID" == '' ] ; then
+    read -r -p "Enter tenant ID for the Azure AD application registered in the Partner Center: " TENANT_ID
 fi
 
 # Optional: get MSTEAMS_WEBHOOK if not set at the beginning of this file
@@ -148,6 +169,9 @@ if $USE_GITHUB_CLI; then
     msg "${YELLOW}\"AZURE_CREDENTIALS\""
     msg "${GREEN}${AZURE_CREDENTIALS}"
     gh ${GH_FLAGS} secret set USER_NAME -b"${USER_NAME}"
+    gh ${GH_FLAGS} secret set CLIENT_ID -b"${CLIENT_ID}"
+    gh ${GH_FLAGS} secret set SECRET_VALUE -b"${SECRET_VALUE}"
+    gh ${GH_FLAGS} secret set TENANT_ID -b"${TENANT_ID}"
     gh ${GH_FLAGS} secret set MSTEAMS_WEBHOOK -b"${MSTEAMS_WEBHOOK}"
     msg "${GREEN}Secrets configured"
   } || {
@@ -164,6 +188,12 @@ if [ $USE_GITHUB_CLI == false ]; then
   msg "${GREEN}${AZURE_CREDENTIALS}"
   msg "${YELLOW}\"USER_NAME\""
   msg "${GREEN}${USER_NAME}"
+  msg "${YELLOW}\"CLIENT_ID\""
+  msg "${GREEN}${CLIENT_ID}"
+  msg "${YELLOW}\"SECRET_VALUE\""
+  msg "${GREEN}${SECRET_VALUE}"
+  msg "${YELLOW}\"TENANT_ID\""
+  msg "${GREEN}${TENANT_ID}"
   msg "${YELLOW}\"MSTEAMS_WEBHOOK\""
   msg "${GREEN}${MSTEAMS_WEBHOOK}"
   msg "${NOFORMAT}========================================================================"
