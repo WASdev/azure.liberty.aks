@@ -14,6 +14,7 @@ The recommended way to set the secrets is to run the scripts.  Setting the secre
 
 #### Preconditions for running the scripts to set the secrets
 
+1. Ensure the Azure ID that is currently logged in when running the scripts has the `Global Administrator` Azure AD role.
 1. Ensure the Azure CLI is installed on a supported UNIX-like environment. See [How to install the Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli). **Sign in to Azure using the Azure CLI**. After installation, sign in to the correct tenant. The actions will create Azure resources in this signed-in tenant.
 1. Ensure the GitHub CLI is installed on the same environment as the preceding step. See [Installation](https://cli.github.com/manual/installation). Note: If working on macOS, we highly recommend Homebrew. Visit https://brew.sh/ for instructions on installing Homebrew. **Authenticate to GitHub**. After installation, use `gh auth login` to sign in to GitHub. You'll need a sufficiently empowered `PERSONAL ACCESS TOKEN` for this repository.
 1. Clone this repository into the environment from the preceding steps.
@@ -34,7 +35,7 @@ If you make any changes for files located in the following path:
 
 ## Update the version of the solution template
 
-If you haven't bumped the version, pls do so before publishing the solution template to partner center. 
+If you haven't incremented the version, pls do so before publishing the solution template to partner center. 
 
 1. Increase the [version number](https://github.com/WASdev/azure.liberty.aks/blob/main/pom.xml#L23) which is specified in the `pom.xml`.
 1. Get the PR merged.
