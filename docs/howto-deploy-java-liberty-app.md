@@ -44,12 +44,15 @@ Follow the steps in this section to deploy the sample application on the Liberty
 
 ### Check out the application
 
-Clone the sample code for this workshop. The sample is on [GitHub](https://github.com/m-reza-rahman/open-liberty-on-aks).
+Clone the sample code for this workshop. The sample is on [GitHub](https://github.com/Azure-Samples/open-liberty-on-aks).
 
 ```azurecli-interactive
-git clone https://github.com/m-reza-rahman/open-liberty-on-aks.git
+git clone https://github.com/Azure-Samples/open-liberty-on-aks.git
 cd open-liberty-on-aks
+git checkout open-liberty-on-aks-lab-2023-08-23
 ```
+
+If you see a message about being in `detached HEAD` state, this message is safe to ignore.
 
 There are a few samples in the repository. We'll use *java-app/*. Here's the file structure of the application.
 
