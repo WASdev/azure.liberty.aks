@@ -6,9 +6,11 @@ This workshop demonstrates how to:
 
 * Run your Java, Java EE, Jakarta EE, or MicroProfile application on the Open Liberty or WebSphere Liberty runtime.
 * Build the application Docker image using Open Liberty or WebSphere Liberty container images.
-* Deploy the containerized application to an AKS cluster using the Open Liberty Operator.
+* Deploy the containerized application to an AKS cluster using the Open Liberty Operator or WebSphere Liberty Operator.
 
-The Open Liberty Operator simplifies the deployment and management of applications running on Kubernetes clusters. With the Open Liberty Operator, you can also perform more advanced operations, such as gathering traces and dumps.
+Workshop participants use an AKS cluster with Liberty pre-installed in advance. This has been done using the Azure Marketplace offer for Liberty on AKS. For a quick start guide on using the offer, see [Deploy a Java application with Open Liberty or WebSphere Liberty on an Azure Kubernetes Service (AKS) cluster](https://learn.microsoft.com/en-us/azure/aks/howto-deploy-java-liberty-app).
+
+The Open Liberty Operator simplifies the deployment and management of applications running on Kubernetes clusters. With the Open Liberty or WebSphere Liberty Operator, you can also perform more advanced operations, such as gathering traces and dumps.
 
 For more information on Open Liberty, see [the Open Liberty project page](https://openliberty.io/). For more information on IBM WebSphere Liberty, see [the WebSphere Liberty product page](https://www.ibm.com/cloud/websphere-liberty).
 
@@ -25,7 +27,7 @@ You will need the name of your AKS cluster.
 1. In the upper left of any portal page, select the hamburger menu and select **Resource groups**.
 1. In the box with the text **Filter for any field**, enter the first few characters of your resource group.
 1. In the list of resources in the resource group, find the resource with **Type** of **Kubernetes service**.
-1. Note and save aside the name of the resouce.
+1. Note and save aside the name of the resource.
 
 ## Capture information about the registry
 
@@ -87,10 +89,10 @@ Now that you've gathered the necessary properties, you can build the application
 cd <path-to-your-repo>/java-app
 
 # The following variables will be used for deployment file generation into target.
-export LOGIN_SERVER=<Azure_Container_Registery_Login_Server_URL>
-export REGISTRY_NAME=<Azure_Container_Registery_Name>
-export USER_NAME=<Azure_Container_Registery_Username>
-export PASSWORD=<Azure_Container_Registery_Password>
+export LOGIN_SERVER=<Azure_Container_Registry_Login_Server_URL>
+export REGISTRY_NAME=<Azure_Container_Registry_Name>
+export USER_NAME=<Azure_Container_Registry_Username>
+export PASSWORD=<Azure_Container_Registry_Password>
 export DB_SERVER_NAME=<Server name>.database.windows.net
 export DB_NAME=<Database name>
 export DB_USER=<Server admin login>@<Server name>
@@ -152,7 +154,7 @@ You can now use the following steps to test the Docker image locally before depl
 
 ### Upload image to ACR
 
-Now, we upload the built image to the Azure Container Registry (ACR) instance.
+Upload the built image to the Azure Container Registry (ACR) instance.
 
 ```bash
 docker tag javaee-cafe:v1 ${LOGIN_SERVER}/javaee-cafe:${NAMESPACE}-v1
@@ -201,9 +203,9 @@ The following steps deploy and test the application.
 
    ```output
    NAME                                       READY   STATUS    RESTARTS   AGE
-   javaee-cafe-cluster-67cdc95bc-2j2gr   1/1     Running   0          29s
-   javaee-cafe-cluster-67cdc95bc-fgtt8   1/1     Running   0          29s
-   javaee-cafe-cluster-67cdc95bc-h47qm   1/1     Running   0          29s
+   javaee-cafe-cluster-67cdc95bc-2j2gr        1/1     Running   0          29s
+   javaee-cafe-cluster-67cdc95bc-fgtt8        1/1     Running   0          29s
+   javaee-cafe-cluster-67cdc95bc-h47qm        1/1     Running   0          29s
    ```
 
 ### Test the application
@@ -227,7 +229,7 @@ Once the *EXTERNAL-IP* address changes from *pending* to an actual public IP add
 
 Open a web browser to the external IP address of your service (`52.152.189.57` for the above example) to see the application home page. You should see the pod name of your application replicas displayed at the top-left of the page. Wait for a few minutes and refresh the page to see a different pod name displayed due to load balancing provided by the AKS cluster.
 
-## Next steps
+## References
 
 * [Azure Kubernetes Service](https://azure.microsoft.com/free/services/kubernetes-service/)
 * [Open Liberty](https://openliberty.io/)
