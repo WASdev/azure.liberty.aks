@@ -27,7 +27,7 @@ param utcValue string = utcNow()
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'ds-enable-agic'
   location: location
   kind: 'AzureCLI'
