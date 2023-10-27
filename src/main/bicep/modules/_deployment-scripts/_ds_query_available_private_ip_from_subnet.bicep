@@ -30,7 +30,7 @@ var const_azcliVersion='2.15.0'
 var const_deploymentName='ds-query-private-ip'
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: const_deploymentName
   location: location
   kind: 'AzureCLI'

@@ -45,7 +45,7 @@ param utcValue string = utcNow()
 
 var const_identityId = substring(string(identity.userAssignedIdentities), indexOf(string(identity.userAssignedIdentities), '"') + 1, lastIndexOf(string(identity.userAssignedIdentities), '"') - (indexOf(string(identity.userAssignedIdentities), '"') + 1))
 
-resource keyvault 'Microsoft.KeyVault/vaults@2021-10-01' = {
+resource keyvault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: keyVaultName
   location: location
   properties: {
@@ -57,7 +57,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     accessPolicies: [
       {
         // Must specify API version of identity.
-        objectId: reference(const_identityId, '2018-11-30').principalId
+        objectId: reference(const_identityId, '2023-01-31').principalId
         tenantId: subscription().tenantId
         permissions: permission
       }
@@ -72,7 +72,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2021-10-01' = {
   }
 }
 
-resource createAddCertificate 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
+resource createAddCertificate 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   name: 'ds-create-add-appgw-certificate'
   location: location
   identity: identity
