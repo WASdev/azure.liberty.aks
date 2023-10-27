@@ -24,12 +24,12 @@ var const_APIVersion = '2020-12-01'
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var const_roleDefinitionIdOfAcrPull = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-02-01' existing = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-07-01' existing = {
   name: aksClusterName
   scope: resourceGroup(aksClusterRGName)
 }
 
-resource acr 'Microsoft.ContainerRegistry/registries@2021-09-01' existing = {
+resource acr 'Microsoft.ContainerRegistry/registries@2022-12-01' existing = {
   name: acrName
   scope: resourceGroup(acrRGName)
 }
