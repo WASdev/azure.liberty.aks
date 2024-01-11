@@ -46,14 +46,33 @@ function install_azure_ingress() {
     fi
 }
 
+MAX_RETRIES=299
+
+wait_agic_deployment_complete() {
+    cnt=0
+    ret=$(kubectl get pod -n kube-system | grep "ingress-appgw-deployment-*" | grep "Running")
+    while [ -z "$ret" ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo_stdout "Timeout and exit due to the maximum retries reached."
+            return 1
+        fi
+        cnt=$((cnt+1))
+
+        echo_stdout "AGIC not ready, retry ${cnt} of ${MAX_RETRIES}..."
+        sleep 5
+        ret=$(kubectl get pod -n kube-system | grep "ingress-appgw-deployment-*" | grep "Running")
+    done
+}
+
 function validate_azure_ingress() {
     # Connect to cluster
     install_kubectl
     az aks get-credentials --resource-group ${AKS_CLUSTER_RG_NAME} --name ${AKS_CLUSTER_NAME} --overwrite-existing
     validate_status "Connect to the AKS cluster."
 
-    local ret=$(kubectl get pod -n kube-system | grep "ingress-appgw-deployment-*" | grep "Running")
-    if [[ -z "$ret" ]]; then
+    wait_agic_deployment_complete
+    if [[ $? -ne 0 ]]; then
         echo_stderr "Failed to enable azure ingress."
         exit 1
     fi
