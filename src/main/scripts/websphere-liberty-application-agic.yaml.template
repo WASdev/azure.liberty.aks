@@ -38,10 +38,10 @@ metadata:
   name: ${Application_Name}-ingress-tls
   namespace: ${Project_Name}
   annotations:
-    kubernetes.io/ingress.class: azure/application-gateway
     appgw.ingress.kubernetes.io/cookie-based-affinity: "${Enable_Cookie_Based_Affinity}"
     appgw.ingress.kubernetes.io/use-private-ip: "${App_Gw_Use_Private_Ip}"
 spec:
+  ingressClassName: azure-application-gateway
   tls:
   - secretName: ${Frontend_Tls_Secret}
   rules:
@@ -61,10 +61,10 @@ metadata:
   name: ${Application_Name}-ingress
   namespace: ${Project_Name}
   annotations:
-    kubernetes.io/ingress.class: azure/application-gateway
     appgw.ingress.kubernetes.io/cookie-based-affinity: "${Enable_Cookie_Based_Affinity}"
     appgw.ingress.kubernetes.io/use-private-ip: "${App_Gw_Use_Private_Ip}"
 spec:
+  ingressClassName: azure-application-gateway
   rules:
   - http:
       paths:
