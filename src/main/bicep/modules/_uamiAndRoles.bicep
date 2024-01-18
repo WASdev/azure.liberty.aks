@@ -23,7 +23,7 @@ var name_deploymentScriptUserDefinedManagedIdentity = 'ol-aks-deployment-script-
 var name_deploymentScriptContributorRoleAssignmentName = guid('${resourceGroup().id}${name_deploymentScriptUserDefinedManagedIdentity}Deployment Script')
 
 // UAMI for deployment script
-resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource uamiForDeploymentScript 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: name_deploymentScriptUserDefinedManagedIdentity
   location: location
 }
