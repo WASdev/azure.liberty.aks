@@ -199,7 +199,7 @@ jobs:
             fi
 
   delete-resources:
-    needs: integration-test
+    needs: notification
     runs-on: ubuntu-latest
     if: always()
     steps:
