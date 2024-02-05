@@ -151,14 +151,6 @@ jobs:
             echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
             exit 1 
           fi
-      - name: Delete all Azure resources
-        id: delete-resources-in-group
-        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
       - name: Generate artifact file name and path
         id: artifact_file
         run: |
@@ -173,6 +165,7 @@ jobs:
         with:
           name: ${{steps.artifact_file.outputs.artifactName}}
           path: ${{steps.artifact_file.outputs.artifactPath}}
+
   notification:
     needs: integration-test
     if: always()
@@ -204,3 +197,17 @@ jobs:
             else
                 echo "Job integration-test succeeded."
             fi
+
+  delete-resources:
+    needs: integration-test
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Delete all Azure resources
+        id: delete-resources-in-group
+        if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
