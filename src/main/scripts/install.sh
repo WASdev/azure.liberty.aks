@@ -236,9 +236,9 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # Retrieve login server and credentials of the ACR
-LOGIN_SERVER=$(az acr show -n $acrName --query 'loginServer' -o tsv)
-USER_NAME=$(az acr credential show -n $acrName --query 'username' -o tsv)
-PASSWORD=$(az acr credential show -n $acrName --query 'passwords[0].value' -o tsv)
+LOGIN_SERVER=$(az acr show -n $acrName -g $ACR_RG_NAME --query 'loginServer' -o tsv)
+USER_NAME=$(az acr credential show -n $acrName -g $ACR_RG_NAME --query 'username' -o tsv)
+PASSWORD=$(az acr credential show -n $acrName -g $ACR_RG_NAME --query 'passwords[0].value' -o tsv)
 
 # Choose right template
 appDeploymentTemplate=open-liberty-application.yaml.template
@@ -262,7 +262,7 @@ export WLA_Metric="${WLA_METRIC}"
 if [ "$deployApplication" = True ]; then
     # Log into the ACR and import application image
     docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile 2>/dev/null
-    az acr import -n $acrName --source ${sourceImagePath} -t ${Application_Image} >> $logFile
+    az acr import -n $acrName -g $ACR_RG_NAME --source ${sourceImagePath} -t ${Application_Image} >> $logFile
     if [[ $? != 0 ]]; then
         echo "Unable to import source image ${sourceImagePath} to the Azure Container Registry instance. Please check if it's a public image and the source image path is correct" >&2
         exit 1
