@@ -22,6 +22,7 @@ param location string
 param name string = ''
 param identity object = {}
 param arguments string = ''
+param acrRGName string = ''
 param deployWLO bool = false
 param edition string = 'IBM WebSphere Application Server'
 param productEntitlementSource string = 'Standalone'
@@ -44,6 +45,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
   properties: {
     azCliVersion: '2.15.0'
     environmentVariables: [
+      {
+        name: 'ACR_RG_NAME'
+        value: string(acrRGName)
+      }
       {
         name: 'ENABLE_APP_GW_INGRESS'
         value: string(enableAppGWIngress)
