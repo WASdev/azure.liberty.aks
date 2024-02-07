@@ -652,6 +652,85 @@
                         "visible": "[bool(steps('Application').deployApplication)]"
                     },
                     {
+                        "name": "autoScaling",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Auto-scale replicas?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to autonomically create or delete instances based on resource consumption, or select 'No' to specify static instances.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[bool(steps('Application').deployApplication)]"
+                    },
+                    {
+                        "name": "requestCPU",
+                        "type": "Microsoft.Common.Slider",
+                        "min": 100,
+                        "max": 5000,
+                        "label": "Minimum required CPU core",
+                        "subLabel": "millicore",
+                        "defaultValue": 300,
+                        "showStepMarkers": false,
+                        "toolTip": "Set the minimum required CPU core (millicore) over all the replicas.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
+                    },
+                    {
+                        "name": "cpuUtilization",
+                        "type": "Microsoft.Common.Slider",
+                        "min": 1,
+                        "max": 100,
+                        "label": "Target average CPU utilization",
+                        "subLabel": "percentage",
+                        "defaultValue": 60,
+                        "showStepMarkers": false,
+                        "toolTip": "Set the target average CPU utilization (percentage) over all the replicas.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
+                    },
+                    {
+                        "name": "minReplicas",
+                        "type": "Microsoft.Common.Slider",
+                        "min": 1,
+                        "max": "[int(steps('Application').maxReplicas)]",
+                        "label": "Minimum application replicas",
+                        "defaultValue": 1,
+                        "showStepMarkers": false,
+                        "toolTip": "Set the minimum number of application replicas.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
+                    },
+                    {
+                        "name": "maxReplicas",
+                        "type": "Microsoft.Common.Slider",
+                        "min": "[int(steps('Application').minReplicas)]",
+                        "max": 20,
+                        "label": "Maximum application replicas",
+                        "defaultValue": 20,
+                        "showStepMarkers": false,
+                        "toolTip": "Set the maximum number of application replicas.",
+                        "constraints": {
+                            "required": true
+                        },
+                        "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
+                    },
+                    {
                         "name": "appReplicas",
                         "type": "Microsoft.Common.Slider",
                         "min": 1,
@@ -663,7 +742,7 @@
                         "constraints": {
                             "required": true
                         },
-                        "visible": "[bool(steps('Application').deployApplication)]"
+                        "visible": "[and(bool(steps('Application').deployApplication), not(bool(steps('Application').autoScaling)))]"
                     }
                 ]
             }
