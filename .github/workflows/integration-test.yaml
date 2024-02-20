@@ -209,7 +209,7 @@ jobs:
     steps:
       - env:
           azCliVersion: ${{needs.integration-test.outputs.azCliVersion}}
-        run:
+        run: |
           echo azCliVersion=${azCliVersion}
       - uses: azure/login@v1
         id: azure-login
