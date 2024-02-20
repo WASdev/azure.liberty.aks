@@ -225,6 +225,7 @@ jobs:
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
         uses: azure/CLI@v1
         with:
-          azcliversion: ${{ env.azCliVersion }}
+          azcliversion: 2.30.0
           inlineScript: |
+            echo "azCliVersion=${{ env.azCliVersion }}"
             az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
