@@ -47,12 +47,18 @@ env:
 jobs:
   integration-test:
     runs-on: ubuntu-latest
+    outputs:
+      azCliVersion:
+       description: "azCliVersion"
+       value: ${{ steps.get-external-deps-versions.azCliVersion }}
     steps:
       - name: Get versions of external dependencies
+        id: get-external-deps-versions
         run: |
           curl -Lo external-deps-versions.properties https://raw.githubusercontent.com/Azure/azure-javaee-iaas/main/external-deps-versions.properties
           source external-deps-versions.properties
           echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_ENV
+          echo "azCliVersion=${AZ_CLI_VERSION}" >> $GITHUB_OUTPUT
           echo "bicepVersion=${BICEP_VERSION}" >> $GITHUB_ENV
           echo "refArmttk=${ARM_TTK_REFERENCE}" >> $GITHUB_ENV
           echo "refJavaee=${AZURE_JAVAEE_IAAS_REFERENCE}" >> $GITHUB_ENV
@@ -199,7 +205,7 @@ jobs:
             fi
 
   delete-resources:
-    needs: notification
+    needs: [notification,integration-test]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -217,6 +223,6 @@ jobs:
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
         uses: azure/CLI@v1
         with:
-          azcliversion: ${{ env.azCliVersion }}
+          azcliversion: ${{needs.integration-test.outputs.azCliVersion}}
           inlineScript: |
             az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
