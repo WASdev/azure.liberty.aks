@@ -107,7 +107,7 @@ jobs:
             -DdeployWLO=${deployWLO} -Dedition="IBM WebSphere Application Server" -DproductEntitlementSource="Standalone" \
             -DdeployApplication=${deployApplication} -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
             -Dtest.args="-Test All" -Pbicep -Passembly -Ptemplate-validation-tests clean install
-      - uses: azure/login@v2
+      - uses: azure/login@v1
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
@@ -203,7 +203,7 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - uses: azure/login@v2
+      - uses: azure/login@v1
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
