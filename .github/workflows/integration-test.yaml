@@ -41,8 +41,8 @@ env:
   azureCredentials: ${{ secrets.AZURE_CREDENTIALS }}
   userName: ${{ secrets.USER_NAME }}
   msTeamsWebhook: ${{ secrets.MSTEAMS_WEBHOOK }}
-  testResourceGroup: libertyAksTestRG${{ github.run_id }}${{ github.run_number }}
-  testDeploymentName: libertyAksTestDeployment${{ github.run_id }}${{ github.run_number }}
+  testResourceGroup: libertyAksTestRG-${{ github.run_id }}-${{ github.run_number }}
+  testDeploymentName: libertyAksTestDeployment-${{ github.run_id }}-${{ github.run_number }}
   location: eastus
 jobs:
   integration-test:
