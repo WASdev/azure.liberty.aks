@@ -207,6 +207,8 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
+      - env:
+          azCliVersion: ${{needs.integration-test.outputs.azCliVersion}}
       - uses: azure/login@v1
         id: azure-login
         with:
@@ -221,6 +223,6 @@ jobs:
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
         uses: azure/CLI@v1
         with:
-          azcliversion: ${{needs.integration-test.outputs.azCliVersion}}
+          azcliversion: ${{ env.azCliVersion}}
           inlineScript: |
             az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
