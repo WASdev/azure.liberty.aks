@@ -668,24 +668,9 @@
                                     "value": "false"
                                 }
                             ],
-                            "required": true
+                            "required": true 
                         },
                         "visible": "[bool(steps('Application').deployApplication)]"
-                    },
-                    {
-                        "name": "requestCPU",
-                        "type": "Microsoft.Common.Slider",
-                        "min": 100,
-                        "max": 5000,
-                        "label": "Minimum required CPU core",
-                        "subLabel": "millicore",
-                        "defaultValue": 300,
-                        "showStepMarkers": false,
-                        "toolTip": "Set the minimum required CPU core (millicore) over all the replicas.",
-                        "constraints": {
-                            "required": true
-                        },
-                        "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
                     },
                     {
                         "name": "cpuUtilization",
@@ -694,7 +679,7 @@
                         "max": 100,
                         "label": "Target average CPU utilization",
                         "subLabel": "percentage",
-                        "defaultValue": 60,
+                        "defaultValue": 80,
                         "showStepMarkers": false,
                         "toolTip": "Set the target average CPU utilization (percentage) over all the replicas.",
                         "constraints": {
@@ -720,13 +705,29 @@
                         "name": "maxReplicas",
                         "type": "Microsoft.Common.Slider",
                         "min": "[int(steps('Application').minReplicas)]",
-                        "max": 20,
+                        "max": 100,
                         "label": "Maximum application replicas",
-                        "defaultValue": 20,
                         "showStepMarkers": false,
                         "toolTip": "Set the maximum number of application replicas.",
                         "constraints": {
                             "required": true
+                        },
+                        "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
+                    },
+                    {
+                        "name": "requestCPU",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Minimum required CPU core (millicore)",
+                        "showStepMarkers": false,
+                        "toolTip": "Set the minimum required CPU core (millicore) over all the replicas.",
+                        "constraints": {
+                            "required": true,
+                            "validations": [
+                                {
+                                  "regex": "^[1-9][0-9]*$",
+                                  "message": "Only positive numbers are allowed."
+                                }
+                              ]
                         },
                         "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
                     },
