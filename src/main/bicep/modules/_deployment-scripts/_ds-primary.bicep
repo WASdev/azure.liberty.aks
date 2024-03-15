@@ -32,6 +32,11 @@ param enableAppGWIngress bool = false
 param appFrontendTlsSecretName string =''
 param enableCookieBasedAffinity bool = false
 param appgwUsePrivateIP bool = false
+param autoScaling bool = false
+param cpuUtilizationPercentage int = 80
+param minReplicas int = 1
+param maxReplicas int = 100
+param requestCPUMillicore int = 300
 
 param utcValue string = utcNow()
 
@@ -80,6 +85,26 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       {
         name: 'WLA_METRIC'
         value: string(metric)
+      }
+      {
+        name: 'AUTO_SCALING'
+        value: string(autoScaling)
+      }
+      {
+        name: 'CPU_UTILIZATION_PERCENTAGE'
+        value: string(cpuUtilizationPercentage)
+      }
+      {
+        name: 'MIN_REPLICAS'
+        value: string(minReplicas)
+      }
+      {
+        name: 'MAX_REPLICAS'
+        value: string(maxReplicas)
+      }
+      {
+        name: 'REQUEST_CPU_MILLICORE'
+        value: string(requestCPUMillicore)
       }
     ]
     arguments: arguments

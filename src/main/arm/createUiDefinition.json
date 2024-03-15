@@ -673,7 +673,7 @@
                         "visible": "[bool(steps('Application').deployApplication)]"
                     },
                     {
-                        "name": "cpuUtilization",
+                        "name": "cpuUtilizationPercentage",
                         "type": "Microsoft.Common.Slider",
                         "min": 1,
                         "max": 100,
@@ -715,7 +715,7 @@
                         "visible": "[and(bool(steps('Application').deployApplication), bool(steps('Application').autoScaling))]"
                     },
                     {
-                        "name": "requestCPU",
+                        "name": "requestCPUMillicore",
                         "type": "Microsoft.Common.TextBox",
                         "label": "Minimum required CPU core (millicore)",
                         "showStepMarkers": false,
@@ -777,6 +777,11 @@
             "productEntitlementSource": "[steps('Application').productEntitlementSource]",
             "deployApplication": "[bool(steps('Application').deployApplication)]",
             "appImagePath": "[if(equals(steps('Application').appImageInfo.appImageOption, '2'), 'icr.io/appcafe/open-liberty/samples/getting-started', if(equals(steps('Application').appImageInfo.appImageOption, '3'), 'docker.io/ibmcom/websphere-liberty-sample:1.0.0', steps('Application').appImageInfo.appImagePath))]",
+            "autoScaling": "[bool(steps('Application').autoScaling)]",
+            "cpuUtilizationPercentage": "[int(steps('Application').cpuUtilizationPercentage)]",
+            "minReplicas": "[int(steps('Application').minReplicas)]",
+            "maxReplicas": "[int(steps('Application').maxReplicas)]",
+            "requestCPUMillicore": "[int(steps('Application').requestCPUMillicore)]",
             "appReplicas": "[int(steps('Application').appReplicas)]"
         }
     }

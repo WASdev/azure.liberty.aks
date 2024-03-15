@@ -148,6 +148,21 @@ param appImagePath string = ''
 @description('The number of application replicas to deploy')
 param appReplicas int = 2
 
+@description('Flag indicating whether to enable autoscaling for app deployment')
+param autoScaling bool = false
+
+@description('The target average CPU utilization percentage for autoscaling')
+param cpuUtilizationPercentage int = 80
+
+@description('The minimum application replicas for autoscaling')
+param minReplicas int = 1
+
+@description('The maximum application replicas for autoscaling')
+param maxReplicas int = 100
+
+@description('The minimum required CPU core (millicore) over all the replicas for autoscaling')
+param requestCPUMillicore int = 300
+
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_acrRGName = (createACR ? resourceGroup().name : acrRGName)
@@ -499,6 +514,11 @@ module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
     appFrontendTlsSecretName: const_appFrontendTlsSecretName
     enableCookieBasedAffinity: enableCookieBasedAffinity
     appgwUsePrivateIP: appgwUsePrivateIP
+    autoScaling: autoScaling
+    cpuUtilizationPercentage: cpuUtilizationPercentage
+    minReplicas: minReplicas
+    maxReplicas: maxReplicas
+    requestCPUMillicore: requestCPUMillicore
   }
   dependsOn: [
     acrPullRoleAssignment
