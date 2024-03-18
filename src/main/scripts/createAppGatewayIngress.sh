@@ -21,7 +21,7 @@ wait_aks_network_id_available() {
     aksMCRGName=$1
 
     cnt=0
-    aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
+    aksNetWorkId=$(az network vnet list -g ${aksMCRGName} -o tsv --query '[*].id')
     while [ -z "${aksNetWorkId}" ]
     do
         if [ $cnt -eq $MAX_RETRIES ]; then
@@ -32,7 +32,7 @@ wait_aks_network_id_available() {
 
         echo_stdout "AKS network id not available, retry ${cnt} of ${MAX_RETRIES}..."
         sleep 5
-        aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
+        aksNetWorkId=$(az network vnet list -g ${aksMCRGName} -o tsv --query '[*].id')
     done
     echo_stdout "AKS network id is: ${aksNetWorkId}"
 }
@@ -49,8 +49,8 @@ function network_peers_aks_appgw() {
     fi
 
     # query vnet from managed resource group
+    local aksNetWorkId=
     wait_aks_network_id_available ${aksMCRGName}
-    local aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
     echo_stdout "AKS network id is: ${aksNetWorkId}"
 
     local aksNetworkName=${aksNetWorkId#*\/virtualNetworks\/}
