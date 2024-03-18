@@ -20,7 +20,7 @@ on:
         type: boolean
         default: true
       autoScaling:
-        description: 'Enable autoscaling for app deployment?'
+        description: 'Autoscaling for app deployment'
         required: true
         type: boolean
         default: false
