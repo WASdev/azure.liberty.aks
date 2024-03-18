@@ -30,7 +30,7 @@ spec:
     targetCPUUtilizationPercentage: ${Cpu_Utilization_Percentage}
   resources:
     requests:
-      cpu: ${Request_Cpu_Millicore}m 
+      cpu: ${Request_Cpu_Millicore}m
   applicationImage: ${Application_Image}
   pullPolicy: Always
   manageTLS: false
