@@ -535,7 +535,7 @@ module aksEndPid './modules/_pids/_empty.bicep' = {
 }
 
 module autoscalingPid './modules/_pids/_empty.bicep' = if (deployApplication && autoScaling) {
-  name: '7a4e4f27-dcea-5207-86ed-e7c7de1ccd34 '
+  name: '7a4e4f27-dcea-5207-86ed-e7c7de1ccd34'
   params: {}
   dependsOn: [
     aksEndPid
