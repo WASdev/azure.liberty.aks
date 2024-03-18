@@ -70,6 +70,21 @@
         },
         "appReplicas": {
             "value": "${appReplicas}"
+        },
+        "autoScaling": {
+            "value": "${autoScalingParam}"
+        },
+        "cpuUtilizationPercentage": {
+            "value": "${cpuUtilizationPercentageParam}"
+        },
+        "minReplicas": {
+            "value": "${minReplicasParam}"
+        },
+        "maxReplicas": {
+            "value": "${maxReplicasParam}"
+        },
+        "requestCPUMillicore": {
+            "value": "${requestCPUMillicoreParam}"
         }
     }
 }

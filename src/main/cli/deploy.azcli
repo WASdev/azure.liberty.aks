@@ -129,6 +129,16 @@ deployApplication=$( echo $parametersJson | jq '.deployApplication.value' | sed 
 parametersJson=$( echo $parametersJson | jq --argjson deployApp "$deployApplication" '.deployApplication.value = $deployApp' )
 appReplicas=$( echo $parametersJson | jq '.appReplicas.value' | sed 's/"//g' )
 parametersJson=$( echo $parametersJson | jq --argjson replicas "$appReplicas" '.appReplicas.value = $replicas' )
+autoScaling=$( echo $parametersJson | jq '.autoScaling.value' | sed 's/"//g' )
+parametersJson=$( echo $parametersJson | jq --argjson autoScaling "$autoScaling" '.autoScaling.value = $autoScaling' )
+cpuUtilizationPercentage=$( echo $parametersJson | jq '.cpuUtilizationPercentage.value' | sed 's/"//g' )
+parametersJson=$( echo $parametersJson | jq --argjson cpuUtilizationPercentage "$cpuUtilizationPercentage" '.cpuUtilizationPercentage.value = $cpuUtilizationPercentage' )
+minReplicas=$( echo $parametersJson | jq '.minReplicas.value' | sed 's/"//g' )
+parametersJson=$( echo $parametersJson | jq --argjson minReplicas "$minReplicas" '.minReplicas.value = $minReplicas' )
+maxReplicas=$( echo $parametersJson | jq '.maxReplicas.value' | sed 's/"//g' )
+parametersJson=$( echo $parametersJson | jq --argjson maxReplicas "$maxReplicas" '.maxReplicas.value = $maxReplicas' )
+requestCPUMillicore=$( echo $parametersJson | jq '.requestCPUMillicore.value' | sed 's/"//g' )
+parametersJson=$( echo $parametersJson | jq --argjson requestCPUMillicore "$requestCPUMillicore" '.requestCPUMillicore.value = $requestCPUMillicore' )
 parametersJson=$( echo "$parametersJson" | jq -c '.' )
 
 #Start deployment
