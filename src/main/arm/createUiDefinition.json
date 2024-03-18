@@ -216,8 +216,7 @@
                                 "resourceType": "Microsoft.ContainerRegistry/registries",
                                 "options": {
                                     "filter": {
-                                        "subscription": "onBasics",
-                                        "location": "onBasics"
+                                        "subscription": "onBasics"
                                     }
                                 },
                                 "visible": "[not(bool(steps('Cluster').acrInfo.createACR))]"
