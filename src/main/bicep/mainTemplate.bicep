@@ -534,6 +534,14 @@ module aksEndPid './modules/_pids/_empty.bicep' = {
   ]
 }
 
+module autoscalingPid './modules/_pids/_empty.bicep' = if (deployApplication && autoScaling) {
+  name: '7a4e4f27-dcea-5207-86ed-e7c7de1ccd34 '
+  params: {}
+  dependsOn: [
+    aksEndPid
+  ]
+}
+
 output appHttpEndpoint string = deployApplication ? (enableAppGWIngress ? appgwDeployment.outputs.appGatewayURL : primaryDsDeployment.outputs.appEndpoint ) : ''
 output appHttpsEndpoint string = deployApplication && enableAppGWIngress ? appgwDeployment.outputs.appGatewaySecuredURL : ''
 output clusterName string = name_clusterName
