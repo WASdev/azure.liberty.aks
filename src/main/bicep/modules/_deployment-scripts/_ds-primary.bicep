@@ -114,6 +114,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
       uri(const_scriptLocation, 'open-liberty-application-agic.yaml.template${_artifactsLocationSasToken}')
       uri(const_scriptLocation, 'websphere-liberty-application.yaml.template${_artifactsLocationSasToken}')
       uri(const_scriptLocation, 'websphere-liberty-application-agic.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'open-liberty-application-autoscaling.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'open-liberty-application-agic-autoscaling.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'websphere-liberty-application-autoscaling.yaml.template${_artifactsLocationSasToken}')
+      uri(const_scriptLocation, 'websphere-liberty-application-agic-autoscaling.yaml.template${_artifactsLocationSasToken}')
     ]
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'P1D'
