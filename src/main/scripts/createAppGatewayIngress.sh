@@ -34,6 +34,7 @@ wait_aks_network_id_available() {
         sleep 5
         aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
     done
+    echo_stdout "AKS network id is: ${aksNetWorkId}"
 }
 
 # Create network peers for aks and appgw
@@ -50,6 +51,7 @@ function network_peers_aks_appgw() {
     # query vnet from managed resource group
     wait_aks_network_id_available ${aksMCRGName}
     local aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
+    echo_stdout "AKS network id is: ${aksNetWorkId}"
 
     local aksNetworkName=${aksNetWorkId#*\/virtualNetworks\/}
     local aksNetworkRgName=${aksNetWorkId#*\/resourceGroups\/}
