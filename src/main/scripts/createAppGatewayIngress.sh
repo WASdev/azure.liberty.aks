@@ -15,6 +15,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+MAX_RETRIES=299
+
+wait_aks_network_id_available() {
+    aksMCRGName=$1
+
+    cnt=0
+    aksNetWorkId=$(az network vnet list -g ${aksMCRGName} -o tsv --query '[*].id')
+    while [ -z "${aksNetWorkId}" ]
+    do
+        if [ $cnt -eq $MAX_RETRIES ]; then
+            echo_stderr "Timeout and exit due to the maximum retries reached."
+            exit 1
+        fi
+        cnt=$((cnt+1))
+
+        echo_stdout "AKS network id not available, retry ${cnt} of ${MAX_RETRIES}..."
+        sleep 5
+        aksNetWorkId=$(az network vnet list -g ${aksMCRGName} -o tsv --query '[*].id')
+    done
+    echo_stdout "AKS network id is: ${aksNetWorkId}"
+}
+
 # Create network peers for aks and appgw
 function network_peers_aks_appgw() {
     # To successfully peer two virtual networks command 'az network vnet peering create' must be called twice with the values
@@ -27,16 +49,9 @@ function network_peers_aks_appgw() {
     fi
 
     # query vnet from managed resource group
-    local aksNetWorkId=$(az resource list -g ${aksMCRGName} --resource-type Microsoft.Network/virtualNetworks -o tsv --query '[*].id')
-    
-    # no vnet in managed resource group, then query vnet from aks agent
-    if [ -z "${aksNetWorkId}" ]; then
-        # assume all the agent pools are in the same vnet
-        # e.g. /subscriptions/xxxx-xxxx-xxxx-xxxx/resourceGroups/foo-rg/providers/Microsoft.Network/virtualNetworks/foo-aks-vnet/subnets/default
-        local aksAgent1Subnet=$(az aks show -n $AKS_CLUSTER_NAME -g $AKS_CLUSTER_RG_NAME | jq '.agentPoolProfiles[0] | .vnetSubnetId' | tr -d "\"")
-        validate_status "Get subnet id of aks agent 0."
-        aksNetWorkId=${aksAgent1Subnet%\/subnets\/*}
-    fi
+    local aksNetWorkId=
+    wait_aks_network_id_available ${aksMCRGName}
+    echo_stdout "AKS network id is: ${aksNetWorkId}"
 
     local aksNetworkName=${aksNetWorkId#*\/virtualNetworks\/}
     local aksNetworkRgName=${aksNetWorkId#*\/resourceGroups\/}

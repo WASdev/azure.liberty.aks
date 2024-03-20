@@ -241,13 +241,18 @@ USER_NAME=$(az acr credential show -n $acrName -g $ACR_RG_NAME --query 'username
 PASSWORD=$(az acr credential show -n $acrName -g $ACR_RG_NAME --query 'passwords[0].value' -o tsv)
 
 # Choose right template
-appDeploymentTemplate=open-liberty-application.yaml.template
+appDeploymentTemplate=open-liberty-application
 if [ "$ENABLE_APP_GW_INGRESS" = True ] && [ "$DEPLOY_WLO" = True ]; then
-    appDeploymentTemplate=websphere-liberty-application-agic.yaml.template
+    appDeploymentTemplate=websphere-liberty-application-agic
 elif [ "$ENABLE_APP_GW_INGRESS" = True ] && [ "$DEPLOY_WLO" = False ]; then
-    appDeploymentTemplate=open-liberty-application-agic.yaml.template
+    appDeploymentTemplate=open-liberty-application-agic
 elif [ "$ENABLE_APP_GW_INGRESS" = False ] && [ "$DEPLOY_WLO" = True ]; then
-    appDeploymentTemplate=websphere-liberty-application.yaml.template
+    appDeploymentTemplate=websphere-liberty-application
+fi
+if [ "$AUTO_SCALING" = True ]; then
+    appDeploymentTemplate=${appDeploymentTemplate}-autoscaling.yaml.template
+else
+    appDeploymentTemplate=${appDeploymentTemplate}.yaml.template
 fi
 
 appDeploymentFile=liberty-application.yaml
@@ -257,6 +262,10 @@ export Frontend_Tls_Secret=${APP_FRONTEND_TLS_SECRET_NAME}
 export WLA_Edition="${WLA_EDITION}"
 export WLA_Product_Entitlement_Source="${WLA_PRODUCT_ENTITLEMENT_SOURCE}"
 export WLA_Metric="${WLA_METRIC}"
+export Min_Replicas="${MIN_REPLICAS}"
+export Max_Replicas="${MAX_REPLICAS}"
+export Cpu_Utilization_Percentage="${CPU_UTILIZATION_PERCENTAGE}"
+export Request_Cpu_Millicore="${REQUEST_CPU_MILLICORE}"
 
 # Deploy application image if it's requested by the user
 if [ "$deployApplication" = True ]; then
