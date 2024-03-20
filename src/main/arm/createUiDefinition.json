@@ -655,7 +655,7 @@
                         "type": "Microsoft.Common.OptionsGroup",
                         "label": "Auto-scale replicas?",
                         "defaultValue": "No",
-                        "toolTip": "Select 'Yes' to autonomically create or delete instances based on resource consumption, or select 'No' to specify static instances.",
+                        "toolTip": "Select 'Yes' to automatically create or delete instances based on resource consumption, or select 'No' to specify static instances.",
                         "constraints": {
                             "allowedValues": [
                                 {
