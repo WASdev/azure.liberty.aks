@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           wget -O arm-template-toolkit.zip https://aka.ms/arm-ttk-azureapps
-          unzip arm-template-toolkit.zip -d ../arm-ttk
+          unzip arm-template-toolkit.zip -d arm-ttk
 
       - name: Checkout ${{ env.repoName }}
         uses: actions/checkout@v2
