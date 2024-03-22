@@ -24,14 +24,13 @@
     <version>1.0.43</version>
 
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
-    
+
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.19</version>
-        <relativePath></relativePath>
+        <version>1.0.20</version>
     </parent>
-    
+
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>
 
@@ -39,4 +38,21 @@
         <git.repo>WASdev</git.repo>
         <artifactsLocationBase>https://raw.githubusercontent.com/${git.repo}/${project.artifactId}/${git.tag}</artifactsLocationBase>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
+        </pluginRepository>
+    </pluginRepositories>
+
 </project>
