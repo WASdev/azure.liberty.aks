@@ -38,7 +38,6 @@ jobs:
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
           server-username: MAVEN_USERNAME # env variable for username
           server-password: MAVEN_TOKEN # env variable for token
-
       - name: Set Maven env
         env:
           MAVEN_USERNAME: github
@@ -47,26 +46,22 @@ jobs:
         run: |
           echo "MAVEN_USERNAME=${MAVEN_USERNAME}" >> "$GITHUB_ENV"
           echo "MAVEN_TOKEN=${MAVEN_TOKEN}" >> "$GITHUB_ENV"
-
       - name: Set up bicep
         run: |
           curl -Lo bicep https://github.com/Azure/bicep/releases/download/${{ env.bicepVersion }}/bicep-linux-x64
           chmod +x ./bicep
           sudo mv ./bicep /usr/local/bin/bicep
           bicep --version
-
       - name: Download arm-ttk used in partner center pipeline
         shell: bash
         run: |
           wget -O arm-template-toolkit.zip https://aka.ms/arm-ttk-azureapps
           unzip arm-template-toolkit.zip -d arm-ttk
-
       - name: Checkout ${{ env.repoName }}
         uses: actions/checkout@v2
         with:
           path: ${{ env.repoName }}
           ref: ${{ github.event.inputs.ref }}
-
       - name: Build and test ${{ env.repoName }}
         run: |
           cd ${{ env.repoName }}
@@ -81,7 +76,6 @@ jobs:
           echo "##[set-output name=artifactName;]${artifactName}"
           echo "##[set-output name=artifactPath;]${{ env.repoName }}/target/$artifactName"
           echo "##[set-output name=artifactVersion;]${version}"
-
       - name: Archive ${{ env.repoName }} template
         uses: actions/upload-artifact@v1
         if: success()
