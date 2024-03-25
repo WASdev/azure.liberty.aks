@@ -74,7 +74,7 @@ jobs:
       - name: Generate artifact file name and path
         id: artifact_file
         run: |
-          version=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.${{ env.repoName }}}' --file ${{ env.repoName }}/pom.xml --non-recursive exec:exec)
+          version=$(mvn -q -Dexec.executable=echo -Dexec.args='${version.${{ env.repoName }}}' --file pom.xml --non-recursive exec:exec)
           artifactName=${{ env.repoName }}-$version-arm-assembly
           unzip ${{ env.repoName }}/target/$artifactName.zip -d ${{ env.repoName }}/target/$artifactName
           echo "##[set-output name=artifactName;]${artifactName}"
