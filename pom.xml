@@ -28,7 +28,7 @@
 
     <groupId>com.ibm.websphere.azure</groupId>
     <artifactId>azure.liberty.aks</artifactId>
-    <version>1.0.43</version>
+    <version>${version.azure.liberty.aks}</version>
 
     <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
 
@@ -38,6 +38,7 @@
     <properties>
         <git.repo>WASdev</git.repo>
         <artifactsLocationBase>https://raw.githubusercontent.com/${git.repo}/${project.artifactId}/${git.tag}</artifactsLocationBase>
+        <version.azure.liberty.aks>1.0.41</version.azure.liberty.aks>
     </properties>
 
     <repositories>
