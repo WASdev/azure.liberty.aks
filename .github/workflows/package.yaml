@@ -1,8 +1,15 @@
 # Copyright (c) IBM Corporation.
 # Copyright (c) Microsoft Corporation.
-name: Package ARM
+name: Package ARM and Update Offer Artifact
 on:
   workflow_dispatch:
+    inputs:
+      updateOfferArtifact:
+        description: 'Update offer artifact'
+        required: true
+        type: boolean
+        default: true
+
   # Allows you to run this workflow using GitHub APIs
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
@@ -83,6 +90,7 @@ jobs:
           name: ${{steps.artifact_file.outputs.artifactName}}
           path: ${{steps.artifact_file.outputs.artifactPath}}
       - name: Update offer artifact
+        if: ${{ inputs.updateOfferArtifact == true || github.event.client_payload.updateOfferArtifact == true }}
         uses: microsoft/microsoft-partner-center-github-action@v3
         with:
           offerId: ${{ env.offerId }}
