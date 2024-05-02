@@ -19,24 +19,42 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ibm.websphere.azure</groupId>
-    <artifactId>azure.liberty.aks</artifactId>
-    <version>1.0.43</version>
-
-    <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
-    
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.19</version>
+        <version>1.0.22</version>
         <relativePath></relativePath>
     </parent>
-    
+
+    <groupId>com.ibm.websphere.azure</groupId>
+    <artifactId>azure.liberty.aks</artifactId>
+    <version>${version.azure.liberty.aks}</version>
+
+    <!-- mvn -Pbicep -Passembly clean install -Ptemplate-validation-tests -->
+
     <packaging>jar</packaging>
     <name>${project.artifactId}</name>
 
     <properties>
         <git.repo>WASdev</git.repo>
         <artifactsLocationBase>https://raw.githubusercontent.com/${git.repo}/${project.artifactId}/${git.tag}</artifactsLocationBase>
+        <version.azure.liberty.aks>1.0.42</version.azure.liberty.aks>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
+        </pluginRepository>
+    </pluginRepositories>
+
 </project>
