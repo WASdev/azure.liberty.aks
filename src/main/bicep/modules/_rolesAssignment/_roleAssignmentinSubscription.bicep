@@ -42,7 +42,7 @@ resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@2018-01
 }
 
 // Assign role
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = {
   name: name_roleAssignmentName
   properties: {
     description: 'Assign subscription scope role to User Assigned Managed Identity '

@@ -24,18 +24,18 @@ var const_APIVersion = '2020-12-01'
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var const_roleDefinitionIdOfAcrPull = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
-resource aksCluster 'Microsoft.ContainerService/managedClusters@2023-07-01' existing = {
+resource aksCluster 'Microsoft.ContainerService/managedClusters@${azure.apiVersionForManagedClusters}' existing = {
   name: aksClusterName
   scope: resourceGroup(aksClusterRGName)
 }
 
-resource acr 'Microsoft.ContainerRegistry/registries@2022-12-01' existing = {
+resource acr 'Microsoft.ContainerRegistry/registries@${azure.apiVersionForContainerRegistries}' existing = {
   name: acrName
   scope: resourceGroup(acrRGName)
 }
 
 // https://github.com/Azure/azure-quickstart-templates/issues/4205
-resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@${azure.apiVersionForRoleAssignment}' = {
   name: guid('${aksCluster.id}${acr.id}ForKubeletIdentity')
   properties: {
     description: 'Assign Resource Group Contributor role to User Assigned Managed Identity '
