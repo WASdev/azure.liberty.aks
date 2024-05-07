@@ -37,7 +37,7 @@ param principalId string = ''
 var name_roleAssignmentName = guid('${subscription().id}${principalId}Role assignment in subscription scope')
 
 // Get role resource id in subscription
-resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+resource roleResourceDefinition 'Microsoft.Authorization/roleDefinitions@${azure.apiVersionForRoleDefinitions}' existing = {
   name: roleDefinitionId
 }
 
