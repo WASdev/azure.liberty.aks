@@ -20,7 +20,7 @@ param name_deploymentScriptContributorRoleAssignmentName string = newGuid()
 
 // https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles
 var const_roleDefinitionIdOfContributor = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-var name_deploymentScriptUserDefinedManagedIdentity = 'ol-aks-deployment-script-user-defined-managed-itentity-itentity-${substring(uniqueString(name_deploymentScriptContributorRoleAssignmentName),0,5)}'
+var name_deploymentScriptUserDefinedManagedIdentity = 'ol-aks-deployment-script-user-defined-managed-itentity-${substring(uniqueString(name_deploymentScriptContributorRoleAssignmentName),0,5)}'
 
 
 // UAMI for deployment script
