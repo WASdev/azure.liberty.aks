@@ -278,7 +278,7 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
   ]
 }
 
-resource acrDeployment 'Microsoft.ContainerRegistry/registries@2022-12-01' = if (createACR) {
+resource acrDeployment 'Microsoft.ContainerRegistry/registries@${azure.apiVersionForContainerRegistries}' = if (createACR) {
   name: name_acrName
   location: location
   sku: {
@@ -293,13 +293,13 @@ resource acrDeployment 'Microsoft.ContainerRegistry/registries@2022-12-01' = if 
 }
 
 // Get existing VNET
-resource existingVnet 'Microsoft.Network/virtualNetworks@2023-04-01' existing = if (enableAppGWIngress && !const_newVnet) {
+resource existingVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtualNetworks}' existing = if (enableAppGWIngress && !const_newVnet) {
   name: name_vnet
   scope: resourceGroup(vnetForApplicationGateway.resourceGroup)
 }
 
 // Get existing subnet
-resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-04-01' existing = if (enableAppGWIngress && !const_newVnet) {
+resource existingSubnet 'Microsoft.Network/virtualNetworks/subnets@${azure.apiVersionForVirtualNetworks}' existing = if (enableAppGWIngress && !const_newVnet) {
   name: name_subnet
   parent: existingVnet
 }
@@ -319,7 +319,7 @@ module vnetForAppgatewayDeployment 'modules/_azure-resoruces/_vnetAppGateway.bic
   ]
 }
 
-resource clusterDeployment 'Microsoft.ContainerService/managedClusters@2023-07-01' = if (createCluster) {
+resource clusterDeployment 'Microsoft.ContainerService/managedClusters@${azure.apiVersionForManagedClusters}' = if (createCluster) {
   name: name_clusterName
   location: location
   properties: {
@@ -394,7 +394,7 @@ module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep
 }
 
 // get key vault object in a resource group
-resource existingKeyvault 'Microsoft.KeyVault/vaults@2022-07-01' existing = if (enableAppGWIngress) {
+resource existingKeyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVault}' existing = if (enableAppGWIngress) {
   name: (!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultName : appgwSecretDeployment.outputs.keyVaultName
   scope: resourceGroup(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultResourceGroup : resourceGroup().name)
 }

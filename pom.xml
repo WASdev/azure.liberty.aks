@@ -38,7 +38,7 @@
     <properties>
         <git.repo>WASdev</git.repo>
         <artifactsLocationBase>https://raw.githubusercontent.com/${git.repo}/${project.artifactId}/${git.tag}</artifactsLocationBase>
-        <version.azure.liberty.aks>1.0.43</version.azure.liberty.aks>
+        <version.azure.liberty.aks>1.0.45</version.azure.liberty.aks>
     </properties>
 
     <repositories>
@@ -56,5 +56,28 @@
             <url>https://maven.pkg.github.com/azure-javaee/azure-javaee-iaas</url>
         </pluginRepository>
     </pluginRepositories>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>properties-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>read-project-properties</goal>
+                        </goals>
+                        <configuration>
+                            <urls>
+                                <file>file:///${basedir}/src/main/resources/azure-common.properties</file>
+                            </urls>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
