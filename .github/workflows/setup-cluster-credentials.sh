@@ -5,6 +5,7 @@
 # - has done az login.
 # - can create repository secrets in the github repo from which this file was cloned.
 # - has the gh client >= 2.0.0 installed.
+# - has yq 4.x installed.
 #
 # This script initializes the repo from which this file is was cloned
 # with the necessary secrets to run the workflows.
@@ -46,14 +47,14 @@ check_parameters() {
         name=$(echo "$line" | yq -r '.name')
         value=$(echo "$line" | yq -r '.value')
 
-       if [ -z "$value" ] || [ "$value" == "null" ]; then
+        if [ -z "$value" ] || [ "$value" == "null" ]; then
             print_error "The parameter '$name' has an empty/null value. Please provide a valid value."
             has_empty_value=1
             break
         else
             echo "Name: $name, Value: $value"
         fi
-    done < <(yq -c '.[]' "$param_file")
+    done < <(yq eval -o=json '.[]' "$param_file" | jq -c '.')
 
     echo "return $has_empty_value"
     return $has_empty_value
@@ -62,9 +63,9 @@ check_parameters() {
 # Function to set values from YAML
 set_values() {
     echo "Setting values..."
-    yq -c '.[]' "$param_file" | while read -r line; do
-        name=$(echo "$line" | yq -r '.name')
-        value=$(echo "$line" | yq -r '.value')
+    yq eval -o=json '.[]' "$param_file" | jq -c '.' | while read -r line; do
+        name=$(echo "$line" | jq -r '.name')
+        value=$(echo "$line" | jq -r '.value')
         gh secret set "$name" -b"${value}"
     done
 }
