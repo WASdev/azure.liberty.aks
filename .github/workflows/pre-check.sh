@@ -33,7 +33,7 @@ echo "2/5...GitHub CLI (gh) is installed."
 # Check if the GitHub CLI (gh) is logged in
 if ! gh auth status &> /dev/null; then
     echo "Check required tools and environment failed."
-    echo "You are not logged in to GitHub CLI (gh). Please log in to proceed."
+    echo "You are not logged in to GitHub CLI (gh). Please log in with `gh auth login` to proceed."
     exit 1
 fi
 echo "3/5...You are logged in to GitHub CLI (gh)."
@@ -50,7 +50,7 @@ echo "4/5...Azure CLI (az) is installed."
 # check if az is logged in
 if ! az account show &> /dev/null; then
     echo "Check required tools and environment failed."
-    echo "You are not logged in to Azure CLI (az). Please log in to proceed."
+    echo "You are not logged in to Azure CLI (az). Please log in with command `az login` to proceed."
     exit 1
 fi
 echo "5/5...You are logged in to Azure CLI (az)."

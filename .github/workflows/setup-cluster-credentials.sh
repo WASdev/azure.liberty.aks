@@ -14,7 +14,10 @@
 # 3. Clone the repository.
 # 4. Prepare the .github/resource/credentials-params.yaml file with the required parameters.
 # 5. Run the script with the following command:
-#    bash .github/workflows/setup-cluster-credentials.sh
+#    ```
+#    cd .github/workflows
+#    bash setup-cluster-credentials.sh
+#    ```
 # 6. The script will set the required secrets in the repository.
 # 7. Check the repository secrets to verify that the secrets are set.
 ################################################
