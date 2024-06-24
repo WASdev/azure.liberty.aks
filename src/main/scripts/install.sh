@@ -216,7 +216,7 @@ else
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-deployment.yaml -q -P ./base
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/base/websphere-liberty-roles.yaml -q -P ./base
     kubectl create namespace ${operatorNamespaceName}
-    kubectl apply -k overlays/watch-all-namespaces
+    kubectl apply --server-side -k overlays/watch-all-namespaces
 fi
 
 if [[ $? -ne 0 ]]; then
