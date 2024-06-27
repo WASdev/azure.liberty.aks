@@ -29,4 +29,3 @@ source ../resource/pre-check.sh
 export param_file="../resource/credentials-params.yaml"
 source ../resource/azure-credential-teardown.sh
 source ../resource/teardown.sh
-
