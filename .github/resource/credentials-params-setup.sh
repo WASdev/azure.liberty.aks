@@ -47,7 +47,7 @@ set_values() {
 
 # Main script execution
 main() {
-  CURRENT_FILE_NAME=$(basename "$0")
+  CURRENT_FILE_NAME="credentials-params-setup.sh"
   echo "Execute $CURRENT_FILE_NAME - Start------------------------------------------"
 
   if check_parameters; then

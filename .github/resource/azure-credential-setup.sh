@@ -4,7 +4,7 @@
 
 set -Eeuo pipefail
 
-CURRENT_FILE_NAME=$(basename "$0")
+CURRENT_FILE_NAME="azure-credential-setup.sh"
 echo "Execute $CURRENT_FILE_NAME - Start------------------------------------------"
 
 ## Create Azure Credentials
