@@ -36,6 +36,8 @@ param appGatewaySSLCertData string = ''
 @secure()
 param appGatewaySSLCertPassword string = ''
 param vmSize string
+param deployApplication bool
+param sourceImagePath string
 
 param utcValue string = utcNow()
 
@@ -104,6 +106,14 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
       {
         name: 'VM_SIZE'
         value: vmSize
+      }
+      {
+        name: 'DEPLOY_APPLICATION'
+        value: string(deployApplication)
+      }
+      {
+        name: 'SOURCE_IMAGE_PATH'
+        value: sourceImagePath
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, 'preflight.sh${_artifactsLocationSasToken}')

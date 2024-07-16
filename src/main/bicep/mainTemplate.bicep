@@ -244,6 +244,8 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     appGatewaySSLCertData: appGatewaySSLCertData
     appGatewaySSLCertPassword: appGatewaySSLCertPassword
     vmSize: vmSize
+    deployApplication: deployApplication
+    sourceImagePath: const_appImagePath
   }
   dependsOn: [
     uamiDeployment

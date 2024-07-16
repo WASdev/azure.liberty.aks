@@ -139,6 +139,23 @@ if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_gateway_frontend_certificates
 fi
 
+# Check if image specified by SOURCE_IMAGE_PATH is publically accessible and supports amd64 architecture
+if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
+  docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
+  if [ $? -ne 0 ]; then
+    echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
+    exit 1
+  else
+    arches=$(cat inspect_output.txt | jq -r '.manifests[].platform.architecture')
+    if echo "$arches" | grep -q '^amd64$'; then
+      echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_output.txt)
+    else
+      echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_output.txt)
+      exit 1
+    fi
+  fi
+fi
+
 # Query available zones for selected region and vm size
 if [[ "${CREATE_CLUSTER,,}" == "true" ]]; then
   availableZones=$(az vm list-skus -l ${LOCATION} --size ${VM_SIZE} --zone true | jq -c '.[] | .locationInfo[] | .zones')
