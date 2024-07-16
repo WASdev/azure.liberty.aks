@@ -141,6 +141,9 @@ fi
 
 # Check if image specified by SOURCE_IMAGE_PATH is publically accessible and supports amd64 architecture
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
+  # Install docker-cli to inspect the image
+  apk update
+  apk add docker-cli
   docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
   if [ $? -ne 0 ]; then
     echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
