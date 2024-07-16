@@ -49,7 +49,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
   kind: 'AzureCLI'
   identity: identity
   properties: {
-    azCliVersion: '2.15.0'
+    azCliVersion: '2.53.0'
     environmentVariables: [
       {
         name: 'CREATE_CLUSTER'
