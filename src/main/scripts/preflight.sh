@@ -138,3 +138,19 @@ if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_appgateway_vnet
   validate_gateway_frontend_certificates
 fi
+
+# Query available zones for selected region and vm size
+if [[ "${CREATE_CLUSTER,,}" == "true" ]]; then
+  availableZones=$(az vm list-skus -l ${LOCATION} --size ${VM_SIZE} --zone true | jq -c '.[] | .locationInfo[] | .zones')
+fi
+
+if [ -z "${availableZones}" ]; then  
+  availableZones="[]"
+fi
+
+# Write outputs to deployment script output path
+result=$(jq -n -c \
+  --arg agentAvailabilityZones "$availableZones" \
+  '{agentAvailabilityZones: $agentAvailabilityZones}')
+echo_stdout "Result is: $result"
+echo $result > $AZ_SCRIPTS_OUTPUT_PATH

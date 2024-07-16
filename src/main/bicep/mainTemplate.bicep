@@ -177,40 +177,11 @@ var const_appImageTag = '1.0.0'
 var const_appName = format('app{0}', guidValue)
 var const_appProjName = 'default'
 var const_arguments = format('{0} {1} {2} {3} {4} {5} {6} {7} {8}', const_clusterRGName, name_clusterName, name_acrName, deployApplication, const_appImagePath, const_appName, const_appProjName, const_appImage, appReplicas)
-var const_availabilityZones = [
-  '1'
-  '2'
-  '3'
-]
 var const_azureSubjectName = format('{0}.{1}.{2}', name_dnsNameforApplicationGateway, location, 'cloudapp.azure.com')
 var const_clusterRGName = (createCluster ? resourceGroup().name : clusterRGName)
 var const_cmdToGetAcrLoginServer = format('az acr show -n {0} --query loginServer -o tsv', name_acrName)
 var const_metric = productEntitlementSource == 'Standalone' || productEntitlementSource == 'IBM WebSphere Application Server Family Edition' ? 'Processor Value Unit (PVU)' : 'Virtual Processor Core (VPC)'
 var const_newVnet = (vnetForApplicationGateway.newOrExisting == 'new') ? true : false
-var const_regionsSupportAvailabilityZones = [
-  'australiaeast'
-  'brazilsouth'
-  'canadacentral'
-  'centralindia'
-  'centralus'
-  'eastasia'
-  'eastus'
-  'eastus2'
-  'francecentral'
-  'germanywestcentral'
-  'japaneast'
-  'koreacentral'
-  'northeurope'
-  'norwayeast'
-  'southeastasia'
-  'southcentralus'
-  'swedencentral'
-  'uksouth'
-  'usgovvirginia'
-  'westeurope'
-  'westus2'
-  'westus3'
-]
 var name_acrName = createACR ? format('acr{0}', guidValue) : acrName
 var name_appGatewayPublicIPAddressName = format('{0}{1}', appGatewayPublicIPAddressName, guidValue)
 var name_clusterName = createCluster ? format('cluster{0}', guidValue) : clusterName
@@ -272,6 +243,7 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     keyVaultSSLCertPasswordSecretName: keyVaultSSLCertPasswordSecretName
     appGatewaySSLCertData: appGatewaySSLCertData
     appGatewaySSLCertPassword: appGatewaySSLCertPassword
+    vmSize: vmSize
   }
   dependsOn: [
     uamiDeployment
@@ -337,7 +309,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@${azure.a
         osType: 'Linux'
         type: 'VirtualMachineScaleSets'
         mode: 'System'
-        availabilityZones: (contains(const_regionsSupportAvailabilityZones, location) ? const_availabilityZones : null)
+        availabilityZones: preflightDsDeployment.outputs.aksAgentAvailabilityZones
       }
     ]
     networkProfile: {

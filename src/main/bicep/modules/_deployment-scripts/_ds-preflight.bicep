@@ -35,6 +35,7 @@ param keyVaultSSLCertPasswordSecretName string = ''
 param appGatewaySSLCertData string = ''
 @secure()
 param appGatewaySSLCertPassword string = ''
+param vmSize string
 
 param utcValue string = utcNow()
 
@@ -96,6 +97,14 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
         name: 'APPLICATION_GATEWAY_SSL_FRONTEND_CERT_PASSWORD'
         secureValue: appGatewaySSLCertPassword
       }
+      {
+        name: 'LOCATION'
+        value: location
+      }
+      {
+        name: 'VM_SIZE'
+        value: vmSize
+      }
     ]
     primaryScriptUri: uri(const_scriptLocation, 'preflight.sh${_artifactsLocationSasToken}')
     supportingScriptUris: [
@@ -107,3 +116,5 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     forceUpdateTag: utcValue
   }
 }
+
+output aksAgentAvailabilityZones array = json(deploymentScript.properties.outputs.agentAvailabilityZones)
