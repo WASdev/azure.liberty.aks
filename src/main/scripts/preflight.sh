@@ -144,6 +144,7 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
   # Install docker-cli to inspect the image
   apk update
   apk add docker-cli
+  export DOCKER_CLI_EXPERIMENTAL=enabled
   docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
   if [ $? -ne 0 ]; then
     echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
