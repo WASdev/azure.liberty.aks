@@ -163,6 +163,7 @@ fi
 # Query available zones for selected region and vm size
 if [[ "${CREATE_CLUSTER,,}" == "true" ]]; then
   availableZones=$(az vm list-skus -l ${LOCATION} --size ${VM_SIZE} --zone true | jq -c '.[] | .locationInfo[] | .zones')
+  echo_stdout "Available zones for region ${LOCATION} and vm size ${VM_SIZE} are: $availableZones"
 fi
 
 if [ -z "${availableZones}" ]; then  
