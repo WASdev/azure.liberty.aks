@@ -176,10 +176,15 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
   fi
 fi
 
-# Query available zones for selected region and vm size
+# Get availability zones
 if [[ "${CREATE_CLUSTER,,}" == "true" ]]; then
+  # Get available zones for the specified region and vm size
   availableZones=$(az vm list-skus -l ${LOCATION} --size ${VM_SIZE} --zone true | jq -c '.[] | .locationInfo[] | .zones')
   echo_stdout "Available zones for region ${LOCATION} and vm size ${VM_SIZE} are: $availableZones"
+else
+  # Get available zones for the existing AKS cluster
+  availableZones=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} | jq '.agentPoolProfiles[] | select(.name=="agentpool") | .availabilityZones')
+  echo_stdout "Available zones for the agent pool of the existing AKS cluster are: $availableZones"
 fi
 
 if [ -z "${availableZones}" ]; then  
@@ -189,6 +194,7 @@ fi
 # Write outputs to deployment script output path
 result=$(jq -n -c \
   --arg agentAvailabilityZones "$availableZones" \
-  '{agentAvailabilityZones: $agentAvailabilityZones}')
+  --arg vmSize "$vmSize" \
+  '{agentAvailabilityZones: $agentAvailabilityZones, vmSize: $vmSize}')
 echo_stdout "Result is: $result"
 echo $result > $AZ_SCRIPTS_OUTPUT_PATH
