@@ -139,6 +139,22 @@ if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_gateway_frontend_certificates
 fi
 
+# Get vm size of the AKS agent pool
+if [[ "${CREATE_CLUSTER,,}" == "false" ]]; then
+  vmSize=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} \
+    | jq '.agentPoolProfiles[] | select(.name=="agentpool") | .vmSize' \
+    | tr -d "\"")
+else
+  vmSize=${VM_SIZE}
+fi
+echo_stdout "VM size for the AKS agent pool is: $vmSize"
+
+# Check if vm size of the AKS agent pool is arm64 based
+if [[ $vmSize == *"p"* ]]; then
+  echo_stderr "The vm of the AKS cluster agent pool is based on ARM64 architecture. It is not supported by the Open Liberty/WebSphere Liberty Operator."
+  exit 1
+fi
+
 # Check if image specified by SOURCE_IMAGE_PATH is publically accessible and supports amd64 architecture
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
   # Install docker-cli to inspect the image
