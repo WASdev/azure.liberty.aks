@@ -138,3 +138,63 @@ if [[ "${ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER,,}" == "true" ]]; then
   validate_appgateway_vnet
   validate_gateway_frontend_certificates
 fi
+
+# Get vm size of the AKS agent pool
+if [[ "${CREATE_CLUSTER,,}" == "false" ]]; then
+  vmSize=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} \
+    | jq '.agentPoolProfiles[] | select(.name=="agentpool") | .vmSize' \
+    | tr -d "\"")
+else
+  vmSize=${VM_SIZE}
+fi
+echo_stdout "VM size for the AKS agent pool is: $vmSize"
+
+# Check if vm size of the AKS agent pool is arm64 based
+if [[ $vmSize == *"p"* ]]; then
+  echo_stderr "The vm of the AKS cluster agent pool is based on ARM64 architecture. It is not supported by the Open Liberty/WebSphere Liberty Operator."
+  exit 1
+fi
+
+# Check if image specified by SOURCE_IMAGE_PATH is publically accessible and supports amd64 architecture
+if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
+  # Install docker-cli to inspect the image
+  apk update
+  apk add docker-cli
+  export DOCKER_CLI_EXPERIMENTAL=enabled
+  docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
+  if [ $? -ne 0 ]; then
+    echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
+    exit 1
+  else
+    arches=$(cat inspect_output.txt | jq -r '.manifests[].platform.architecture')
+    if echo "$arches" | grep -q '^amd64$'; then
+      echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_output.txt)
+    else
+      echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_output.txt)
+      exit 1
+    fi
+  fi
+fi
+
+# Get availability zones
+if [[ "${CREATE_CLUSTER,,}" == "true" ]]; then
+  # Get available zones for the specified region and vm size
+  availableZones=$(az vm list-skus -l ${LOCATION} --size ${VM_SIZE} --zone true | jq -c '.[] | .locationInfo[] | .zones')
+  echo_stdout "Available zones for region ${LOCATION} and vm size ${VM_SIZE} are: $availableZones"
+else
+  # Get available zones for the existing AKS cluster
+  availableZones=$(az aks show -n ${AKS_CLUSTER_NAME} -g ${AKS_CLUSTER_RG_NAME} | jq '.agentPoolProfiles[] | select(.name=="agentpool") | .availabilityZones')
+  echo_stdout "Available zones for the agent pool of the existing AKS cluster are: $availableZones"
+fi
+
+if [ -z "${availableZones}" ]; then  
+  availableZones="[]"
+fi
+
+# Write outputs to deployment script output path
+result=$(jq -n -c \
+  --arg agentAvailabilityZones "$availableZones" \
+  --arg vmSize "$vmSize" \
+  '{agentAvailabilityZones: $agentAvailabilityZones, vmSize: $vmSize}')
+echo_stdout "Result is: $result"
+echo $result > $AZ_SCRIPTS_OUTPUT_PATH
