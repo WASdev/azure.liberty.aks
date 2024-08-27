@@ -155,25 +155,46 @@ if [[ $vmSize == *"p"* ]]; then
   exit 1
 fi
 
-# Check if image specified by SOURCE_IMAGE_PATH is publically accessible and supports amd64 architecture
+# Inspect $SOURCE_IMAGE_PATH for need to check for amd64 and do check if necessary
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
-  # Install docker-cli to inspect the image
-  apk update
-  apk add docker-cli
-  export DOCKER_CLI_EXPERIMENTAL=enabled
-  docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
-  if [ $? -ne 0 ]; then
-    echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
-    exit 1
-  else
-    arches=$(cat inspect_output.txt | jq -r '.manifests[].platform.architecture')
-    if echo "$arches" | grep -q '^amd64$'; then
-      echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_output.txt)
+    DO_DOCKER_INSPECT=false
+    # Check if the string contains exactly one occurrence of 'azurecr.io/' and it is the first '/'
+    if [[ "$SOURCE_IMAGE_PATH" == *"azurecr.io/"* ]]; then
+        # Extract the part before the first '/'
+        first_part="${SOURCE_IMAGE_PATH%%/*}"
+        # Extract the part after the first '/'
+        remaining_part="${SOURCE_IMAGE_PATH#*/}"
+        
+        # Check if 'azurecr.io' is in the first part and not in the remaining part
+        if [[ "$first_part" == *"azurecr.io" ]] && [[ "$remaining_part" != *"azurecr.io/"* ]]; then
+            DO_DOCKER_INSPECT=false
+            echo_stdout "Because $SOURCE_IMAGE_PATH is coming from azurecr.io, assuming it supports amd64 architecture."
+        else
+            DO_DOCKER_INSPECT=true
+        fi
     else
-      echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_output.txt)
-      exit 1
+        DO_DOCKER_INSPECT=true
     fi
-  fi
+
+    if $DO_DOCKER_INSPECT; then
+        # Install docker-cli to inspect the image
+        apk update
+        apk add docker-cli
+        export DOCKER_CLI_EXPERIMENTAL=enabled
+        docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
+        if [ $? -ne 0 ]; then
+            echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
+            exit 1
+        else
+            arches=$(cat inspect_output.txt | jq -r '.manifests[].platform.architecture')
+            if echo "$arches" | grep -q '^amd64$'; then
+                echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_output.txt)
+            else
+                echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_output.txt)
+                exit 1
+            fi
+        fi
+    fi
 fi
 
 # Get availability zones
