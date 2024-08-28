@@ -157,23 +157,31 @@ fi
 
 # Inspect $SOURCE_IMAGE_PATH for need to check for amd64 and do check if necessary
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
-    DO_DOCKER_INSPECT=false
-    # Check if the string contains exactly one occurrence of 'azurecr.io/' and it is the first '/'
+    # Do the docker inspect if any of the following cases are true
+    # - SOURCE_IMAGE_PATH is not from azurecr.io
+    # - SOURCE_IMAGE_PATH is from azurecr.io and we can successfully docker login
+    #   Otherwise, if SOURCE_IMAGE_PATH is from azurecr.io, skip docker inspect
+    DO_DOCKER_INSPECT=true
+    
     if [[ "$SOURCE_IMAGE_PATH" == *"azurecr.io/"* ]]; then
-        # Extract the part before the first '/'
         first_part="${SOURCE_IMAGE_PATH%%/*}"
-        # Extract the part after the first '/'
         remaining_part="${SOURCE_IMAGE_PATH#*/}"
         
         # Check if 'azurecr.io' is in the first part and not in the remaining part
         if [[ "$first_part" == *"azurecr.io" ]] && [[ "$remaining_part" != *"azurecr.io/"* ]]; then
-            DO_DOCKER_INSPECT=false
-            echo_stdout "Because $SOURCE_IMAGE_PATH is coming from azurecr.io, assuming it supports amd64 architecture."
-        else
-            DO_DOCKER_INSPECT=true
+            # Try to docker login.
+            acrName="${first_part%.azurecr.io}"
+            LOGIN_SERVER=$(az acr show -n $acrName -g $ACR_RG_NAME --query 'loginServer' -o tsv 2>/dev/null) || true
+            USER_NAME=$(az acr credential show -n $acrName -g $ACR_RG_NAME --query 'username' -o tsv 2>/dev/null) || true
+            PASSWORD=$(az acr credential show -n $acrName -g $ACR_RG_NAME --query 'passwords[0].value' -o tsv 2>/dev/null) || true
+            docker login $LOGIN_SERVER -u $USER_NAME -p $PASSWORD >> $logFile 2>/dev/null
+            if [ $? -eq 0 ]; then
+                echo_stdout "docker login for $SOURCE_IMAGE_PATH succeeded."
+            else
+                echo_stdout "docker login failed, but because $SOURCE_IMAGE_PATH is coming from azurecr.io, assuming it supports amd64 architecture."
+                DO_DOCKER_INSPECT=false
+            fi
         fi
-    else
-        DO_DOCKER_INSPECT=true
     fi
 
     if $DO_DOCKER_INSPECT; then

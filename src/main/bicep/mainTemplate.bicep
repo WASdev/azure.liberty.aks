@@ -247,6 +247,7 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     vmSize: vmSize
     deployApplication: deployApplication
     sourceImagePath: const_appImagePath
+    acrRGName: const_acrRGName
   }
   dependsOn: [
     uamiDeployment

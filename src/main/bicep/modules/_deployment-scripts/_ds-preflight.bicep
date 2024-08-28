@@ -38,6 +38,7 @@ param appGatewaySSLCertPassword string = ''
 param vmSize string
 param deployApplication bool
 param sourceImagePath string
+param acrRGName string = ''
 
 param utcValue string = utcNow()
 
@@ -114,6 +115,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
       {
         name: 'SOURCE_IMAGE_PATH'
         value: sourceImagePath
+      }
+      {
+        name: 'ACR_RG_NAME'
+        value: string(acrRGName)
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, 'preflight.sh${_artifactsLocationSasToken}')
