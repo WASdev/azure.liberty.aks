@@ -187,8 +187,16 @@ if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
     if echo "$arches" | grep -q '^amd64$'; then
       echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_output.txt)
     else
-      echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_output.txt)
-      exit 1
+      echo_stdout "No amd64 architecture found from the manifest of image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
+      # Retry by inspecting the manifest with --verbose option
+      docker manifest inspect $SOURCE_IMAGE_PATH --verbose > inspect_verbose_output.txt 2>&1
+      arches=$(cat inspect_verbose_output.txt | jq -r '.Descriptor.platform.architecture')
+      if echo "$arches" | grep -q '^amd64$'; then
+        echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_verbose_output.txt)
+      else
+        echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_verbose_output.txt)
+        exit 1
+      fi
     fi
   fi
 fi
