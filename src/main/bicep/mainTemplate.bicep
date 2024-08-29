@@ -247,6 +247,8 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     vmSize: vmSize
     deployApplication: deployApplication
     sourceImagePath: const_appImagePath
+    createACR: createACR
+    acrName: name_acrName
     acrRGName: const_acrRGName
   }
   dependsOn: [
