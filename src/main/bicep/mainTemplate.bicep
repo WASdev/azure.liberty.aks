@@ -171,8 +171,9 @@ var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
 var const_appFrontendTlsSecretName = format('secret{0}', guidValue)
 var const_appImage = format('{0}:{1}', const_appImageName, const_appImageTag)
 var const_appImageName = format('image{0}', guidValue)
-var const_appImagePath = (empty(appImagePath) ? 'NA' : ((const_appImagePathLen == 1) ? format('docker.io/library/{0}', appImagePath) : ((const_appImagePathLen == 2) ? format('docker.io/{0}', appImagePath) : appImagePath)))
 var const_appImagePathLen = length(split(appImagePath, '/'))
+var const_appImagePathLoginServer = split(appImagePath, '/')[0]
+var const_appImagePath = (empty(appImagePath) ? 'NA' : ((const_appImagePathLen == 1) ? format('docker.io/library/{0}', appImagePath) : ((const_appImagePathLen == 2) ? (endsWith(const_appImagePathLoginServer, 'azurecr.io') ? appImagePath : format('docker.io/{0}', appImagePath)) : appImagePath)))
 var const_appImageTag = '1.0.0'
 var const_appName = format('app{0}', guidValue)
 var const_appProjName = 'default'
@@ -246,6 +247,9 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     vmSize: vmSize
     deployApplication: deployApplication
     sourceImagePath: const_appImagePath
+    createACR: createACR
+    acrName: name_acrName
+    acrRGName: const_acrRGName
   }
   dependsOn: [
     uamiDeployment

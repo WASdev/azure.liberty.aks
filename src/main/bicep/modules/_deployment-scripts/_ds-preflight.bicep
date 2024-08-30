@@ -38,6 +38,9 @@ param appGatewaySSLCertPassword string = ''
 param vmSize string
 param deployApplication bool
 param sourceImagePath string
+param createACR bool = true
+param acrName string = ''
+param acrRGName string = ''
 
 param utcValue string = utcNow()
 
@@ -62,7 +65,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
       {
         name: 'AKS_CLUSTER_RG_NAME'
         value: aksClusterRGName
-      }      
+      }
       {
         name: 'ENABLE_APPLICATION_GATEWAY_INGRESS_CONTROLLER'
         value: string(enableAppGWIngress)
@@ -114,6 +117,18 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
       {
         name: 'SOURCE_IMAGE_PATH'
         value: sourceImagePath
+      }
+      {
+        name: 'CREATE_ACR'
+        value: string(createACR)
+      }
+      {
+        name: 'ACR_NAME'
+        value: acrName
+      }
+      {
+        name: 'ACR_RG_NAME'
+        value: acrRGName
       }
     ]
     primaryScriptUri: uri(const_scriptLocation, 'preflight.sh${_artifactsLocationSasToken}')

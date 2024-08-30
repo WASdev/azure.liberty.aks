@@ -155,23 +155,48 @@ if [[ $vmSize == *"p"* ]]; then
   exit 1
 fi
 
-# Check if image specified by SOURCE_IMAGE_PATH is publically accessible and supports amd64 architecture
+# Check if image specified by SOURCE_IMAGE_PATH is accessible and supports amd64 architecture
 if [[ "${DEPLOY_APPLICATION,,}" == "true" ]]; then
-  # Install docker-cli to inspect the image
+  # Install docker-cli
   apk update
   apk add docker-cli
+
+  if [[ "${CREATE_ACR,,}" == "false" ]]; then
+    # Login to the user specified Azure Container Registry to allow access to its images 
+    ACR_LOGIN_SERVER=$(az acr show -n $ACR_NAME -g $ACR_RG_NAME --query 'loginServer' -o tsv)
+    ACR_USER_NAME=$(az acr credential show -n $ACR_NAME -g $ACR_RG_NAME --query 'username' -o tsv)
+    ACR_PASSWORD=$(az acr credential show -n $ACR_NAME -g $ACR_RG_NAME --query 'passwords[0].value' -o tsv)
+    docker login $ACR_LOGIN_SERVER -u $ACR_USER_NAME -p $ACR_PASSWORD 2>/dev/null
+
+    if [ $? -ne 0 ]; then
+      echo_stderr "Failed to login to the Azure Container Registry server $ACR_LOGIN_SERVER."
+      exit 1
+    fi
+  fi
+
+  # Inspect the manifest of the image
   export DOCKER_CLI_EXPERIMENTAL=enabled
   docker manifest inspect $SOURCE_IMAGE_PATH > inspect_output.txt 2>&1
   if [ $? -ne 0 ]; then
+    # The image is not accessible if the manifest inspect command fails
     echo_stderr "Failed to inspect image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
     exit 1
   else
+    # Check if the image supports amd64 architecture per the manifest
     arches=$(cat inspect_output.txt | jq -r '.manifests[].platform.architecture')
     if echo "$arches" | grep -q '^amd64$'; then
       echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_output.txt)
     else
-      echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_output.txt)
-      exit 1
+      echo_stdout "No amd64 architecture found from the manifest of image $SOURCE_IMAGE_PATH." $(cat inspect_output.txt)
+      # Retry by inspecting the manifest with --verbose option
+      docker manifest inspect $SOURCE_IMAGE_PATH --verbose > inspect_verbose_output.txt 2>&1
+      arches=$(cat inspect_verbose_output.txt | jq -r '.Descriptor.platform.architecture')
+      if echo "$arches" | grep -q '^amd64$'; then
+        echo_stdout "Image $SOURCE_IMAGE_PATH supports amd64 architecture." $(cat inspect_verbose_output.txt)
+      else
+        echo_stderr "Image $SOURCE_IMAGE_PATH does not support amd64 architecture." $(cat inspect_verbose_output.txt)
+        exit 1
+      fi
     fi
   fi
 fi
