@@ -727,7 +727,7 @@
                                 "type": "Microsoft.Common.InfoBox",
                                 "options": {
                                     "icon": "Info",
-                                    "text": "The image you provide must satisfy one of the following conditions:<br> <li>A public image which is accessible without credentials. If you input a fully qualified container image path<br>containing the registry login server, it's used directly. Otherwise, the login server is assumed to be 'docker.io'.<br>For example, 'websphere-liberty' will be converted to 'docker.io/library/websphere-liberty',<br>and 'ibmcom/websphere-liberty' will be converted to 'docker.io/ibmcom/websphere-liberty'.</li><li>A pre-built image stored in the Azure Container Registry you specified in the <b>AKS</b> tab.</li>"
+                                    "text": "The image you provide must satisfy one of the following conditions:<br> <li>A public image which is accessible without credentials. If you input a fully qualified container image path<br>containing the registry login server, it's used directly. Otherwise, the login server is assumed to be 'docker.io'.<br>For example, 'websphere-liberty' will be converted to 'docker.io/library/websphere-liberty',<br>and 'ibmcom/websphere-liberty' will be converted to 'docker.io/ibmcom/websphere-liberty'.</li><li>A pre-built image stored in the Azure Container Registry you specified in the <b>AKS</b> tab.<br>For example, 'contoso.azurecr.io/myapp:v1'"
                                 },
                                 "visible": "[equals(steps('Application').appImageInfo.appImageOption, '1')]"
                             },
