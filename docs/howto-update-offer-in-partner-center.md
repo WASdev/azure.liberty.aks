@@ -20,8 +20,8 @@ The recommended way to set the secrets is to run the scripts.  Setting the secre
 1. Clone this repository into the environment from the preceding steps.
 
 #### Setting the secrets
-- Follow guidance on top of [setup-credentials.sh](../.github/workflows/setup-credentials.sh) to run the shell scripts. The scripts will set the necessary secrets for the repository running the workflows. 
-- If you want to tear down the secrets, follow the guidance on top of [teardown-credentials.sh](../.github/workflows/teardown-credentials.sh) to run the shell scripts. The scripts will remove the necessary secrets for the repository running the workflows.
+- Follow guidance on top of [setup-credentials.sh](../.github/workflows/setup-credentials.sh#L6) to run the shell scripts. The scripts will set the necessary secrets for the repository running the workflows. 
+- If you want to tear down the secrets, follow the guidance on top of [teardown-credentials.sh](../.github/workflows/teardown-credentials.sh#L6) to run the shell scripts. The scripts will remove the necessary secrets for the repository running the workflows.
 
 ## When should I update the offer in partner center?
 
