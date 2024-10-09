@@ -188,7 +188,7 @@ operatorNamespaceName=
 if [ "$DEPLOY_WLO" = False ]; then
     operatorDeploymentName=olo-controller-manager
     operatorNamespaceName=open-liberty
-    OLO_VERSION=1.3.3
+    OLO_VERSION=1.4.0
     # Install Open Liberty Operator, see https://github.com/OpenLiberty/open-liberty-operator/blob/main/deploy/releases/${OLO_VERSION}/kustomize/README.adoc
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/OpenLiberty/open-liberty-operator/main/deploy/releases/${OLO_VERSION}/kustomize/overlays/watch-all-namespaces/olo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
@@ -204,7 +204,7 @@ if [ "$DEPLOY_WLO" = False ]; then
 else
     operatorDeploymentName=websphere-liberty-controller-manager
     operatorNamespaceName=websphere-liberty
-    WLO_VERSION=1.3.3
+    WLO_VERSION=1.4.0
     # Install WebSphere Liberty Operator, see https://www.ibm.com/docs/en/was-liberty/base?topic=cli-installing-kustomize
     mkdir -p overlays/watch-all-namespaces
     wget https://raw.githubusercontent.com/WASdev/websphere-liberty-operator/main/deploy/releases/${WLO_VERSION}/kustomize/overlays/watch-all-namespaces/wlo-all-namespaces.yaml -q -P ./overlays/watch-all-namespaces
