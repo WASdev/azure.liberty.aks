@@ -15,17 +15,6 @@
  limitations under the License.
 */
 
-@secure()
-@description('Certificate data to store in the secret')
-param certificateDataValue string = newGuid()
-
-@secure()
-@description('Certificate password to store in the secret')
-param certificatePasswordValue string = newGuid()
-
-@description('Property to specify whether Azure Resource Manager is permitted to retrieve secrets from the key vault.')
-param enabledForTemplateDeployment bool = true
-
 param identity object = {}
 param location string
 param permission object = {
@@ -43,16 +32,10 @@ param sku string = 'Standard'
 @description('Subject name to create a certificate.')
 param subjectName string = ''
 
-@description('If false, will create a certificate.')
-param useExistingAppGatewaySSLCertificate bool = false
-
 @description('Current deployment time. Used as a tag in deployment script.')
 param keyVaultName string = 'GEN_UNIQUE'
 
-var name_sslCertSecretName = 'myAppGatewaySSLCert'
-var name_sslCertPasswordSecretName = 'myAppGatewaySSLCertPassword'
-
-module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.bicep' = if (!useExistingAppGatewaySSLCertificate) {
+module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.bicep' = {
   name: 'kv-appgw-selfsigned-certificate-deployment'
   params: {
     identity: identity
@@ -64,22 +47,8 @@ module keyVaultwithSelfSignedAppGatewaySSLCert '_keyvault/_keyvaultWithNewCert.b
   }
 }
 
-module keyVaultwithExistingAppGatewaySSLCert '_keyvault/_keyvaultWithExistingCert.bicep' = if (useExistingAppGatewaySSLCertificate) {
-  name: 'kv-appgw-existing-certificate-deployment'
-  params: {
-    certificateDataName: name_sslCertSecretName
-    certificateDataValue: certificateDataValue
-    certificatePswSecretName: name_sslCertPasswordSecretName
-    certificatePasswordValue: certificatePasswordValue
-    enabledForTemplateDeployment: enabledForTemplateDeployment
-    keyVaultName: keyVaultName
-    location: location
-    sku: sku
-  }
-}
-
-output keyVaultName string = (useExistingAppGatewaySSLCertificate ? keyVaultwithExistingAppGatewaySSLCert.outputs.keyVaultName : keyVaultwithSelfSignedAppGatewaySSLCert.outputs.keyVaultName)
-output sslCertDataSecretName string = (useExistingAppGatewaySSLCertificate ? keyVaultwithExistingAppGatewaySSLCert.outputs.sslCertDataSecretName : keyVaultwithSelfSignedAppGatewaySSLCert.outputs.secretName)
-output sslCertPwdSecretName string = (useExistingAppGatewaySSLCertificate ? keyVaultwithExistingAppGatewaySSLCert.outputs.sslCertPwdSecretName: keyVaultwithSelfSignedAppGatewaySSLCert.outputs.secretName)
+output keyVaultName string = keyVaultwithSelfSignedAppGatewaySSLCert.outputs.keyVaultName
+output sslCertDataSecretName string = keyVaultwithSelfSignedAppGatewaySSLCert.outputs.secretName
+output sslCertPwdSecretName string = keyVaultwithSelfSignedAppGatewaySSLCert.outputs.secretName
 output sslBackendCertDataSecretName string = ''
 

@@ -38,12 +38,6 @@
         "appGatewaySSLCertPassword": {
             "value": "${appGatewaySSLCertPassword}"
         },
-        "keyVaultResourceGroup": {
-            "value": "${keyVaultResourceGroup}"
-        },
-        "keyVaultName": {
-            "value": "${keyVaultName}"
-        },
         "keyVaultSSLCertDataSecretName": {
             "value": "${keyVaultSSLCertDataSecretName}"
         },

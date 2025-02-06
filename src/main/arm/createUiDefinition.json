@@ -493,14 +493,6 @@
                                 }
                             },
                             {
-                                "name": "keyVaultText02",
-                                "type": "Microsoft.Common.TextBlock",
-                                "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
-                                "options": {
-                                    "text": "    ⁃ Identify an Azure Key Vault: The Key Vault must already contain the certificate and its password stored as secrets."
-                                }
-                            },
-                            {
                                 "name": "keyVaultText03",
                                 "type": "Microsoft.Common.TextBlock",
                                 "visible": "[steps('section_appGateway').appgwIngress.enableAppGateway]",
@@ -519,10 +511,6 @@
                                         {
                                             "label": "Upload a TLS/SSL certificate",
                                             "value": "haveCert"
-                                        },
-                                        {
-                                            "label": "Identify an Azure Key Vault",
-                                            "value": "haveKeyVault"
                                         },
                                         {
                                             "label": "Generate a self-signed front-end certificate",
@@ -564,58 +552,6 @@
                                     "hideConfirmation": false
                                 },
                                 "visible": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveCert')]"
-                            },
-                            {
-                                "name": "keyVaultResourceGroup",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "Resource group name in current subscription containing the Key Vault",
-                                "defaultValue": "",
-                                "toolTip": "Use only letters and numbers",
-                                "constraints": {
-                                    "required": true,
-                                    "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1}){3,63}$",
-                                    "validationMessage": "[if(greater(length(steps('section_appGateway').appgwIngress.keyVaultResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
-                                },
-                                "visible": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveKeyVault')]"
-                            },
-                            {
-                                "name": "keyVaultName",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "Name of the Azure Key Vault containing secrets for the certificate for TLS/SSL Termination",
-                                "defaultValue": "",
-                                "toolTip": "Use only letters and numbers",
-                                "constraints": {
-                                    "required": true,
-                                    "regex": "^(?=.{3,24}$)[a-zA-Z](?!.*--)[a-zA-Z0-9-]*[a-zA-Z0-9]$",
-                                    "validationMessage": "[if(or(greater(length(steps('section_appGateway').appgwIngress.keyVaultName), 24), less(length(steps('section_appGateway').appgwIngress.keyVaultName), 3)),'Vault name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.','Vault name must only contain alphanumeric characters and dashes and cannot start with a number')]"
-                                },
-                                "visible": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveKeyVault')]"
-                            },
-                            {
-                                "name": "keyVaultSSLCertDataSecretName",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "The name of the secret in the specified Key Vault whose value is the front-end TLS/SSL certificate data",
-                                "defaultValue": "",
-                                "toolTip": "Use only letters and numbers",
-                                "constraints": {
-                                    "required": true,
-                                    "regex": "^[a-z0-9A-Z]{1,30}$",
-                                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
-                                },
-                                "visible": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveKeyVault')]"
-                            },
-                            {
-                                "name": "keyVaultSSLCertPasswordSecretName",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "The name of the secret in the specified Key Vault whose value is the password for the front-end TLS/SSL certificate",
-                                "defaultValue": "",
-                                "toolTip": "Use only letters and numbers",
-                                "constraints": {
-                                    "required": true,
-                                    "regex": "^[a-z0-9A-Z]{1,30}$",
-                                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
-                                },
-                                "visible": "[equals(steps('section_appGateway').appgwIngress.certificateOption, 'haveKeyVault')]"
                             },
                             {
                                 "name": "enableCookieBasedAffinity",
@@ -918,10 +854,6 @@
             "appGatewayCertificateOption": "[steps('section_appGateway').appgwIngress.certificateOption]",
             "appGatewaySSLCertData": "[steps('section_appGateway').appgwIngress.keyVaultSSLCertData]",
             "appGatewaySSLCertPassword": "[steps('section_appGateway').appgwIngress.appGatewaySSLCertPassword]",
-            "keyVaultResourceGroup": "[steps('section_appGateway').appgwIngress.keyVaultResourceGroup]",
-            "keyVaultName": "[steps('section_appGateway').appgwIngress.keyVaultName]",
-            "keyVaultSSLCertDataSecretName": "[steps('section_appGateway').appgwIngress.keyVaultSSLCertDataSecretName]",
-            "keyVaultSSLCertPasswordSecretName": "[steps('section_appGateway').appgwIngress.keyVaultSSLCertPasswordSecretName]",
             "enableCookieBasedAffinity": "[bool(steps('section_appGateway').appgwIngress.enableCookieBasedAffinity)]",
             "deployWLO": "[bool(steps('Application').deployWLO)]",
             "edition": "[steps('Application').edition]",

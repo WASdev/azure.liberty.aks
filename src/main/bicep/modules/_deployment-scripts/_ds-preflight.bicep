@@ -27,8 +27,6 @@ param aksClusterRGName string = ''
 param enableAppGWIngress bool = false
 param vnetForApplicationGateway object = {}
 param appGatewayCertificateOption string = ''
-param keyVaultName string = ''
-param keyVaultResourceGroup string = ''
 param keyVaultSSLCertDataSecretName string = ''
 param keyVaultSSLCertPasswordSecretName string = ''
 @secure()
@@ -77,14 +75,6 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
       {
         name: 'APPLICATION_GATEWAY_CERTIFICATE_OPTION'
         value: appGatewayCertificateOption
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_NAME'
-        value: keyVaultName
-      }
-      {
-        name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_RESOURCEGROUP'
-        value: keyVaultResourceGroup
       }
       {
         name: 'APPLICATION_GATEWAY_SSL_KEYVAULT_FRONTEND_CERT_DATA_SECRET_NAME'
