@@ -38,12 +38,6 @@
         "appGatewaySSLCertPassword": {
             "value": "${appGatewaySSLCertPassword}"
         },
-        "keyVaultSSLCertDataSecretName": {
-            "value": "${keyVaultSSLCertDataSecretName}"
-        },
-        "keyVaultSSLCertPasswordSecretName": {
-            "value": "${keyVaultSSLCertPasswordSecretName}"
-        },
         "enableCookieBasedAffinity": {
             "value": "${enableCookieBasedAffinity}"
         },

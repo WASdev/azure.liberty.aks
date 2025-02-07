@@ -103,12 +103,6 @@ param appGatewaySSLCertPassword string = newGuid()
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
 
-@description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
-param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
-
-@description('The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate of Appliation Gateway frontend TLS/SSL')
-param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
-
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
 
@@ -230,8 +224,6 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     enableAppGWIngress: enableAppGWIngress
     vnetForApplicationGateway: vnetForApplicationGateway
     appGatewayCertificateOption: appGatewayCertificateOption
-    keyVaultSSLCertDataSecretName: keyVaultSSLCertDataSecretName
-    keyVaultSSLCertPasswordSecretName: keyVaultSSLCertPasswordSecretName
     appGatewaySSLCertData: appGatewaySSLCertData
     appGatewaySSLCertPassword: appGatewaySSLCertPassword
     vmSize: vmSize
