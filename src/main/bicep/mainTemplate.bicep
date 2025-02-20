@@ -84,7 +84,6 @@ param dnsNameforApplicationGateway string = 'olgw'
 
 @allowed([
   'haveCert'
-  'haveKeyVault'
   'generateCert'
 ])
 @description('Three scenarios we support for deploying app gateway')
@@ -101,20 +100,8 @@ param appGatewaySSLCertData string = newGuid()
 @description('The value of the password for the SSL Certificate')
 param appGatewaySSLCertPassword string = newGuid()
 
-@description('Resource group name in current subscription containing the KeyVault')
-param keyVaultResourceGroup string = 'kv-contoso-rg'
-
-@description('Existing Key Vault Name')
-param keyVaultName string = 'kv-contoso'
-
 @description('Price tier for Key Vault.')
 param keyVaultSku string = 'Standard'
-
-@description('The name of the secret in the specified KeyVault whose value is the SSL Certificate Data for Appliation Gateway frontend TLS/SSL.')
-param keyVaultSSLCertDataSecretName string = 'kv-ssl-data'
-
-@description('The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate of Appliation Gateway frontend TLS/SSL')
-param keyVaultSSLCertPasswordSecretName string = 'kv-ssl-psw'
 
 @description('true to enable cookie based affinity.')
 param enableCookieBasedAffinity bool = false
@@ -167,7 +154,6 @@ param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_acrRGName = (createACR ? resourceGroup().name : acrRGName)
 var const_appGatewaySSLCertOptionHaveCert = 'haveCert'
-var const_appGatewaySSLCertOptionHaveKeyVault = 'haveKeyVault'
 var const_appFrontendTlsSecretName = format('secret{0}', guidValue)
 var const_appImage = format('{0}:{1}', const_appImageName, const_appImageTag)
 var const_appImageName = format('image{0}', guidValue)
@@ -238,10 +224,6 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     enableAppGWIngress: enableAppGWIngress
     vnetForApplicationGateway: vnetForApplicationGateway
     appGatewayCertificateOption: appGatewayCertificateOption
-    keyVaultName: keyVaultName
-    keyVaultResourceGroup: keyVaultResourceGroup
-    keyVaultSSLCertDataSecretName: keyVaultSSLCertDataSecretName
-    keyVaultSSLCertPasswordSecretName: keyVaultSSLCertPasswordSecretName
     appGatewaySSLCertData: appGatewaySSLCertData
     appGatewaySSLCertPassword: appGatewaySSLCertPassword
     vmSize: vmSize
@@ -354,16 +336,13 @@ module appgwStartPid './modules/_pids/_empty.bicep' = if (enableAppGWIngress) {
   ]
 }
 
-module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep' = if (enableAppGWIngress && (appGatewayCertificateOption != const_appGatewaySSLCertOptionHaveKeyVault)) {
+module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep' = if (enableAppGWIngress && !_useExistingAppGatewaySSLCertificate) {
   name: 'appgateway-certificates-secrets-deployment'
   params: {
-    certificateDataValue: appGatewaySSLCertData
-    certificatePasswordValue: appGatewaySSLCertPassword
     identity: obj_uamiForDeploymentScript
     location: location
     sku: keyVaultSku
     subjectName: format('CN={0}', const_azureSubjectName)
-    useExistingAppGatewaySSLCertificate: _useExistingAppGatewaySSLCertificate
     keyVaultName: name_keyVaultName
   }
   dependsOn: [
@@ -372,9 +351,9 @@ module appgwSecretDeployment 'modules/_azure-resoruces/_keyvaultForGateway.bicep
 }
 
 // get key vault object in a resource group
-resource existingKeyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVault}' existing = if (enableAppGWIngress) {
-  name: (!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultName : appgwSecretDeployment.outputs.keyVaultName
-  scope: resourceGroup(appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault ? keyVaultResourceGroup : resourceGroup().name)
+resource existingKeyvault 'Microsoft.KeyVault/vaults@${azure.apiVersionForKeyVault}' existing = if (enableAppGWIngress && !_useExistingAppGatewaySSLCertificate) {
+  name: appgwSecretDeployment.outputs.keyVaultName
+  scope: resourceGroup()
 }
 
 module queryPrivateIPFromSubnet 'modules/_deployment-scripts/_ds_query_available_private_ip_from_subnet.bicep' = if (enableAppGWIngress && appgwUsePrivateIP) {
@@ -449,8 +428,8 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-networking.bicep' =
     identity: obj_uamiForDeploymentScript
 
     appgwCertificateOption: appGatewayCertificateOption
-    appgwFrontendSSLCertData: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertDataSecretName : appgwSecretDeployment.outputs.sslCertDataSecretName)
-    appgwFrontendSSLCertPsw: existingKeyvault.getSecret((!enableAppGWIngress || appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveKeyVault) ? keyVaultSSLCertPasswordSecretName : appgwSecretDeployment.outputs.sslCertPwdSecretName)
+    appgwFrontendSSLCertData: _useExistingAppGatewaySSLCertificate ? appGatewaySSLCertData : existingKeyvault.getSecret(appgwSecretDeployment.outputs.sslCertDataSecretName)
+    appgwFrontendSSLCertPsw: _useExistingAppGatewaySSLCertificate ? appGatewaySSLCertPassword : existingKeyvault.getSecret(appgwSecretDeployment.outputs.sslCertPwdSecretName)
 
     appgwName: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
 
