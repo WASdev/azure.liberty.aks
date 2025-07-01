@@ -4,9 +4,12 @@
       "workflow": "integration-test.yaml",
       "scenarios": [
         {
-          "scenario": "Default scenario for integration tests",
+          "scenario": "Deploy with existing AKS clusters",
           "inputs": {
-
+            "configurations_for_ci": {
+              "createCluster": "false",
+              "clusterName": "my-existing-aks-cluster"
+            }
           }
         }
       ]
