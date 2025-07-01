@@ -1,0 +1,15 @@
+{
+  "validation_scenarios": [
+    {
+      "workflow": "integration-test.yaml",
+      "scenarios": [
+        {
+          "scenario": "Default scenario for integration tests",
+          "inputs": {
+
+          }
+        }
+      ]
+    }
+  ]
+}
