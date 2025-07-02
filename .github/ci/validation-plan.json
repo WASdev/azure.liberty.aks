@@ -6,7 +6,6 @@
         {
           "scenario": "Deploy with existing AKS clusters",
           "inputs": {
-            "deleteAzureResources": false,
             "configurations_for_ci": {
               "createCluster": "false",
               "clusterName": "my-existing-aks-cluster"
@@ -16,8 +15,7 @@
         {
           "scenario": "Disable Application Gateway Ingress Controller",
           "inputs": {
-            "enableAppGWIngress": false,
-            "deleteAzureResources": false
+            "enableAppGWIngress": false
           }
         }
       ]
