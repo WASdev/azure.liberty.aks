@@ -11,6 +11,12 @@
               "clusterName": "my-existing-aks-cluster"
             }
           }
+        },
+        {
+          "scenario": "Disable Application Gateway Ingress Controller",
+          "inputs": {
+            "enableAppGWIngress": "false"
+          }
         }
       ]
     }
