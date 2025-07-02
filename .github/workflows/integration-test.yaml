@@ -154,7 +154,10 @@ jobs:
           # the value of **createCluster** is `false`, which means the offer won't create a new AKS cluster, but use an existing one.
           # in order to simulate the same behavior as the offer, we need to create a resource group and an AKS cluster.
           az group create -n ${{ env.testResourceGroup }} -l ${{ env.location }}
-          az aks create -n ${{ env.clusterName }} -g ${{ env.testResourceGroup }}
+          az aks create \
+            -n ${{ env.clusterName }} \
+            -g ${{ env.testResourceGroup }} \
+            --generate-ssh-keys
       - name: Start the deployment
         run: |
           cd ${{ env.repoName }}/target/cli
