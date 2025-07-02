@@ -16,7 +16,8 @@
         {
           "scenario": "Disable Application Gateway Ingress Controller",
           "inputs": {
-            "enableAppGWIngress": false
+            "enableAppGWIngress": false,
+            "deleteAzureResources": false
           }
         }
       ]

@@ -162,6 +162,8 @@ jobs:
           az aks create \
             -n ${{ env.clusterName }} \
             -g ${{ env.testResourceGroup }} \
+            --enable-managed-identity \
+            --network-plugin kubenet \
             --generate-ssh-keys
       - name: Start the deployment
         run: |
