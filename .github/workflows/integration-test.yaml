@@ -154,6 +154,11 @@ jobs:
           # the value of **createCluster** is `false`, which means the offer won't create a new AKS cluster, but use an existing one.
           # in order to simulate the same behavior as the offer, we need to create a resource group and an AKS cluster.
           az group create -n ${{ env.testResourceGroup }} -l ${{ env.location }}
+          az feature register \
+            --namespace "Microsoft.ContainerService" \
+            --name "AppGatewayWithOverlayPreview"
+          az provider register --namespace Microsoft.ContainerService          
+          
           az aks create \
             -n ${{ env.clusterName }} \
             -g ${{ env.testResourceGroup }} \
