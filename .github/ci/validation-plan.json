@@ -2,6 +2,7 @@
   "validation_scenarios": [
     {
       "workflow": "integration-test.yaml",
+      "run_mode": "serial",
       "scenarios": [
         {
           "scenario": "Deploy with existing AKS clusters",
@@ -10,6 +11,12 @@
               "createCluster": "false",
               "clusterName": "my-existing-aks-cluster"
             }
+          }
+        },
+        {
+          "scenario": "Deploy with a new AKS clusters and Application Gateway Ingress Controller enabled",
+          "inputs": {
+            "enableAppGWIngress": true
           }
         },
         {
