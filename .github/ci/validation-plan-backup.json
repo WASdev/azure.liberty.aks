@@ -12,6 +12,18 @@
               "clusterName": "my-existing-aks-cluster"
             }
           }
+        },
+        {
+          "scenario": "Deploy with a new AKS clusters and Application Gateway Ingress Controller enabled",
+          "inputs": {
+            "enableAppGWIngress": true
+          }
+        },
+        {
+          "scenario": "Disable Application Gateway Ingress Controller",
+          "inputs": {
+            "enableAppGWIngress": false
+          }
         }
       ]
     }
