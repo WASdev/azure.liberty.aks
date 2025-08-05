@@ -7,7 +7,7 @@
         {
           "scenario": "Deploy with existing AKS clusters",
           "inputs": {
-            "configurations_for_ci": {
+            "configurations_for_it": {
               "createCluster": "false",
               "clusterName": "my-existing-aks-cluster"
             }
