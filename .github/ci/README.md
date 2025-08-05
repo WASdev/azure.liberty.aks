@@ -1,12 +1,12 @@
 
 # CI Validation Configuration
 
-This directory contains JSON configuration files that define validation scenarios for the CI validation orchestrator. The validation system uses a reusable GitHub Action located at `.github/actions/ci/action.yml` to execute these plans and trigger the corresponding workflows for Open Liberty and WebSphere Liberty deployments on Azure AKS and VMs.
+This directory contains JSON configuration files that define validation scenarios for the CI validation orchestrator. The validation system uses a reusable GitHub Action located at `.github/actions/ci/action.yml` to execute these plans and trigger the corresponding workflows for Open Liberty and WebSphere Liberty deployments on Azure AKS.
 
 
 ## Overview
 
-The CI validation system is a comprehensive integration testing framework designed to validate Open Liberty and WebSphere Liberty deployments on Azure across multiple scenarios and configurations. It automates the execution of various deployment scenarios, monitors their progress, and generates detailed reports to ensure the reliability and quality of the Azure Liberty templates and scripts.
+The CI validation system is a comprehensive integration testing framework designed to validate Open Liberty and WebSphere Liberty deployments on Azure AKS across multiple scenarios and configurations. It automates the execution of various deployment scenarios, monitors their progress, and generates detailed reports to ensure the reliability and quality of the Azure Liberty templates and scripts.
 
 
 ### Key Features
