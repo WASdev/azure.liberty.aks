@@ -8,6 +8,8 @@
 * [Liberty on ARO](https://github.com/WASdev/azure.liberty.aro)
 
 
+# Integration tests report
+[![IT Validation Workflows](https://github.com/WASdev/azure.liberty.aks/actions/workflows/it-validation-workflows.yaml/badge.svg)](https://github.com/WASdev/azure.liberty.aks/actions/workflows/it-validation-workflows.yaml)
 
 # Deploy a Java application with Open Liberty or WebSphere Liberty on an Azure Kubernetes Service (AKS) cluster
 

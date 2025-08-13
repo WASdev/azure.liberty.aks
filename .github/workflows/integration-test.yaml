@@ -34,6 +34,10 @@ on:
         required: true
         type: string
         default: 'eastus'
+      configurations_for_it:
+        description: "JSON string of environment variables used for IT"
+        required: false
+        default: '{}'
   # Allows you to run this workflow using GitHub workflow dispatch APIs
   # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
   # REPO_NAME=WASdev/azure.liberty.aks
@@ -57,6 +61,7 @@ env:
 jobs:
   integration-test:
     runs-on: ubuntu-latest
+    env: ${{ fromJson(inputs.configurations_for_it) }}
     steps:
       - name: Get versions of external dependencies
         id: get-external-deps-versions
@@ -116,7 +121,24 @@ jobs:
             autoScaling=true
           fi
           cd ${{ env.repoName }}
-          mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=$GITHUB_REF_NAME -DcreateCluster=true -DcreateACR=true \
+          
+          if ${{ env.createCluster == 'false' }}; then
+            echo "Deploy with an existing AKS cluster"
+            createCluster=false
+            clusterName=${{ env.clusterName }}
+            clusterRGName=${{ env.testResourceGroup }}
+          else
+            echo "Deploy with a new AKS cluster"
+            createCluster=true
+            clusterName="aks-cluster-${{ github.run_id }}-${{ github.run_number }}"
+            clusterRGName=${{ env.testResourceGroup }}
+          fi
+          
+          mvn -Dgit.repo=${{ env.userName }} -Dgit.tag=$GITHUB_REF_NAME \
+            -DcreateCluster=${createCluster} \
+            -DclusterName=${clusterName} \
+            -DclusterRGName=${clusterRGName} \
+            -DcreateACR=true \
             -DenableAppGWIngress=${enableAppGWIngress} -DappgwUsePrivateIP=false -DappGatewayCertificateOption=generateCert -DenableCookieBasedAffinity=true \
             -DdeployWLO=${deployWLO} -Dedition="IBM WebSphere Application Server" -DproductEntitlementSource="Standalone" \
             -DdeployApplication=${deployApplication} -DappImagePath=icr.io/appcafe/open-liberty/samples/getting-started -DappReplicas=2 \
@@ -126,6 +148,23 @@ jobs:
         id: azure-login
         with:
           creds: ${{ env.azureCredentials }}
+      - name: Provision AKS Cluster as an existing cluster for deployment
+        if: ${{ env.createCluster == 'false' }}
+        run: |
+          # the value of **createCluster** is `false`, which means the offer won't create a new AKS cluster, but use an existing one.
+          # in order to simulate the same behavior as the offer, we need to create a resource group and an AKS cluster.
+          az group create -n ${{ env.testResourceGroup }} -l ${{ env.location }}
+          az feature register \
+            --namespace "Microsoft.ContainerService" \
+            --name "AppGatewayWithOverlayPreview"
+          az provider register --namespace Microsoft.ContainerService          
+          
+          az aks create \
+            -n ${{ env.clusterName }} \
+            -g ${{ env.testResourceGroup }} \
+            --enable-managed-identity \
+            --network-plugin kubenet \
+            --generate-ssh-keys
       - name: Start the deployment
         run: |
           cd ${{ env.repoName }}/target/cli
