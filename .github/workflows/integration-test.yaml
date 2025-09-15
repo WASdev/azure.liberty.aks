@@ -170,6 +170,9 @@ jobs:
           cd ${{ env.repoName }}/target/cli
           chmod a+x deploy.azcli
           ./deploy.azcli -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} -l ${{ env.location }}
+          az deployment operation group list --resource-group ${{ env.testResourceGroup }} --name ${{ env.testDeploymentName }}
+          az deployment operation group list --resource-group ${{ env.testResourceGroup }} --name ${{ env.testDeploymentName }} --query "[?properties.provisioningState=='Failed']"
+          az deployment operation group list --resource-group ${{ env.testResourceGroup }} --name ${{ env.testDeploymentName }} --query "[?properties.provisioningState=='Failed'].properties.statusMessage.error"
       - name: Verify the deployment
         run: |
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
