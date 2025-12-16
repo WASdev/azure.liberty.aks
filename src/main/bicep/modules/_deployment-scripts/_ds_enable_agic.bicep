@@ -24,6 +24,8 @@ param appgwName string = 'appgw-contoso'
 param identity object = {}
 param location string
 param utcValue string = utcNow()
+@description('${label.tagsLabel}')
+param tagsByResource object  = {}
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 
@@ -60,4 +62,5 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
   }
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }

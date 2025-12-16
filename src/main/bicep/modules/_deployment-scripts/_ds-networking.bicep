@@ -21,6 +21,8 @@ param _artifactsLocationSasToken string = ''
 param location string
 
 param identity object = {}
+@description('${label.tagsLabel}')
+param tagsByResource object  = {}
 
 @allowed([
   'haveCert'
@@ -98,4 +100,5 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
   }
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }

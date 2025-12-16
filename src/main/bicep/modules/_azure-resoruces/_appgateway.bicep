@@ -25,6 +25,8 @@ param gatewaySubnetId string = '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxx
 param staticPrivateFrontentIP string = '10.0.0.1'
 param usePrivateIP bool = false
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
+@description('${label.tagsLabel}')
+param tagsByResource object  = {}
 
 var const_nameSuffix = empty(nameSuffix) ? guidValue : nameSuffix
 var name_appGateway = format('appgw{0}', const_nameSuffix)
@@ -83,14 +85,13 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersion
       domainNameLabel: dnsNameforApplicationGateway
     }
   }
+  tags: tagsByResource['${identifier.publicIPAddresses}']
 }
 
 resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersionForApplicationGateways}' = {
   name: name_appGateway
   location: location
-  tags: {
-    'managed-by-k8s-ingress': 'true'
-  }
+
   properties: {
     sku: {
       name: 'WAF_v2'
@@ -175,6 +176,9 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersi
   dependsOn: [
     gatewayPublicIP
   ]
+  tags: union(tagsByResource['${identifier.applicationGateways}'], {
+    'managed-by-k8s-ingress': 'true'
+  })
 }
 
 output appGatewayAlias string = usePrivateIP ? staticPrivateFrontentIP : reference(gatewayPublicIP.id).dnsSettings.fqdn

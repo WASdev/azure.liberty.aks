@@ -39,6 +39,8 @@ param acrName string = ''
 param acrRGName string = ''
 
 param utcValue string = utcNow()
+@description('${label.tagsLabel}')
+param tagsByResource object  = {}
 
 var const_scriptLocation = uri(_artifactsLocation, 'scripts/')
 
@@ -120,6 +122,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
   }
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }
 
 output aksAgentAvailabilityZones array = json(deploymentScript.properties.outputs.agentAvailabilityZones)
