@@ -150,6 +150,9 @@ param maxReplicas int = 100
 @description('The minimum required CPU core (millicore) over all the replicas for autoscaling')
 param requestCPUMillicore int = 300
 
+@description('${label.tagsLabel}')
+param tagsByResource object = {}
+
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
 
 var const_acrRGName = (createACR ? resourceGroup().name : acrRGName)
@@ -193,6 +196,18 @@ var _appGatewaySubnetStartAddress = vnetForApplicationGateway.subnets.gatewaySub
 var _enableAppGWIngress = enableAppGWIngress
 var _useExistingAppGatewaySSLCertificate = appGatewayCertificateOption == const_appGatewaySSLCertOptionHaveCert
 
+var _objTagsByResource = {
+  '${identifier.virtualNetworks}': contains(tagsByResource, '${identifier.virtualNetworks}') ? tagsByResource['${identifier.virtualNetworks}'] : json('{}')
+  '${identifier.networkSecurityGroups}': contains(tagsByResource, '${identifier.networkSecurityGroups}') ? tagsByResource['${identifier.networkSecurityGroups}'] : json('{}')
+  '${identifier.publicIPAddresses}': contains(tagsByResource, '${identifier.publicIPAddresses}') ? tagsByResource['${identifier.publicIPAddresses}'] : json('{}')
+  '${identifier.deploymentScripts}': contains(tagsByResource, '${identifier.deploymentScripts}') ? tagsByResource['${identifier.deploymentScripts}'] : json('{}')
+  '${identifier.vaults}': contains(tagsByResource, '${identifier.vaults}') ? tagsByResource['${identifier.vaults}'] : json('{}')
+  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}') 
+  '${identifier.applicationGateways}': contains(tagsByResource, '${identifier.applicationGateways}') ? tagsByResource['${identifier.applicationGateways}'] : json('{}')  
+  '${identifier.registries}': contains(tagsByResource, '${identifier.registries}') ? tagsByResource['${identifier.registries}'] : json('{}')  
+  '${identifier.managedClusters}': contains(tagsByResource, '${identifier.managedClusters}') ? tagsByResource['${identifier.managedClusters}'] : json('{}')      
+}
+
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
   name: 'pid-68a0b448-a573-4012-ab25-d5dc9842063e-partnercenter'
   params: {}
@@ -232,6 +247,7 @@ module preflightDsDeployment 'modules/_deployment-scripts/_ds-preflight.bicep' =
     createACR: createACR
     acrName: name_acrName
     acrRGName: const_acrRGName
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     uamiDeployment
@@ -250,6 +266,7 @@ resource acrDeployment 'Microsoft.ContainerRegistry/registries@${azure.apiVersio
   dependsOn: [
     preflightDsDeployment
   ]
+  tags: _objTagsByResource['${identifier.registries}']
 }
 
 // Get existing VNET
@@ -273,6 +290,7 @@ module vnetForAppgatewayDeployment 'modules/_azure-resoruces/_vnetAppGateway.bic
     newOrExistingVnetForApplicationGateway: newOrExistingVnetForApplicationGateway
     vnetForApplicationGateway: vnetForApplicationGateway
     vnetRGNameForApplicationGateway: vnetRGNameForApplicationGateway
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     preflightDsDeployment
@@ -312,6 +330,7 @@ resource clusterDeployment 'Microsoft.ContainerService/managedClusters@${azure.a
     acrDeployment
     vnetForAppgatewayDeployment
   ]
+  tags: _objTagsByResource['${identifier.managedClusters}']
 }
 
 module acrPullRoleAssignment 'modules/_rolesAssignment/_acrPullRoleAssignment.bicep' = {
@@ -366,6 +385,7 @@ module queryPrivateIPFromSubnet 'modules/_deployment-scripts/_ds_query_available
     subnetId: ref_subId
 
     knownIP: _appGatewaySubnetStartAddress
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     vnetForAppgatewayDeployment
@@ -382,6 +402,7 @@ module appgwDeployment 'modules/_azure-resoruces/_appgateway.bicep' = if (enable
     gatewaySubnetId: ref_subId
     staticPrivateFrontentIP: _appgwUsePrivateIP ? queryPrivateIPFromSubnet.outputs.privateIP : ''
     usePrivateIP: appgwUsePrivateIP
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     appgwStartPid
@@ -401,6 +422,8 @@ module enableAgic 'modules/_deployment-scripts/_ds_enable_agic.bicep' = if (enab
     aksClusterName: name_clusterName
     aksClusterRGName: const_clusterRGName
     appgwName: _enableAppGWIngress ? appgwDeployment.outputs.appGatewayName : ''
+    tagsByResource: _objTagsByResource
+    
   }
   dependsOn: [
     appgwDeployment
@@ -437,6 +460,7 @@ module networkingDeployment 'modules/_deployment-scripts/_ds-networking.bicep' =
     aksClusterName: name_clusterName
     appFrontendTlsSecretName: const_appFrontendTlsSecretName
     appProjName: const_appProjName
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     appgwSecretDeployment
@@ -476,6 +500,7 @@ module primaryDsDeployment 'modules/_deployment-scripts/_ds-primary.bicep' = {
     minReplicas: minReplicas
     maxReplicas: maxReplicas
     requestCPUMillicore: requestCPUMillicore
+    tagsByResource: _objTagsByResource
   }
   dependsOn: [
     acrPullRoleAssignment

@@ -25,6 +25,8 @@ param knownIP string = '10.0.0.1'
 param identity object = {}
 param location string
 param utcValue string = utcNow()
+@description('${label.tagsLabel}')
+param tagsByResource object  = {}
 
 var const_azcliVersion='2.15.0'
 var const_deploymentName='ds-query-private-ip'
@@ -55,6 +57,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
   }
+  tags: tagsByResource['${identifier.deploymentScripts}']
 }
 
 output privateIP string = string(reference(const_deploymentName).outputs.privateIP)

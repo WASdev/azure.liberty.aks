@@ -36,6 +36,8 @@ param vnetForApplicationGateway object = {
 param vnetRGNameForApplicationGateway string
 param nameSuffix string = ''
 param guidValue string = take(replace(newGuid(), '-', ''), 6)
+@description('${label.tagsLabel}')
+param tagsByResource object = {}
 
 var const_nameSuffix = empty(nameSuffix) ? guidValue : nameSuffix
 var const_subnetAddressPrefixes = vnetForApplicationGateway.subnets.gatewaySubnet.addressPrefix
@@ -82,6 +84,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@${azure.apiVersionForNetwo
       }
     ]
   }
+    tags: tagsByResource['${identifier.networkSecurityGroups}']
 }
 
 // Create new VNET and subnet.
@@ -104,6 +107,7 @@ resource newVnet 'Microsoft.Network/virtualNetworks@${azure.apiVersionForVirtual
       }
     ]
   }
+  tags: tagsByResource['${identifier.virtualNetworks}']
 }
 
 // To mitigate ARM-TTK error: Control Named vnetForApplicationGateway must output the resourceGroup property when hideExisting is false

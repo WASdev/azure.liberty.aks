@@ -38,7 +38,7 @@
     <properties>
         <git.repo>WASdev</git.repo>
         <artifactsLocationBase>https://raw.githubusercontent.com/${git.repo}/${project.artifactId}/${git.tag}</artifactsLocationBase>
-        <version.azure.liberty.aks>1.0.58</version.azure.liberty.aks>
+        <version.azure.liberty.aks>1.0.59</version.azure.liberty.aks>
     </properties>
 
     <repositories>

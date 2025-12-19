@@ -37,6 +37,8 @@ param cpuUtilizationPercentage int = 80
 param minReplicas int = 1
 param maxReplicas int = 100
 param requestCPUMillicore int = 300
+@description('${label.tagsLabel}')
+param tagsByResource object  = {}
 
 param utcValue string = utcNow()
 
@@ -123,6 +125,7 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@${azure.apiVers
     retentionInterval: 'P1D'
     forceUpdateTag: utcValue
   }
+  tags: tagsByResource['${identifier.deploymentScripts}'] 
 }
 
 output appEndpoint string = (deployApplication && !enableAppGWIngress) ? deploymentScript.properties.outputs.appEndpoint : ''
