@@ -173,6 +173,7 @@ jobs:
       - name: Verify the deployment
         run: |
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
+          echo "outputs: ${outputs}"
           appHttpEndpoint=$(echo $outputs | jq -r '.appHttpEndpoint.value')
           echo "appHttpEndpoint: ${appHttpEndpoint}"
           appHttpsEndpoint=$(echo $outputs | jq -r '.appHttpsEndpoint.value')
@@ -271,3 +272,4 @@ jobs:
         if: ${{ (github.event_name == 'workflow_dispatch' && inputs.deleteAzureResources) || (github.event_name == 'repository_dispatch' && github.event.client_payload.deleteAzureResources) }}
         run: |
             az group delete -n ${{ env.testResourceGroup }} --yes --no-wait
+
