@@ -166,10 +166,7 @@ jobs:
             --network-plugin kubenet \
             --generate-ssh-keys
       - name: Start the deployment
-        run: |
-          # Verify resource group exists and is ready
-          az group show -n ${{ env.testResourceGroup }} || exit 1
-    
+        run: |   
           cd ${{ env.repoName }}/target/cli
           chmod a+x deploy.azcli
           ./deploy.azcli -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} -l ${{ env.location }} --verbose
