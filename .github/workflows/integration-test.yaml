@@ -167,9 +167,29 @@ jobs:
             --generate-ssh-keys
       - name: Start the deployment
         run: |
+          # Verify resource group exists and is ready
+          az group show -n ${{ env.testResourceGroup }} || exit 1
+    
           cd ${{ env.repoName }}/target/cli
           chmod a+x deploy.azcli
-          ./deploy.azcli -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} -l ${{ env.location }}
+          ./deploy.azcli -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} -l ${{ env.location }} --verbose
+          az deployment operation group list --resource-group ${{ env.testResourceGroup }} --name ${{ env.testDeploymentName }}
+          az deployment operation group list --resource-group ${{ env.testResourceGroup }} --name ${{ env.testDeploymentName }} --query "[?properties.provisioningState=='Failed']"
+          az deployment operation group list --resource-group ${{ env.testResourceGroup }} --name ${{ env.testDeploymentName }} --query "[?properties.provisioningState=='Failed'].properties.statusMessage.error"
+      - name: Retrieve deployment error details
+        if: failure()
+        run: |
+          echo "=== Deployment Details ==="
+          az deployment group show \
+            -n ${{ env.testDeploymentName }} \
+            -g ${{ env.testResourceGroup }} \
+            --query 'properties.error' -o json
+    
+          echo "=== Operation List ==="
+          az deployment operation group list \
+            -n ${{ env.testDeploymentName }} \
+            -g ${{ env.testResourceGroup }} \
+            --query "[?properties.provisioningState=='Failed']" -o json    
       - name: Verify the deployment
         run: |
           outputs=$(az deployment group show -n ${{ env.testDeploymentName }} -g ${{ env.testResourceGroup }} --query 'properties.outputs')
