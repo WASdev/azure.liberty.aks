@@ -88,6 +88,29 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersion
   tags: tagsByResource['${identifier.publicIPAddresses}']
 }
 
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2023-11-01' = {
+  name: 'wafPolicy${const_nameSuffix}'
+  location: location
+  properties: {
+    policySettings: {
+      fileUploadLimitInMb: 100
+      state: 'Enabled'
+      mode: 'Prevention'
+      requestBodyCheck: true
+      maxRequestBodySizeInKb: 128
+    }
+    managedRules: {
+      managedRuleSets: [
+        {
+          ruleSetType: 'OWASP'
+          ruleSetVersion: '3.2'
+        }
+      ]
+    }
+  }
+  tags: tagsByResource['${identifier.webApplicationFirewallPolicies}']
+}
+
 resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersionForApplicationGateways}' = {
   name: name_appGateway
   location: location
@@ -96,6 +119,9 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersi
     sku: {
       name: 'WAF_v2'
       tier: 'WAF_v2'
+    }
+    firewallPolicy: {
+      id: wafPolicy.id
     }
     gatewayIPConfigurations: [
       {
@@ -161,12 +187,7 @@ resource wafv2AppGateway 'Microsoft.Network/applicationGateways@${azure.apiVersi
         }
       }
     ]
-    webApplicationFirewallConfiguration: {
-      enabled: true
-      firewallMode: 'Prevention'
-      ruleSetType: 'OWASP'
-      ruleSetVersion: '3.0'
-    }
+
     enableHttp2: false
     autoscaleConfiguration: {
       minCapacity: 2
@@ -185,3 +206,4 @@ output appGatewayAlias string = usePrivateIP ? staticPrivateFrontentIP : referen
 output appGatewayName string = name_appGateway
 output appGatewayURL string = uri(format('http://{0}/', usePrivateIP ? staticPrivateFrontentIP : reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
 output appGatewaySecuredURL string = uri(format('https://{0}/', usePrivateIP ? staticPrivateFrontentIP : reference(gatewayPublicIP.id).dnsSettings.fqdn), '')
+output wafPolicyId string = wafPolicy.id

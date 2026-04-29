@@ -202,10 +202,11 @@ var _objTagsByResource = {
   '${identifier.publicIPAddresses}': contains(tagsByResource, '${identifier.publicIPAddresses}') ? tagsByResource['${identifier.publicIPAddresses}'] : json('{}')
   '${identifier.deploymentScripts}': contains(tagsByResource, '${identifier.deploymentScripts}') ? tagsByResource['${identifier.deploymentScripts}'] : json('{}')
   '${identifier.vaults}': contains(tagsByResource, '${identifier.vaults}') ? tagsByResource['${identifier.vaults}'] : json('{}')
-  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}') 
-  '${identifier.applicationGateways}': contains(tagsByResource, '${identifier.applicationGateways}') ? tagsByResource['${identifier.applicationGateways}'] : json('{}')  
-  '${identifier.registries}': contains(tagsByResource, '${identifier.registries}') ? tagsByResource['${identifier.registries}'] : json('{}')  
-  '${identifier.managedClusters}': contains(tagsByResource, '${identifier.managedClusters}') ? tagsByResource['${identifier.managedClusters}'] : json('{}')      
+  '${identifier.userAssignedIdentities}': contains(tagsByResource, '${identifier.userAssignedIdentities}') ? tagsByResource['${identifier.userAssignedIdentities}'] : json('{}')
+  '${identifier.applicationGateways}': contains(tagsByResource, '${identifier.applicationGateways}') ? tagsByResource['${identifier.applicationGateways}'] : json('{}')
+  '${identifier.registries}': contains(tagsByResource, '${identifier.registries}') ? tagsByResource['${identifier.registries}'] : json('{}')
+  '${identifier.managedClusters}': contains(tagsByResource, '${identifier.managedClusters}') ? tagsByResource['${identifier.managedClusters}'] : json('{}')
+  '${identifier.webApplicationFirewallPolicies}': contains(tagsByResource, '${identifier.webApplicationFirewallPolicies}') ? tagsByResource['${identifier.webApplicationFirewallPolicies}'] : json('{}')
 }
 
 module partnerCenterPid './modules/_pids/_empty.bicep' = {
