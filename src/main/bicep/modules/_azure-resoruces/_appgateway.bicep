@@ -88,7 +88,7 @@ resource gatewayPublicIP 'Microsoft.Network/publicIPAddresses@${azure.apiVersion
   tags: tagsByResource['${identifier.publicIPAddresses}']
 }
 
-resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@2023-11-01' = {
+resource wafPolicy 'Microsoft.Network/ApplicationGatewayWebApplicationFirewallPolicies@${azure.apiVersionForApplicationGatewayWebApplicationFirewallPolicies}' = {
   name: 'wafPolicy${const_nameSuffix}'
   location: location
   properties: {
