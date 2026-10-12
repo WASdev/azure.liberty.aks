@@ -203,8 +203,22 @@ jobs:
             fi
           elif [[ -n "$appHttpsEndpoint" ]]; then
             echo "Invalid value of appHttpsEndpoint: ${appHttpsEndpoint}"
-            exit 1 
+            exit 1
           fi
+      - name: Retrieve deployment error details
+        if: failure()
+        run: |
+          echo "=== Deployment Error Summary ==="
+          az deployment group show \
+            -n ${{ env.testDeploymentName }} \
+            -g ${{ env.testResourceGroup }} \
+            --query "properties.error" -o json || true
+
+          echo "=== Failed Operations ==="
+          az deployment operation group list \
+            -n ${{ env.testDeploymentName }} \
+            -g ${{ env.testResourceGroup }} \
+            --query "[?properties.provisioningState=='Failed'].properties.statusMessage" -o json || true
       - name: Generate artifact file name and path
         id: artifact_file
         run: |
